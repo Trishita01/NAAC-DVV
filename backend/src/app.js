@@ -1,13 +1,43 @@
 // app.js
 import express from "express";
 import dotenv from "dotenv";
-
+import cors from "cors";
+import criteriaMasterRoutes from "./routes/criteriaMasterRoutes.js";
 
 dotenv.config();          // Load .env vars
 
 const app = express();    // Create Express app
 
-// Built-in middleware
-app.use(express.json());  
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// API Routes
+app.use('/api/v1/criteria', criteriaMasterRoutes);
+
+// Health Checka
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Server is running' });
+});
+
+// 404 Handler
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: 'Not Found',
+    error: `Cannot ${req.method} ${req.url}`
+  });
+});
+
+// Error Handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong!'
+  });
+});
 
 export default app;
