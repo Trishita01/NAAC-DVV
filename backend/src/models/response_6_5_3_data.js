@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -37,11 +37,11 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     reg_meetings_of_the_IQAC_head: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: true
     },
     conf_seminar_workshops_on_quality_edu: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: true
     },
     collab_quality_initiatives: {
@@ -49,7 +49,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     participatipn_in_NIRF: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: true
     },
     from_to_date: {
@@ -57,7 +57,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true
     },
     other_quality_audit: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: true
     },
     submitted_at: {

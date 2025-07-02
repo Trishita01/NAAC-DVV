@@ -1,6 +1,5 @@
 var DataTypes = require("sequelize").DataTypes;
 var _criteria_master = require("./criteria_master");
-var _criteriamaster = require("./criteriamaster");
 var _file_uploads = require("./file_uploads");
 var _hdr = require("./hdr");
 var _response_1_1_3_data = require("./response_1_1_3_data");
@@ -55,7 +54,6 @@ var _users = require("./users");
 
 function initModels(sequelize) {
   var criteria_master = _criteria_master(sequelize, DataTypes);
-  var criteriamaster = _criteriamaster(sequelize, DataTypes);
   var file_uploads = _file_uploads(sequelize, DataTypes);
   var hdr = _hdr(sequelize, DataTypes);
   var response_1_1_3_data = _response_1_1_3_data(sequelize, DataTypes);
@@ -311,7 +309,6 @@ function initModels(sequelize) {
 
   return {
     criteria_master,
-    criteriamaster,
     file_uploads,
     hdr,
     response_1_1_3_data,

@@ -1,4 +1,5 @@
 import db from "../models/index.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const CriteriaMaster = db.criteria_master;
 // Get all criteria
@@ -14,7 +15,7 @@ const getAllCriteria = async (req, res) => {
 // Get single criteria by ID
 const getCriteriaById = async (req, res) => {
   try {
-    const criteria = await criteria_master.findByPk(req.params.id);
+    const criteria = await CriteriaMaster.findByPk(req.params.id);
     if (!criteria) {
       return res.status(404).json({ error: 'Criteria not found' });
     }
@@ -35,8 +36,7 @@ const createCriteria = async (req, res) => {
 };
 
 // Update criteria
-const updateCriteria = async (req, res) => {
-  try {
+const updateCriteria = asyncHandler(async (req, res) => {
     const [updated] = await CriteriaMaster.update(req.body, {
       where: { id: req.params.id }
     });
@@ -44,11 +44,8 @@ const updateCriteria = async (req, res) => {
       const updatedCriteria = await CriteriaMaster.findByPk(req.params.id);
       return res.json(updatedCriteria);
     }
-    throw new Error('Criteria not found');
-  } catch (error) {
     res.status(400).json({ error: error.message });
-  }
-};
+});
 
 // Delete criteria
 const deleteCriteria = async (req, res) => {

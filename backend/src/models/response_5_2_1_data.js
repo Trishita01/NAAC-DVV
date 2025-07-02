@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -32,7 +32,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     student_name_contact: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     program_graduated_from: {
@@ -40,11 +40,11 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     employer_details: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     pay_package_inr: {
-      type: DataTypes.DECIMAL(10,2),
+      type: DataTypes.DECIMAL(15,2),
       allowNull: true
     },
     submitted_at: {

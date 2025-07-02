@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -32,55 +32,55 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     registeration_number: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_net: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_slet: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_gate: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_gmat: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_cat: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_gre: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_jam: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_ielts: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_toefl: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_civil_services: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_state_services: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     exam_other: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     submitted_at: {

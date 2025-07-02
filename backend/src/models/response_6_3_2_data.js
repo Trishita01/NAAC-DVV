@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -44,7 +44,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true
     },
     amt_of_spt_received: {
-      type: DataTypes.STRING(10),
+      type: DataTypes.DECIMAL(15,2),
       allowNull: true
     },
     submitted_at: {

@@ -2,8 +2,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import criteriaMasterRoutes from "./routes/criteriaMasterRoutes.js";
-
+import criteriaMasterRoutes from "./routes/criteriaMaster.routes.js";
+import criteria1Routes from "./routes/criteria1.routes.js";
 dotenv.config();          // Load .env vars
 
 const app = express();    // Create Express app
@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // API Routes
 app.use('/api/v1/criteria', criteriaMasterRoutes);
+app.use('/api/v1/criteria1', criteria1Routes);
 
 // Health Checka
 app.get('/health', (req, res) => {

@@ -1,5 +1,5 @@
-import Sequelize from "sequelize";
-export default function criteria_master(sequelize, DataTypes) {
+const Sequelize = require('sequelize');
+module.exports = function(sequelize, DataTypes) {
   return sequelize.define('criteria_master', {
     id: {
       autoIncrement: true,
@@ -8,8 +8,8 @@ export default function criteria_master(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false
+      type: DataTypes.STRING(20),
+      allowNull: true
     },
     criterion_id: {
       type: DataTypes.STRING(10),
@@ -24,23 +24,23 @@ export default function criteria_master(sequelize, DataTypes) {
       allowNull: false
     },
     criterion_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     sub_criterion_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     sub_sub_criterion_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     criteria_type: {
       type: DataTypes.ENUM('Qn','Ql'),
       allowNull: false
     },
     requirements: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: true
     },
     last_reviewed: {

@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -32,7 +32,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     scheme_name: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     gov_students_count: {
@@ -41,9 +41,8 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: 0
     },
     gov_amount: {
-      type: DataTypes.DECIMAL(12,2),
-      allowNull: true,
-      defaultValue: 0.00
+      type: DataTypes.DECIMAL(15,2),
+      allowNull: true
     },
     inst_students_count: {
       type: DataTypes.INTEGER,
@@ -51,9 +50,8 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: 0
     },
     inst_amount: {
-      type: DataTypes.DECIMAL(12,2),
-      allowNull: true,
-      defaultValue: 0.00
+      type: DataTypes.DECIMAL(15,2),
+      allowNull: true
     },
     submitted_at: {
       type: DataTypes.DATE,

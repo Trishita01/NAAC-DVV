@@ -25,7 +25,11 @@ if (envConfig.use_env_variable) {
     envConfig.database,
     envConfig.username,
     envConfig.password,
-    envConfig
+    {
+      ...envConfig,
+      // Add additional Sequelize options if needed
+      logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    }
   );
 }
 

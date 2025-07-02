@@ -6,7 +6,7 @@ import {
   createCriteria, 
   updateCriteria, 
   deleteCriteria 
-} from '../controllers/criteriaMasterController.js';
+} from '../controllers/criteriaMaster.controller.js';
 
 // CRUD routes for Criteria Master
 router.route('/getAllCriteria').get(getAllCriteria)

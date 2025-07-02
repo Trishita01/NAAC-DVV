@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -32,19 +32,19 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     resource_type: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     subscription_detail: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.TEXT,
       allowNull: false
     },
     expenditure_lakhs: {
-      type: DataTypes.DECIMAL(10,2),
+      type: DataTypes.DECIMAL(15,2),
       allowNull: true
     },
     total_expenditure: {
-      type: DataTypes.DECIMAL(10,2),
+      type: DataTypes.DECIMAL(15,2),
       allowNull: true
     },
     submitted_at: {
