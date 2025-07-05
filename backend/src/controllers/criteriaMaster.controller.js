@@ -44,7 +44,7 @@ const updateCriteria = asyncHandler(async (req, res) => {
       const updatedCriteria = await CriteriaMaster.findByPk(req.params.id);
       return res.json(updatedCriteria);
     }
-    res.status(400).json({ error: error.message });
+    throw new apiError(400, "Criteria not found");
 });
 
 // Delete criteria

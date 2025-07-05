@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_1_1_3_data', {
+import Sequelize from "sequelize";
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_1_1_3', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -24,11 +24,11 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     session: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: false
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.TEXT,
       allowNull: true
     },
     teacher_name: {
@@ -50,7 +50,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_1_1_3_data',
+    tableName: 'response_1_1_3',
     timestamps: false,
     indexes: [
       {
