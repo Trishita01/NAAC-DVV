@@ -23,8 +23,8 @@ const getAllCriteria211 = asyncHandler(async (req, res) => {
 });
 
 /**
- * @route POST /api/response/1.1.3
- * @description Create a new response for criteria 1.1.3
+ * @route POST /api/response/2.1.1
+ * @description Create a new response for criteria 2.1.1
  * @access Private/Admin
  */
 const createResponse211 = asyncHandler(async (req, res) => {
@@ -54,7 +54,7 @@ const createResponse211 = asyncHandler(async (req, res) => {
           // Create proper Date objects for session
           const sessionDate = new Date(year, 0, 1); // Jan 1st of the given year
           console.log(criteria.criteria_code)
-          // Insert into response_1_1_3_data
+          // Insert into response_2_1_1_data
           const entry = await Criteria211.create({
             id: criteria.id,
             criteria_code: criteria.criteria_code,
@@ -72,7 +72,7 @@ const createResponse211 = asyncHandler(async (req, res) => {
 
 });
 /**
- * @route GET /api/response/1.1.3/:criteriaCode
+ * @route GET /api/response/2.1.1/:criteriaCode
  * @description Get all responses for a specific criteria code
  * @access Public
  */
@@ -118,8 +118,8 @@ export { getAllCriteria211,
 });
 
 /**
-* @route POST /api/response/1.1.3
-* @description Create a new response for criteria 1.1.3
+* @route POST /api/response/2.1.2
+* @description Create a new response for criteria 2.1.2
 * @access Private/Admin
 */
 const createResponse212 = asyncHandler(async (req, res) => {
@@ -149,7 +149,7 @@ const createResponse212 = asyncHandler(async (req, res) => {
         // Create proper Date objects for session
         const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
         console.log(criteria.criteria_code)
-        // Insert into response_1_1_3_data
+        // Insert into response_2_1_2_data
         const entry = await Criteria212.create({
           id: criteria.id,
           criteria_code: criteria.criteria_code,
@@ -165,7 +165,7 @@ const createResponse212 = asyncHandler(async (req, res) => {
 
 });
 /**
-* @route GET /api/response/1.1.3/:criteriaCode
+* @route GET /api/response/2.1.2/:criteriaCode
 * @description Get all responses for a specific criteria code
 * @access Public
 */
@@ -213,8 +213,8 @@ const getAllCriteria241243222233 = asyncHandler(async (req, res) => {
 });
 
 /**
-* @route POST /api/response/1.1.3
-* @description Create a new response for criteria 1.1.3
+* @route POST /api/response/2.4.1and2.4.3and2.2.2and2.3.3
+* @description Create a new response for criteria 2.4.1 and 2.4.3 and 2.2.2 and 2.3.3
 * @access Private/Admin
 */
 const createResponse241243222233 = asyncHandler(async (req, res) => {
@@ -244,7 +244,7 @@ const createResponse241243222233 = asyncHandler(async (req, res) => {
         // Create proper Date objects for session
         const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
         console.log(criteria.criteria_code)
-        // Insert into response_1_1_3_data
+        // Insert into response_2_4_1and2_4_3and2_2_2and2_3_3_data
         const entry = await Criteria241243222233.create({
           id: criteria.id,
           criteria_code: criteria.criteria_code,
@@ -264,7 +264,7 @@ const createResponse241243222233 = asyncHandler(async (req, res) => {
 
 });
 /**
-* @route GET /api/response/1.1.3/:criteriaCode
+* @route GET /api/response/2.4.1and2.4.3and2.2.2and2.3.3/:criteriaCode
 * @description Get all responses for a specific criteria code
 * @access Public
 */
@@ -309,8 +309,8 @@ const getAllCriteria242 = asyncHandler(async (req, res) => {
 });
 
 /**
-* @route POST /api/response/1.1.3
-* @description Create a new response for criteria 1.1.3
+* @route POST /api/response/2.4.2
+* @description Create a new response for criteria 2.4.2
 * @access Private/Admin
 */
 const createResponse242 = asyncHandler(async (req, res) => {
@@ -340,7 +340,7 @@ const createResponse242 = asyncHandler(async (req, res) => {
         // Create proper Date objects for session
         const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
         console.log(criteria.criteria_code)
-        // Insert into response_1_1_3_data
+        // Insert into response_2_4_2_data
         const entry = await Criteria242.create({
           id: criteria.id,
           criteria_code: criteria.criteria_code,
@@ -358,7 +358,7 @@ const createResponse242 = asyncHandler(async (req, res) => {
 
 });
 /**
-* @route GET /api/response/1.1.3/:criteriaCode
+* @route GET /api/response/2.4.2/:criteriaCode
 * @description Get all responses for a specific criteria code
 * @access Public
 */
@@ -403,8 +403,8 @@ const getAllCriteria263 = asyncHandler(async (req, res) => {
 });
 
 /**
-* @route POST /api/response/1.1.3
-* @description Create a new response for criteria 1.1.3
+* @route POST /api/response/2.6.3
+* @description Create a new response for criteria 2.6.3
 * @access Private/Admin
 */
 const createResponse263 = asyncHandler(async (req, res) => {
@@ -434,7 +434,7 @@ const createResponse263 = asyncHandler(async (req, res) => {
         // Create proper Date objects for session
         const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
         console.log(criteria.criteria_code)
-        // Insert into response_1_1_3_data
+        // Insert into response_2_6_3_data
         const entry = await Criteria263.create({
           id: criteria.id,
           criteria_code: criteria.criteria_code,
@@ -452,7 +452,7 @@ const createResponse263 = asyncHandler(async (req, res) => {
 
 });
 /**
-* @route GET /api/response/1.1.3/:criteriaCode
+* @route GET /api/response/2.6.3/:criteriaCode
 * @description Get all responses for a specific criteria code
 * @access Public
 */
@@ -498,8 +498,8 @@ const getAllCriteria271 = asyncHandler(async (req, res) => {
 });
 
 /**
-* @route POST /api/response/1.1.3
-* @description Create a new response for criteria 1.1.3
+* @route POST /api/response/2.7.1
+* @description Create a new response for criteria 2.7.1
 * @access Private/Admin
 */
 const createResponse271 = asyncHandler(async (req, res) => {
@@ -529,7 +529,7 @@ const createResponse271 = asyncHandler(async (req, res) => {
         // Create proper Date objects for session
         const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
         console.log(criteria.criteria_code)
-        // Insert into response_1_1_3_data
+        // Insert into response_2_7_1_data
         const entry = await Criteria271.create({
           id: criteria.id,
           criteria_code: criteria.criteria_code,
@@ -552,7 +552,7 @@ const createResponse271 = asyncHandler(async (req, res) => {
 
 });
 /**
-* @route GET /api/response/1.1.3/:criteriaCode
+* @route GET /api/response/2.7.1/:criteriaCode
 * @description Get all responses for a specific criteria code
 * @access Public
 */

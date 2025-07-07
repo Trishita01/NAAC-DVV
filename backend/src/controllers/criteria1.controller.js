@@ -5,12 +5,12 @@ import apiError from "../utils/apiError.js";
 
 const Criteria113 = db.response_1_1_3;
 const Criteria121 = db.response_1_2_1;
-const Criteria122 = db.response_1_2_2and3;
+const Criteria122and123 = db.response_1_2_2and3;
 const Criteria132 = db.response_1_3_2;
 const Criteria133 = db.response_1_3_3;
 const CriteriaMaster = db.criteria_master;
 
-const getAllCriteria1 = asyncHandler(async (req, res) => {
+const getAllCriteria113 = asyncHandler(async (req, res) => {
     const criteria = await Criteria113.findAll();
     if (!criteria) {
         throw new apiError(404, "Criteria not found");
@@ -86,7 +86,7 @@ const createResponse113 = asyncHandler(async (req, res) => {
  * @description Get all responses for a specific criteria code
  * @access Public
  */
-const getResponsesByCriteriaCode = async (req, res, next) => {
+const getResponsesByCriteriaCode113 = async (req, res, next) => {
     try {
         const { criteriaCode } = req.params;
         
@@ -108,14 +108,32 @@ const getResponsesByCriteriaCode = async (req, res, next) => {
         next(error);
     }
 };
-export { getAllCriteria1,
+export { getAllCriteria113,
     createResponse113,
-    getResponsesByCriteriaCode
+    getResponsesByCriteriaCode113
  };
 
 
 
  // 1.2.1
+
+
+ const getAllCriteria121 = asyncHandler(async (req, res) => {
+  const criteria = await Criteria121.findAll();
+  if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+  }
+  
+  res.status(200).json(
+      new apiResponse(200, criteria, "Criteria found")
+  );
+});
+
+/**
+* @route POST /api/response/1.1.3
+* @description Create a new response for criteria 1.1.3
+* @access Private/Admin
+*/
 
  const createResponse121 = asyncHandler(async (req, res) => {
     /*
@@ -185,7 +203,7 @@ export { getAllCriteria1,
  * @description Get all responses for a specific criteria code
  * @access Public
  */
-const getResponsesByCriteriaCode = async (req, res, next) => {
+const getResponsesByCriteriaCode121 = async (req, res, next) => {
     try {
         const { criteriaCode } = req.params;
         
@@ -207,17 +225,34 @@ const getResponsesByCriteriaCode = async (req, res, next) => {
         next(error);
     }
 };
-export { getAllCriteria1,
+export { getAllCriteria121,
     createResponse121,
-    getResponsesByCriteriaCode
+    getResponsesByCriteriaCode121
  };
 
 
 
  //1.2.2 
 
+ const getAllCriteria122123 = asyncHandler(async (req, res) => {
+  const criteria = await Criteria122and123.findAll();
+  if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+  }
+  
+  res.status(200).json(
+      new apiResponse(200, criteria, "Criteria found")
+  );
+});
 
- const createResponse122 = asyncHandler(async (req, res) => {
+/**
+* @route POST /api/response/1.2.2and1.2.3
+* @description Create a new response for criteria 1.2.2 and 1.2.3
+* @access Private/Admin
+*/
+
+
+ const createResponse122123 = asyncHandler(async (req, res) => {
     /*
     1. get the user input from the req body
     2. query the criteria_master table to get the id and criteria_code 
@@ -225,13 +260,13 @@ export { getAllCriteria1,
     4. create a new response
     5. return the response
     */
-        // Fetch 1.2.2 criterion from criteria_master
+        // Fetch 1.2.2 and 1.2.3 criterion from criteria_master
         console.log(CriteriaMaster)
         const criteria = await CriteriaMaster.findOne({
             where: {
-              sub_sub_criterion_id: '010202',
-              sub_criterion_id: '0102',
-              criterion_id: '01'
+              sub_sub_criterion_id: '010202' || '010203',
+              sub_criterion_id: '0102' || '0102',
+              criterion_id: '01' || '01'
             }
           });
       
@@ -274,11 +309,11 @@ export { getAllCriteria1,
 
 });
 /**
- * @route GET /api/response/1.2.2/:criteriaCode
+ * @route GET /api/response/1.2.2and1.2.3/:criteriaCode
  * @description Get all responses for a specific criteria code
  * @access Public
  */
-const getResponsesByCriteriaCode = async (req, res, next) => {
+const getResponsesByCriteriaCode122123 = async (req, res, next) => {
     try {
         const { criteriaCode } = req.params;
         
@@ -300,109 +335,33 @@ const getResponsesByCriteriaCode = async (req, res, next) => {
         next(error);
     }
 };
-export { getAllCriteria1,
-    createResponse122,
-    getResponsesByCriteriaCode
+export { getAllCriteria122123,
+    createResponse122123,
+    getResponsesByCriteriaCode122123
  };
 
-
-
-
- //1.2.3
-
-
-
- const createResponse123 = asyncHandler(async (req, res) => {
-    /*
-    1. get the user input from the req body
-    2. query the criteria_master table to get the id and criteria_code 
-    3. validate the user input
-    4. create a new response
-    5. return the response
-    */
-        // Fetch 1.2.3 criterion from criteria_master
-        console.log(CriteriaMaster)
-        const criteria = await CriteriaMaster.findOne({
-            where: {
-              sub_sub_criterion_id: '010203',
-              sub_criterion_id: '0102',
-              criterion_id: '01'
-            }
-          });
-      
-          if (!criteria) {
-            throw new apiError(404, "Criteria not found");
-          }
-      
-          // Validate required fields
-          const { program_code, course_code, year_of_offering, no_of_times_offered, duration, no_of_students_enrolled, no_of_students_completed} = req.body;
-          if (!program_code || !course_code || !year_of_offering || !no_of_times_offered || !duration || !no_of_students_enrolled || !no_of_students_completed ) {
-            throw new apiError(400, "Missing required fields");
-          }
-
-          if (year_of_offering < 1990 || year_of_offering > new Date().getFullYear()) {
-            throw new apiError(400, "Year of offering must be between 1990 and current year");
-          }
-
-          
-          // Create proper Date objects for session
-          const sessionDate = new Date(year, 0, 1); // Jan 1st of the given year
-          console.log(criteria.criteria_code)
-          // Insert into response_1_2_2and3_data
-          const entry = await Criteria122.create({
-            id: criteria.id,
-            criteria_code: criteria.criteria_code,
-            session: sessionDate,  // Store as Date object
-            
-            program_code,
-            course_code,
-            year_of_offering,
-            no_of_times_offered,
-            duration,
-            no_of_students_enrolled,
-            no_of_students_completed
-          });
-      
-          res.status(201).json(
-            new apiResponse(201, entry, "Response created successfully")
-          );
-
-});
-/**
- * @route GET /api/response/1.2.3/:criteriaCode
- * @description Get all responses for a specific criteria code
- * @access Public
- */
-const getResponsesByCriteriaCode = async (req, res, next) => {
-    try {
-        const { criteriaCode } = req.params;
-        
-        const responses = await db.response_1_2_2and3.findAll({
-            where: { criteria_code: criteriaCode },
-            include: [{
-                model: db.criteria_master,
-                as: 'criteria',
-                attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
-            }],
-            order: [['submitted_at', 'DESC']]
-        });
-
-        return res.status(200).json(
-            new apiResponse(200, responses, 'Responses retrieved successfully')
-        );
-
-    } catch (error) {
-        next(error);
-    }
-};
-export { getAllCriteria1,
-    createResponse123,
-    getResponsesByCriteriaCode
- };
 
 
 
  //1.3.2
+
+
+ const getAllCriteria132 = asyncHandler(async (req, res) => {
+  const criteria = await Criteria113.findAll();
+  if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+  }
+  
+  res.status(200).json(
+      new apiResponse(200, criteria, "Criteria found")
+  );
+});
+
+/**
+* @route POST /api/response/1.3.2
+* @description Create a new response for criteria 1.3.2
+* @access Private/Admin
+*/
 
 
  const createResponse132 = asyncHandler(async (req, res) => {
@@ -464,7 +423,7 @@ export { getAllCriteria1,
  * @description Get all responses for a specific criteria code
  * @access Public
  */
-const getResponsesByCriteriaCode = async (req, res, next) => {
+const getResponsesByCriteriaCode132 = async (req, res, next) => {
     try {
         const { criteriaCode } = req.params;
         
@@ -486,13 +445,31 @@ const getResponsesByCriteriaCode = async (req, res, next) => {
         next(error);
     }
 };
-export { getAllCriteria1,
+export { getAllCriteria132,
     createResponse132,
-    getResponsesByCriteriaCode
+    getResponsesByCriteriaCode132
  };
 
 
  //1.3.3
+
+
+ const getAllCriteria133 = asyncHandler(async (req, res) => {
+  const criteria = await Criteria133.findAll();
+  if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+  }
+  
+  res.status(200).json(
+      new apiResponse(200, criteria, "Criteria found")
+  );
+});
+
+/**
+* @route POST /api/response/1.3.3
+* @description Create a new response for criteria 1.3.3
+* @access Private/Admin
+*/
 
  const createResponse133 = asyncHandler(async (req, res) => {
     /*
@@ -546,7 +523,7 @@ export { getAllCriteria1,
  * @description Get all responses for a specific criteria code
  * @access Public
  */
-const getResponsesByCriteriaCode = async (req, res, next) => {
+const getResponsesByCriteriaCode133 = async (req, res, next) => {
     try {
         const { criteriaCode } = req.params;
         
@@ -568,9 +545,9 @@ const getResponsesByCriteriaCode = async (req, res, next) => {
         next(error);
     }
 };
-export { getAllCriteria1,
+export { getAllCriteria133,
     createResponse133,
-    getResponsesByCriteriaCode
+    getResponsesByCriteriaCode133
  };
 
 
