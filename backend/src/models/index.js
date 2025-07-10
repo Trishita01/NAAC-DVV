@@ -48,8 +48,10 @@ const modelFiles = fs
 for (const file of modelFiles) {
   try {
     const modelPath = `./${file}`;
+    console.log(`Loading model from file: ${file}`);
     const modelModule = await import(modelPath);
     const model = modelModule.default(sequelize, Sequelize.DataTypes);
+    console.log(`Model loaded: ${model.name}`);
     db[model.name] = model;
   } catch (error) {
     console.error(`Error loading model ${file}:`, error);

@@ -9,6 +9,15 @@ const Criteria122and123 = db.response_1_2_2and3;
 const Criteria132 = db.response_1_3_2;
 const Criteria133 = db.response_1_3_3;
 const CriteriaMaster = db.criteria_master;
+const Score = db.scores;
+
+    // Convert criteria code to padded format (e.g., '1.1.3' -> '010103')
+    const convertToPaddedFormat = (code) => {
+      // First remove any dots, then split into individual characters
+      const parts = code.replace(/\./g, '').split('');
+      // Pad each part to 2 digits and join
+      return parts.map(part => part.padStart(2, '0')).join('');
+  };
 
 const getAllCriteria113 = asyncHandler(async (req, res) => {
     const criteria = await Criteria113.findAll();
@@ -18,6 +27,47 @@ const getAllCriteria113 = asyncHandler(async (req, res) => {
     
     res.status(200).json(
         new apiResponse(200, criteria, "Criteria found")
+    );
+});
+
+
+const getResponsesByCriteriaCode = asyncHandler(async (req, res) => {
+    const { criteriaCode } = req.params;
+    if (!criteriaCode) {
+        throw new apiError(400, "Missing criteria code");
+    }
+    
+    console.log(criteriaCode)
+    
+    const paddedCriteriaCode = convertToPaddedFormat(criteriaCode);
+    const dbName = `response_${criteriaCode.replace(/\./g, '_')}`;
+
+    console.log(paddedCriteriaCode)
+    console.log(dbName)
+    
+    // First find the criteria master record
+    const criteriaMaster = await db.criteria_master.findOne({
+      where: { 
+        sub_sub_criterion_id: paddedCriteriaCode
+      }
+    });
+
+    console.log(criteriaMaster.criteria_code)
+    
+    if (!criteriaMaster) {
+      throw new apiError(404, `Criteria not found for code: ${criteriaCode}`);
+    }
+    
+    // Then find all responses for this criteria
+    const responses = await db[dbName].findAll({
+      where: { 
+        criteria_code: criteriaMaster.criteria_code 
+      },
+      order: [['submitted_at', 'DESC']]
+    });
+
+    return res.status(200).json(
+        new apiResponse(200, responses, 'Responses retrieved successfully')
     );
 });
 
@@ -65,6 +115,7 @@ const createResponse113 = asyncHandler(async (req, res) => {
           // Create proper Date objects for session
           const sessionDate = new Date(year, 0, 1); // Jan 1st of the given year
           console.log(criteria.criteria_code)
+
           // Insert into response_1_1_3_data
           const entry = await Criteria113.create({
             id: criteria.id,
@@ -81,42 +132,140 @@ const createResponse113 = asyncHandler(async (req, res) => {
           );
 
 });
-/**
- * @route GET /api/response/1.1.3/:criteriaCode
- * @description Get all responses for a specific criteria code
- * @access Public
- */
-const getResponsesByCriteriaCode113 = async (req, res, next) => {
-    try {
-        const { criteriaCode } = req.params;
-        
-        const responses = await db.response_1_1_3.findAll({
-            where: { criteria_code: criteriaCode },
-            include: [{
-                model: db.criteria_master,
-                as: 'criteria',
-                attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
-            }],
-            order: [['submitted_at', 'DESC']]
-        });
 
-        return res.status(200).json(
-            new apiResponse(200, responses, 'Responses retrieved successfully')
-        );
 
-    } catch (error) {
-        next(error);
+const score113 = asyncHandler(async (req, res) => {
+    /*
+    1. get the user input from the req body
+    2. query the criteria_master table to get the id and criteria_code 
+    3. validate the user input
+    4. create a new response
+    5. return the response
+    */
+    const criteria_code = convertToPaddedFormat("1.1.3");
+    console.log(criteria_code)
+    console.log(CriteriaMaster)
+    const criteria = await CriteriaMaster.findOne({
+      where: { 
+        sub_sub_criterion_id: criteria_code
+      }
+    });
+    const responses = await Criteria113.findAll({
+      attributes: ['option_selected'],  // Only get the option_selected field
+      where: {
+          criteria_code:criteria.criteria_code  
+      }
+  });
+  const optionValues = responses.map(response => response.option_selected);
+  console.log('All option values:', optionValues);
+  
+  // Create a Set to store unique values between 1-4
+  const uniqueValues = new Set();
+  
+  optionValues.forEach(value => {
+    const num = parseInt(value, 10);
+    if (num >= 1 && num <= 4) {
+      uniqueValues.add(num);
     }
-};
-export { getAllCriteria113,
-    createResponse113,
-    getResponsesByCriteriaCode113
- };
+  });
 
+  console.log("Score",Score)
+  const currentYear = new Date().getFullYear();
+  const sessionDate = new Date(currentYear, 0, 1);  // Jan 1st of current year
+  console.log(sessionDate);
+  console.log(currentYear);
+  
+  const count = uniqueValues.size;
 
+  if(count == 4) {
+    const entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: 4,
+      session: sessionDate,
+      year: currentYear,
+      cycle_year: 1
+    });
+    res.status(200).json(
+      new apiResponse(200,4, "Grade is A")
+    );
+  }
+  else if(count == 3) {
+    const entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: 3,
+      session: sessionDate,
+      year: currentYear,
+      cycle_year: 1
+    });
+    res.status(200).json(
+      new apiResponse(200,3, "Grade is B")
+    );
+  }
+  else if(count == 2) {
+    const entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: 2,
+      session: sessionDate,
+      year: currentYear,
+      cycle_year: 1
+    });
+    res.status(200).json(
+      new apiResponse(200,2, "Grade is C")
+    );
+  }
+  else if(count == 1) {
+    const entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: 1,
+      session: sessionDate,
+      year: currentYear,
+      cycle_year: 1
+    });
+    res.status(200).json(
+      new apiResponse(200,1, "Grade is D")
+    );
+  }
+  else {
+    const entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: 0,
+      session: sessionDate,
+      year: currentYear,
+      cycle_year: 1
+    });
+    res.status(200).json(
+      new apiResponse(200,0, "Grade is E")
+    );
+  }
+
+});
 
  // 1.2.1
-
 
  const getAllCriteria121 = asyncHandler(async (req, res) => {
   const criteria = await Criteria121.findAll();
@@ -130,8 +279,8 @@ export { getAllCriteria113,
 });
 
 /**
-* @route POST /api/response/1.1.3
-* @description Create a new response for criteria 1.1.3
+* @route POST /api/response/1.2.1
+* @description Create a new response for criteria 1.2.1
 * @access Private/Admin
 */
 
@@ -198,39 +347,6 @@ export { getAllCriteria113,
           );
 
 });
-/**
- * @route GET /api/response/1.2.1/:criteriaCode
- * @description Get all responses for a specific criteria code
- * @access Public
- */
-const getResponsesByCriteriaCode121 = async (req, res, next) => {
-    try {
-        const { criteriaCode } = req.params;
-        
-        const responses = await db.response_1_2_1.findAll({
-            where: { criteria_code: criteriaCode },
-            include: [{
-                model: db.criteria_master,
-                as: 'criteria',
-                attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
-            }],
-            order: [['submitted_at', 'DESC']]
-        });
-
-        return res.status(200).json(
-            new apiResponse(200, responses, 'Responses retrieved successfully')
-        );
-
-    } catch (error) {
-        next(error);
-    }
-};
-export { getAllCriteria121,
-    createResponse121,
-    getResponsesByCriteriaCode121
- };
-
-
 
  //1.2.2 
 
@@ -335,10 +451,9 @@ const getResponsesByCriteriaCode122123 = async (req, res, next) => {
         next(error);
     }
 };
-export { getAllCriteria122123,
-    createResponse122123,
-    getResponsesByCriteriaCode122123
- };
+
+
+
 
 
 
@@ -445,10 +560,7 @@ const getResponsesByCriteriaCode132 = async (req, res, next) => {
         next(error);
     }
 };
-export { getAllCriteria132,
-    createResponse132,
-    getResponsesByCriteriaCode132
- };
+
 
 
  //1.3.3
@@ -545,9 +657,13 @@ const getResponsesByCriteriaCode133 = async (req, res, next) => {
         next(error);
     }
 };
-export { getAllCriteria133,
-    createResponse133,
-    getResponsesByCriteriaCode133
+export { createResponse133,
+  createResponse132,
+  createResponse122123,
+  createResponse121,
+  createResponse113,
+  getResponsesByCriteriaCode,
+  score113
  };
 
 

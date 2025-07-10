@@ -1,13 +1,6 @@
-import Sequelize from "sequelize";
-import DataTypes from "sequelize";
-export default function(sequelize, DataTypes) {
-  return sequelize.define('response_1_1_3', {
-    sl_no: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true
-    },
+const Sequelize = require('sequelize');
+module.exports = function(sequelize, DataTypes) {
+  return sequelize.define('response_5_1_1_5_1_2_data', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -15,6 +8,12 @@ export default function(sequelize, DataTypes) {
         model: 'criteria_master',
         key: 'id'
       }
+    },
+    sl_no: {
+      autoIncrement: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      primaryKey: true
     },
     criteria_code: {
       type: DataTypes.STRING(20),
@@ -25,24 +24,34 @@ export default function(sequelize, DataTypes) {
       }
     },
     session: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: false
     },
     year: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    teacher_name: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    },
-    body_name: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    },
-    option_selected: {
-      type: DataTypes.ENUM('1','2','3','4','5'),
+      type: DataTypes.DATE,
       allowNull: false
+    },
+    scheme_name: {
+      type: DataTypes.TEXT,
+      allowNull: false
+    },
+    gov_students_count: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
+    },
+    gov_amount: {
+      type: DataTypes.DECIMAL(15,2),
+      allowNull: true
+    },
+    inst_students_count: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
+    },
+    inst_amount: {
+      type: DataTypes.DECIMAL(15,2),
+      allowNull: true
     },
     submitted_at: {
       type: DataTypes.DATE,
@@ -51,7 +60,7 @@ export default function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_1_1_3',
+    tableName: 'response_5_1_1_5_1_2_data',
     timestamps: false,
     indexes: [
       {
@@ -63,7 +72,7 @@ export default function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "idx_r113_criteria",
+        name: "fk_r511_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },
