@@ -265,102 +265,153 @@ const score113 = asyncHandler(async (req, res) => {
 
 });
 
- // 1.2.1
-
- const getAllCriteria121 = asyncHandler(async (req, res) => {
-  const criteria = await Criteria121.findAll();
-  if (!criteria) {
-      throw new apiError(404, "Criteria not found");
-  }
-  
-  res.status(200).json(
-      new apiResponse(200, criteria, "Criteria found")
-  );
-});
-
 /**
 * @route POST /api/response/1.2.1
 * @description Create a new response for criteria 1.2.1
 * @access Private/Admin
 */
 
- const createResponse121 = asyncHandler(async (req, res) => {
-    /*
-    1. get the user input from the req body
-    2. query the criteria_master table to get the id and criteria_code 
-    3. validate the user input
-    4. create a new response
-    5. return the response
-    */
-        // Fetch 1.2.1 criterion from criteria_master
-        console.log(CriteriaMaster)
-        const criteria = await CriteriaMaster.findOne({
-            where: {
-              sub_sub_criterion_id: '010201',
-              sub_criterion_id: '0102',
-              criterion_id: '01'
-            }
-          });
-      
-          if (!criteria) {
-            throw new apiError(404, "Criteria not found");
+const createResponse121 = asyncHandler(async (req, res) => {
+  /*
+  1. get the user input from the req body
+  2. query the criteria_master table to get the id and criteria_code 
+  3. validate the user input
+  4. create a new response
+  5. return the response
+  */
+      // Fetch 1.2.1 criterion from criteria_master
+      console.log(CriteriaMaster)
+      const criteria = await CriteriaMaster.findOne({
+          where: {
+            sub_sub_criterion_id: '010201',
+            sub_criterion_id: '0102',
+            criterion_id: '01'
           }
-      
-          // Validate required fields
-          const { programme_code, programme_name, year_of_introduction, status_of_implementation_of_CBCS, year_of_implementation_of_CBCS, year_of_revision, prc_content_added} = req.body;
-          if (!programme_code || !programme_name || !year_of_introduction || !status_of_implementation_of_CBCS || !year_of_implementation_of_CBCS || !year_of_revision || !prc_content_added) {
-            throw new apiError(400, "Missing required fields");
-          }
+        });
+    
+        if (!criteria) {
+          throw new apiError(404, "Criteria not found");
+        }
+    
+        // Validate required fields
+        const { programme_code, programme_name, year_of_introduction, status_of_implementation_of_CBCS, year_of_implementation_of_CBCS, year_of_revision, prc_content_added} = req.body;
+        if (!programme_code || !programme_name || !year_of_introduction || !status_of_implementation_of_CBCS || !year_of_implementation_of_CBCS || !year_of_revision || !prc_content_added) {
+          throw new apiError(400, "Missing required fields");
+        }
 
-          if (year_of_introduction < 1990 || year_of_introduction > new Date().getFullYear()) {
-            throw new apiError(400, "Year of introduction must be between 1990 and current year");
-          }
+        if (year_of_introduction < 1990 || year_of_introduction > new Date().getFullYear()) {
+          throw new apiError(400, "Year of introduction must be between 1990 and current year");
+        }
 
-          if (year_of_implementation_of_CBCS < 1990 || year_of_implementation_of_CBCS > new Date().getFullYear()) {
-            throw new apiError(400, "Year of implementation of CBCS must be between 1990 and current year");
-          }
+        if (year_of_implementation_of_CBCS < 1990 || year_of_implementation_of_CBCS > new Date().getFullYear()) {
+          throw new apiError(400, "Year of implementation of CBCS must be between 1990 and current year");
+        }
 
-          if (year_of_revision < 1990 || year_of_revision > new Date().getFullYear()) {
-            throw new apiError(400, "Year of revision must be between 1990 and current year");
-          }
-
-          // Create proper Date objects for session
-          const sessionDate = new Date(year, 0, 1); // Jan 1st of the given year
-          console.log(criteria.criteria_code)
-          // Insert into response_1_2_1_data
-          const entry = await Criteria121.create({
-            id: criteria.id,
-            criteria_code: criteria.criteria_code,
-            session: sessionDate,  // Store as Date object
-            
-            programme_code,
-            programme_name,
-            year_of_introduction,
-            status_of_implementation_of_CBCS,
-            year_of_implementation_of_CBCS,
-            year_of_revision,
-            prc_content_added
-          });
-      
-          res.status(201).json(
-            new apiResponse(201, entry, "Response created successfully")
-          );
+        if (year_of_revision < 1990 || year_of_revision > new Date().getFullYear()) {
+          throw new apiError(400, "Year of revision must be between 1990 and current year");
+        }
+        const year  = new Date().getFullYear();
+        // Create proper Date objects for session
+        const sessionDate = new Date(year, 0, 1); // Jan 1st of the given year
+        console.log(criteria.criteria_code)
+        // Insert into response_1_2_1_data
+        const entry = await Criteria121.create({
+          id: criteria.id,
+          criteria_code: criteria.criteria_code,
+          session: sessionDate,  // Store as Date object
+          programme_code,
+          programme_name,
+          year_of_introduction,
+          status_of_implementation_of_CBCS,
+          year_of_implementation_of_CBCS,
+          year_of_revision,
+          prc_content_added
+        });
+    
+        res.status(201).json(
+          new apiResponse(201, entry, "Response created successfully")
+        );
 
 });
 
- //1.2.2 
-
- const getAllCriteria122123 = asyncHandler(async (req, res) => {
-  const criteria = await Criteria122and123.findAll();
-  if (!criteria) {
-      throw new apiError(404, "Criteria not found");
+const score121 = asyncHandler(async (req, res) => {
+/*
+1. get the user input from the req body
+2. query the criteria_master table to get the id and criteria_code 
+3. validate the user input
+4. create a new response
+5. return the response
+*/
+const criteria_code = convertToPaddedFormat("1.2.1");
+console.log(criteria_code)
+console.log(CriteriaMaster)
+const criteria = await CriteriaMaster.findOne({
+  where: { 
+    sub_sub_criterion_id: criteria_code
   }
-  
-  res.status(200).json(
-      new apiResponse(200, criteria, "Criteria found")
-  );
 });
 
+const responses = await Criteria121.findAll({
+attributes: ['status_of_implementation_of_CBCS'],
+where: {
+  criteria_code: criteria.criteria_code
+}
+});
+
+const cbcsStatusArray = responses.map(response => response.status_of_implementation_of_CBCS);
+console.log('CBCS Status Array:', cbcsStatusArray);
+function countCBCSYes(dataArray) {
+let counter = 0;
+dataArray.forEach(item => {
+  if (item == "YES" || item == "Yes") {
+    counter++;
+  }
+});
+console.log('Number of YES responses:', counter);
+return counter;
+}
+const count = countCBCSYes(cbcsStatusArray);
+console.log('Number of YES responses:', count);
+const totalResponses = cbcsStatusArray.length;
+console.log('Total CBCS responses:', totalResponses);
+const percentage = (count / totalResponses) * 100;
+console.log('Percentage of YES responses:', percentage);
+
+let score;
+if (percentage > 25) {
+score = 4;
+} else if (percentage >= 15 && percentage <= 25) {
+score = 3;
+} else if (percentage >= 5 && percentage < 15) {
+score = 2;
+} else if (percentage >0 && percentage < 5) {
+score = 1;
+} else {
+score = 0; 
+}
+console.log('Score:', score);
+const currentYear = new Date().getFullYear();
+const sessionDate = new Date(currentYear, 0, 1); 
+const entry = await Score.create(
+  {
+    criteria_code: criteria.criteria_code,
+    criteria_id: criteria.criterion_id,
+    sub_criteria_id: criteria.sub_criterion_id,
+    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+    score_criteria: 0,
+    score_sub_criteria: 0,
+    score_sub_sub_criteria: score,
+    session: sessionDate,
+    year: currentYear,
+    cycle_year: 1
+  }
+);
+
+res.status(200).json(
+new apiResponse(200, entry, "Response created successfully")
+);
+
+});
 /**
 * @route POST /api/response/1.2.2and1.2.3
 * @description Create a new response for criteria 1.2.2 and 1.2.3
@@ -663,7 +714,8 @@ export { createResponse133,
   createResponse121,
   createResponse113,
   getResponsesByCriteriaCode,
-  score113
+  score113,
+  score121,
  };
 
 
