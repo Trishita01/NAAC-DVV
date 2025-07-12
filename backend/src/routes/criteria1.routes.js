@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { createResponse113,createResponse121, createResponse122123,createResponse132, createResponse133, getResponsesByCriteriaCode,score113 } from '../controllers/criteria1.controller.js';
+import { createResponse113,createResponse121, createResponse122123,createResponse132, createResponse133, getResponsesByCriteriaCode,score113,score121 } from '../controllers/criteria1.controller.js';
 
 router.route('/createResponse113')
     .post(createResponse113);
@@ -25,4 +25,8 @@ router.route('/getResponsesByCriteriaCode/:criteriaCode')
 
 router.route('/score113')
     .get(score113);
+
+router.route('/score121')
+    .get(score121);
 export default router;
+
