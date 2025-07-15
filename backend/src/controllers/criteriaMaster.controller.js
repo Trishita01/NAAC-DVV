@@ -5,7 +5,9 @@ const CriteriaMaster = db.criteria_master;
 // Get all criteria
 const getAllCriteria = async (req, res) => {
   try {
+    console.log(CriteriaMaster)
     const criteria = await CriteriaMaster.findAll();
+    console.log(criteria)
     res.json(criteria);
   } catch (error) {
     res.status(500).json({ error: error.message });

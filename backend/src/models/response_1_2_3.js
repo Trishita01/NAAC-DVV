@@ -1,6 +1,6 @@
 import Sequelize from "sequelize";
 export default function(sequelize, DataTypes) {
-  return sequelize.define('response_1_2_2and3', {
+  return sequelize.define('response_1_2_3', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +16,8 @@ export default function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -57,7 +57,7 @@ export default function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_1_2_2and3',
+    tableName: 'response_1_2_3',
     timestamps: false,
     indexes: [
       {
@@ -69,7 +69,7 @@ export default function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "idx_r1223_criteria",
+        name: "idx_r123_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

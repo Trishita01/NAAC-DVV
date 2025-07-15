@@ -3,10 +3,13 @@ var _criteria_master = require("./criteria_master");
 var _file_uploads = require("./file_uploads");
 var _hdr = require("./hdr");
 var _response_1_1_3 = require("./response_1_1_3");
-var _response_1_2_2and3 = require("./response_1_2_2and3");
+var _response_1_2_1 = require("./response_1_2_1");
+var _response_1_2_2 = require("./response_1_2_2");
+var _response_1_2_3 = require("./response_1_2_3");
 var _response_1_3_2 = require("./response_1_3_2");
 var _response_1_3_3 = require("./response_1_3_3");
 var _response_1_4_1 = require("./response_1_4_1");
+var _response_1_4_2 = require("./response_1_4_2");
 var _response_2_1_1 = require("./response_2_1_1");
 var _response_2_1_2 = require("./response_2_1_2");
 var _response_2_4_1and_2_4_3and2_2_2and2_3_3 = require("./response_2_4_1and_2_4_3and2_2_2and2_3_3");
@@ -56,10 +59,13 @@ function initModels(sequelize) {
   var file_uploads = _file_uploads(sequelize, DataTypes);
   var hdr = _hdr(sequelize, DataTypes);
   var response_1_1_3 = _response_1_1_3(sequelize, DataTypes);
-  var response_1_2_2and3 = _response_1_2_2and3(sequelize, DataTypes);
+  var response_1_2_1 = _response_1_2_1(sequelize, DataTypes);
+  var response_1_2_2 = _response_1_2_2(sequelize, DataTypes);
+  var response_1_2_3 = _response_1_2_3(sequelize, DataTypes);
   var response_1_3_2 = _response_1_3_2(sequelize, DataTypes);
   var response_1_3_3 = _response_1_3_3(sequelize, DataTypes);
   var response_1_4_1 = _response_1_4_1(sequelize, DataTypes);
+  var response_1_4_2 = _response_1_4_2(sequelize, DataTypes);
   var response_2_1_1 = _response_2_1_1(sequelize, DataTypes);
   var response_2_1_2 = _response_2_1_2(sequelize, DataTypes);
   var response_2_4_1and_2_4_3and2_2_2and2_3_3 = _response_2_4_1and_2_4_3and2_2_2and2_3_3(sequelize, DataTypes);
@@ -118,10 +124,18 @@ function initModels(sequelize) {
   criteria_master.hasMany(response_1_1_3, { as: "response_1_1_3s", foreignKey: "criteria_code"});
   response_1_1_3.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
   criteria_master.hasMany(response_1_1_3, { as: "id_response_1_1_3s", foreignKey: "id"});
-  response_1_2_2and3.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
-  criteria_master.hasMany(response_1_2_2and3, { as: "response_1_2_2and3s", foreignKey: "criteria_code"});
-  response_1_2_2and3.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
-  criteria_master.hasMany(response_1_2_2and3, { as: "id_response_1_2_2and3s", foreignKey: "id"});
+  response_1_2_1.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
+  criteria_master.hasMany(response_1_2_1, { as: "response_1_2_1s", foreignKey: "criteria_code"});
+  response_1_2_1.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
+  criteria_master.hasMany(response_1_2_1, { as: "id_response_1_2_1s", foreignKey: "id"});
+  response_1_2_2.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
+  criteria_master.hasMany(response_1_2_2, { as: "response_1_2_2s", foreignKey: "criteria_code"});
+  response_1_2_2.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
+  criteria_master.hasMany(response_1_2_2, { as: "id_response_1_2_2s", foreignKey: "id"});
+  response_1_2_3.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
+  criteria_master.hasMany(response_1_2_3, { as: "response_1_2_3s", foreignKey: "criteria_code"});
+  response_1_2_3.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
+  criteria_master.hasMany(response_1_2_3, { as: "id_response_1_2_3s", foreignKey: "id"});
   response_1_3_2.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(response_1_3_2, { as: "response_1_3_2s", foreignKey: "criteria_code"});
   response_1_3_2.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
@@ -134,6 +148,10 @@ function initModels(sequelize) {
   criteria_master.hasMany(response_1_4_1, { as: "response_1_4_1s", foreignKey: "criteria_code"});
   response_1_4_1.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
   criteria_master.hasMany(response_1_4_1, { as: "id_response_1_4_1s", foreignKey: "id"});
+  response_1_4_2.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
+  criteria_master.hasMany(response_1_4_2, { as: "response_1_4_2s", foreignKey: "criteria_code"});
+  response_1_4_2.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
+  criteria_master.hasMany(response_1_4_2, { as: "id_response_1_4_2s", foreignKey: "id"});
   response_2_1_1.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(response_2_1_1, { as: "response_2_1_1s", foreignKey: "criteria_code"});
   response_2_1_1.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
@@ -306,10 +324,13 @@ function initModels(sequelize) {
     file_uploads,
     hdr,
     response_1_1_3,
-    response_1_2_2and3,
+    response_1_2_1,
+    response_1_2_2,
+    response_1_2_3,
     response_1_3_2,
     response_1_3_3,
     response_1_4_1,
+    response_1_4_2,
     response_2_1_1,
     response_2_1_2,
     response_2_4_1and_2_4_3and2_2_2and2_3_3,

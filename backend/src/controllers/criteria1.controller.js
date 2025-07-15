@@ -5,31 +5,18 @@ import apiError from "../utils/apiError.js";
 
 const Criteria113 = db.response_1_1_3;
 const Criteria121 = db.response_1_2_1;
-const Criteria122and123 = db.response_1_2_2and3;
 const Criteria132 = db.response_1_3_2;
 const Criteria133 = db.response_1_3_3;
 const CriteriaMaster = db.criteria_master;
 const Score = db.scores;
 
-    // Convert criteria code to padded format (e.g., '1.1.3' -> '010103')
-    const convertToPaddedFormat = (code) => {
-      // First remove any dots, then split into individual characters
-      const parts = code.replace(/\./g, '').split('');
-      // Pad each part to 2 digits and join
-      return parts.map(part => part.padStart(2, '0')).join('');
-  };
-
-const getAllCriteria113 = asyncHandler(async (req, res) => {
-    const criteria = await Criteria113.findAll();
-    if (!criteria) {
-        throw new apiError(404, "Criteria not found");
-    }
-    
-    res.status(200).json(
-        new apiResponse(200, criteria, "Criteria found")
-    );
-});
-
+// Convert criteria code to padded format (e.g., '1.1.3' -> '010103')
+const convertToPaddedFormat = (code) => {
+    // First remove any dots, then split into individual characters
+    const parts = code.replace(/\./g, '').split('');
+    // Pad each part to 2 digits and join
+    return parts.map(part => part.padStart(2, '0')).join('');
+};
 
 const getResponsesByCriteriaCode = asyncHandler(async (req, res) => {
     const { criteriaCode } = req.params;
@@ -71,11 +58,7 @@ const getResponsesByCriteriaCode = asyncHandler(async (req, res) => {
     );
 });
 
-/**
- * @route POST /api/response/1.1.3
- * @description Create a new response for criteria 1.1.3
- * @access Private/Admin
- */
+
 const createResponse113 = asyncHandler(async (req, res) => {
     /*
     1. get the user input from the req body
@@ -265,11 +248,6 @@ const score113 = asyncHandler(async (req, res) => {
 
 });
 
-/**
-* @route POST /api/response/1.2.1
-* @description Create a new response for criteria 1.2.1
-* @access Private/Admin
-*/
 
 const createResponse121 = asyncHandler(async (req, res) => {
   /*
@@ -334,92 +312,8 @@ const createResponse121 = asyncHandler(async (req, res) => {
 
 });
 
-const score121 = asyncHandler(async (req, res) => {
-/*
-1. get the user input from the req body
-2. query the criteria_master table to get the id and criteria_code 
-3. validate the user input
-4. create a new response
-5. return the response
-*/
-const criteria_code = convertToPaddedFormat("1.2.1");
-console.log(criteria_code)
-console.log(CriteriaMaster)
-const criteria = await CriteriaMaster.findOne({
-  where: { 
-    sub_sub_criterion_id: criteria_code
-  }
-});
 
-const responses = await Criteria121.findAll({
-attributes: ['status_of_implementation_of_CBCS'],
-where: {
-  criteria_code: criteria.criteria_code
-}
-});
-
-const cbcsStatusArray = responses.map(response => response.status_of_implementation_of_CBCS);
-console.log('CBCS Status Array:', cbcsStatusArray);
-function countCBCSYes(dataArray) {
-let counter = 0;
-dataArray.forEach(item => {
-  if (item == "YES" || item == "Yes") {
-    counter++;
-  }
-});
-console.log('Number of YES responses:', counter);
-return counter;
-}
-const count = countCBCSYes(cbcsStatusArray);
-console.log('Number of YES responses:', count);
-const totalResponses = cbcsStatusArray.length;
-console.log('Total CBCS responses:', totalResponses);
-const percentage = (count / totalResponses) * 100;
-console.log('Percentage of YES responses:', percentage);
-
-let score;
-if (percentage > 25) {
-score = 4;
-} else if (percentage >= 15 && percentage <= 25) {
-score = 3;
-} else if (percentage >= 5 && percentage < 15) {
-score = 2;
-} else if (percentage >0 && percentage < 5) {
-score = 1;
-} else {
-score = 0; 
-}
-console.log('Score:', score);
-const currentYear = new Date().getFullYear();
-const sessionDate = new Date(currentYear, 0, 1); 
-const entry = await Score.create(
-  {
-    criteria_code: criteria.criteria_code,
-    criteria_id: criteria.criterion_id,
-    sub_criteria_id: criteria.sub_criterion_id,
-    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
-    score_criteria: 0,
-    score_sub_criteria: 0,
-    score_sub_sub_criteria: score,
-    session: sessionDate,
-    year: currentYear,
-    cycle_year: 1
-  }
-);
-
-res.status(200).json(
-new apiResponse(200, entry, "Response created successfully")
-);
-
-});
-/**
-* @route POST /api/response/1.2.2and1.2.3
-* @description Create a new response for criteria 1.2.2 and 1.2.3
-* @access Private/Admin
-*/
-
-
- const createResponse122123 = asyncHandler(async (req, res) => {
+const createResponse122123 = asyncHandler(async (req, res) => {
     /*
     1. get the user input from the req body
     2. query the criteria_master table to get the id and criteria_code 
@@ -475,62 +369,9 @@ new apiResponse(200, entry, "Response created successfully")
           );
 
 });
-/**
- * @route GET /api/response/1.2.2and1.2.3/:criteriaCode
- * @description Get all responses for a specific criteria code
- * @access Public
- */
-const getResponsesByCriteriaCode122123 = async (req, res, next) => {
-    try {
-        const { criteriaCode } = req.params;
-        
-        const responses = await db.response_1_2_2and3.findAll({
-            where: { criteria_code: criteriaCode },
-            include: [{
-                model: db.criteria_master,
-                as: 'criteria',
-                attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
-            }],
-            order: [['submitted_at', 'DESC']]
-        });
-
-        return res.status(200).json(
-            new apiResponse(200, responses, 'Responses retrieved successfully')
-        );
-
-    } catch (error) {
-        next(error);
-    }
-};
 
 
-
-
-
-
-
- //1.3.2
-
-
- const getAllCriteria132 = asyncHandler(async (req, res) => {
-  const criteria = await Criteria113.findAll();
-  if (!criteria) {
-      throw new apiError(404, "Criteria not found");
-  }
-  
-  res.status(200).json(
-      new apiResponse(200, criteria, "Criteria found")
-  );
-});
-
-/**
-* @route POST /api/response/1.3.2
-* @description Create a new response for criteria 1.3.2
-* @access Private/Admin
-*/
-
-
- const createResponse132 = asyncHandler(async (req, res) => {
+const createResponse132 = asyncHandler(async (req, res) => {
     /*
     1. get the user input from the req body
     2. query the criteria_master table to get the id and criteria_code 
@@ -584,57 +425,9 @@ const getResponsesByCriteriaCode122123 = async (req, res, next) => {
           );
 
 });
-/**
- * @route GET /api/response/1.3.2/:criteriaCode
- * @description Get all responses for a specific criteria code
- * @access Public
- */
-const getResponsesByCriteriaCode132 = async (req, res, next) => {
-    try {
-        const { criteriaCode } = req.params;
-        
-        const responses = await db.response_1_3_2.findAll({
-            where: { criteria_code: criteriaCode },
-            include: [{
-                model: db.criteria_master,
-                as: 'criteria',
-                attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
-            }],
-            order: [['submitted_at', 'DESC']]
-        });
-
-        return res.status(200).json(
-            new apiResponse(200, responses, 'Responses retrieved successfully')
-        );
-
-    } catch (error) {
-        next(error);
-    }
-};
 
 
-
- //1.3.3
-
-
- const getAllCriteria133 = asyncHandler(async (req, res) => {
-  const criteria = await Criteria133.findAll();
-  if (!criteria) {
-      throw new apiError(404, "Criteria not found");
-  }
-  
-  res.status(200).json(
-      new apiResponse(200, criteria, "Criteria found")
-  );
-});
-
-/**
-* @route POST /api/response/1.3.3
-* @description Create a new response for criteria 1.3.3
-* @access Private/Admin
-*/
-
- const createResponse133 = asyncHandler(async (req, res) => {
+const createResponse133 = asyncHandler(async (req, res) => {
     /*
     1. get the user input from the req body
     2. query the criteria_master table to get the id and criteria_code 
@@ -681,41 +474,139 @@ const getResponsesByCriteriaCode132 = async (req, res, next) => {
           );
 
 });
-/**
- * @route GET /api/response/1.3.3/:criteriaCode
- * @description Get all responses for a specific criteria code
- * @access Public
- */
-const getResponsesByCriteriaCode133 = async (req, res, next) => {
-    try {
-        const { criteriaCode } = req.params;
-        
-        const responses = await db.response_1_3_3.findAll({
-            where: { criteria_code: criteriaCode },
-            include: [{
-                model: db.criteria_master,
-                as: 'criteria',
-                attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
-            }],
-            order: [['submitted_at', 'DESC']]
-        });
 
-        return res.status(200).json(
-            new apiResponse(200, responses, 'Responses retrieved successfully')
-        );
-
-    } catch (error) {
-        next(error);
+const score121 = asyncHandler(async (req, res) => {
+  /*
+  1. get the user input from the req body
+  2. query the criteria_master table to get the id and criteria_code 
+  3. validate the user input
+  4. create a new response
+  5. return the response
+  */
+  const criteria_code = convertToPaddedFormat("1.2.1");
+  console.log(criteria_code)
+  console.log(CriteriaMaster)
+  const criteria = await CriteriaMaster.findOne({
+    where: { 
+      sub_sub_criterion_id: criteria_code
     }
-};
+  });
+  
+  const responses = await Criteria121.findAll({
+  attributes: ['status_of_implementation_of_CBCS'],
+  where: {
+    criteria_code: criteria.criteria_code
+  }
+  });
+  
+  const cbcsStatusArray = responses.map(response => response.status_of_implementation_of_CBCS);
+  console.log('CBCS Status Array:', cbcsStatusArray);
+  function countCBCSYes(dataArray) {
+  let counter = 0;
+  dataArray.forEach(item => {
+    if (item == "YES" || item == "Yes") {
+      counter++;
+    }
+  });
+  console.log('Number of YES responses:', counter);
+  return counter;
+  }
+  const count = countCBCSYes(cbcsStatusArray);
+  console.log('Number of YES responses:', count);
+  const totalResponses = cbcsStatusArray.length;
+  console.log('Total CBCS responses:', totalResponses);
+  const percentage = (count / totalResponses) * 100;
+  console.log('Percentage of YES responses:', percentage);
+  
+  let score;
+  if (percentage > 25) {
+  score = 4;
+  } else if (percentage >= 15 && percentage <= 25) {
+  score = 3;
+  } else if (percentage >= 5 && percentage < 15) {
+  score = 2;
+  } else if (percentage >0 && percentage < 5) {
+  score = 1;
+  } else {
+  score = 0; 
+  }
+  console.log('Score:', score);
+  const currentYear = new Date().getFullYear();
+  const sessionDate = new Date(currentYear, 0, 1); 
+  const entry = await Score.create(
+    {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: score,
+      session: sessionDate,
+      year: currentYear,
+      cycle_year: 1
+    }
+  );
+  
+  res.status(200).json(
+  new apiResponse(200, entry, "Response created successfully")
+  );
+  
+  });
+  
+  
+const score122 = asyncHandler(async (req, res) => {
+    /*
+    1. get the user input from the req body
+    2. query the criteria_master table to get the id and criteria_code 
+    3. validate the user input
+    4. create a new response
+    5. return the response
+    */
+    const criteria_code = convertToPaddedFormat("1.2.2&1.2.3");
+    console.log(criteria_code)  
+    console.log(CriteriaMaster)
+    const criteria = await CriteriaMaster.findOne({
+      where: { 
+        sub_sub_criterion_id: criteria_code
+      }
+    });
+    
+    const responses = await Criteria122123.findAll({
+    attributes: ['no_of_times_offered'],
+    where: {
+      criteria_code: criteria.criteria_code
+    }
+    });
+    // Calculate the score: sum of no_of_times_offered for the last 5 years
+  const currentYear = new Date().getFullYear();
+  const total = responses
+      .filter(r => r.year_of_offering >= currentYear - 4)
+      .reduce((sum, r) => sum + (r.no_of_times_offered || 0), 0);
+  
+  // Grading logic (now called score)
+  let score = 0;
+  if (total >= 25) score = 4;
+  else if (total >= 15) score = 3;
+  else if (total >= 5) score = 2;
+  else if (total >= 1) score = 1;
+  else score = 0;
+  
+  return res.status(200).json(
+      new apiResponse(200, { responses, total, score }, 'Responses, total, and score retrieved successfully')
+      );
+  
+});
+
+
 export { createResponse133,
   createResponse132,
   createResponse122123,
   createResponse121,
   createResponse113,
   getResponsesByCriteriaCode,
-  score113,
-  score121,
+  score113
+
  };
 
 

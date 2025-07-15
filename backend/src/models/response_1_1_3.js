@@ -1,5 +1,4 @@
 import Sequelize from "sequelize";
-import DataTypes from "sequelize";
 export default function(sequelize, DataTypes) {
   return sequelize.define('response_1_1_3', {
     sl_no: {

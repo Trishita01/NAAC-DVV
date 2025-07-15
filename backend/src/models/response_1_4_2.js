@@ -1,6 +1,6 @@
-import Sequelize from "sequelize";
-export default function(sequelize, DataTypes) {
-  return sequelize.define('response_1_3_3', {
+const Sequelize = require('sequelize');
+module.exports = function(sequelize, DataTypes) {
+  return sequelize.define('response_1_4_2', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -23,25 +23,13 @@ export default function(sequelize, DataTypes) {
         key: 'criteria_code'
       }
     },
-    session: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    program_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false
-    },
-    program_code: {
-      type: DataTypes.STRING(50),
-      allowNull: true
-    },
-    student_name: {
-      type: DataTypes.STRING(50),
+    option_selected: {
+      type: DataTypes.ENUM('0','1','2','3','4'),
       allowNull: false
     }
   }, {
     sequelize,
-    tableName: 'response_1_3_3',
+    tableName: 'response_1_4_2',
     timestamps: false,
     indexes: [
       {
@@ -53,7 +41,7 @@ export default function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "idx_r133_criteria",
+        name: "idx_r142_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

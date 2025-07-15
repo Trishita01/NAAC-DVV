@@ -10,10 +10,10 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const config = {
   development: {
-    username: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'naac_dvv',
-    host: process.env.DB_HOST || '127.0.0.1',
+    username: process.env.RAILWAYDB_USER || 'root',
+    password: process.env.RAILWAYDB_PASSWORD || '',
+    database: process.env.RAILWAYDB_NAME || 'naac_dvv',
+    host: process.env.RAILWAYDB_HOST || '127.0.0.1',
     dialect: 'mysql',
   },
   test: {
