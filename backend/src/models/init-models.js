@@ -2,6 +2,7 @@ var DataTypes = require("sequelize").DataTypes;
 var _criteria_master = require("./criteria_master");
 var _file_uploads = require("./file_uploads");
 var _hdr = require("./hdr");
+var _iqac_supervision = require("./iqac_supervision");
 var _response_1_1_3 = require("./response_1_1_3");
 var _response_1_2_1 = require("./response_1_2_1");
 var _response_1_2_2 = require("./response_1_2_2");
@@ -49,15 +50,14 @@ var _response_7_1_4_data = require("./response_7_1_4_data");
 var _response_7_1_5_data = require("./response_7_1_5_data");
 var _response_7_1_6_data = require("./response_7_1_6_data");
 var _response_7_1_7_data = require("./response_7_1_7_data");
-var _roles = require("./roles");
 var _scores = require("./scores");
-var _user_roles = require("./user_roles");
 var _users = require("./users");
 
 function initModels(sequelize) {
   var criteria_master = _criteria_master(sequelize, DataTypes);
   var file_uploads = _file_uploads(sequelize, DataTypes);
   var hdr = _hdr(sequelize, DataTypes);
+  var iqac_supervision = _iqac_supervision(sequelize, DataTypes);
   var response_1_1_3 = _response_1_1_3(sequelize, DataTypes);
   var response_1_2_1 = _response_1_2_1(sequelize, DataTypes);
   var response_1_2_2 = _response_1_2_2(sequelize, DataTypes);
@@ -105,13 +105,9 @@ function initModels(sequelize) {
   var response_7_1_5_data = _response_7_1_5_data(sequelize, DataTypes);
   var response_7_1_6_data = _response_7_1_6_data(sequelize, DataTypes);
   var response_7_1_7_data = _response_7_1_7_data(sequelize, DataTypes);
-  var roles = _roles(sequelize, DataTypes);
   var scores = _scores(sequelize, DataTypes);
-  var user_roles = _user_roles(sequelize, DataTypes);
   var users = _users(sequelize, DataTypes);
 
-  roles.belongsToMany(users, { as: 'user_id_users', through: user_roles, foreignKey: "role_name", otherKey: "user_id" });
-  users.belongsToMany(roles, { as: 'role_name_roles', through: user_roles, foreignKey: "user_id", otherKey: "role_name" });
   file_uploads.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(file_uploads, { as: "file_uploads", foreignKey: "criteria_code"});
   file_uploads.belongsTo(criteria_master, { as: "criteria_master", foreignKey: "criteria_master_id"});
@@ -310,19 +306,12 @@ function initModels(sequelize) {
   criteria_master.hasMany(response_7_1_7_data, { as: "id_response_7_1_7_data", foreignKey: "id"});
   scores.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(scores, { as: "scores", foreignKey: "criteria_code"});
-  user_roles.belongsTo(roles, { as: "role_name_role", foreignKey: "role_name"});
-  roles.hasMany(user_roles, { as: "user_roles", foreignKey: "role_name"});
-  file_uploads.belongsTo(users, { as: "uploaded_by_user", foreignKey: "uploaded_by"});
-  users.hasMany(file_uploads, { as: "file_uploads", foreignKey: "uploaded_by"});
-  scores.belongsTo(users, { as: "computed_by_user", foreignKey: "computed_by"});
-  users.hasMany(scores, { as: "scores", foreignKey: "computed_by"});
-  user_roles.belongsTo(users, { as: "user", foreignKey: "user_id"});
-  users.hasMany(user_roles, { as: "user_roles", foreignKey: "user_id"});
 
   return {
     criteria_master,
     file_uploads,
     hdr,
+    iqac_supervision,
     response_1_1_3,
     response_1_2_1,
     response_1_2_2,
@@ -370,9 +359,7 @@ function initModels(sequelize) {
     response_7_1_5_data,
     response_7_1_6_data,
     response_7_1_7_data,
-    roles,
     scores,
-    user_roles,
     users,
   };
 }

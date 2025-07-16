@@ -1,5 +1,5 @@
-import Sequelize from "sequelize";
-export default function(sequelize, DataTypes) {
+const Sequelize = require('sequelize');
+module.exports = function(sequelize, DataTypes) {
   return sequelize.define('scores', {
     sl_no: {
       autoIncrement: true,
@@ -40,8 +40,8 @@ export default function(sequelize, DataTypes) {
       allowNull: false
     },
     session: {
-      type: DataTypes.DATEONLY,
-      allowNull: true
+      type: DataTypes.DATE,
+      allowNull: false
     },
     cycle_year: {
       type: DataTypes.TINYINT,
@@ -49,11 +49,7 @@ export default function(sequelize, DataTypes) {
     },
     computed_by: {
       type: DataTypes.CHAR(36),
-      allowNull: true,
-      references: {
-        model: 'users',
-        key: 'user_id'
-      }
+      allowNull: true
     },
     computed_at: {
       type: DataTypes.DATE,
@@ -78,13 +74,6 @@ export default function(sequelize, DataTypes) {
         using: "BTREE",
         fields: [
           { name: "criteria_code" },
-        ]
-      },
-      {
-        name: "fk_scores_user",
-        using: "BTREE",
-        fields: [
-          { name: "computed_by" },
         ]
       },
     ]

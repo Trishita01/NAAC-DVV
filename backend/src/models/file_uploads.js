@@ -9,7 +9,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     criteria_code: {
       type: DataTypes.STRING(20),
-      allowNull: true,
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -33,11 +33,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     uploaded_by: {
       type: DataTypes.CHAR(36),
-      allowNull: true,
-      references: {
-        model: 'users',
-        key: 'user_id'
-      }
+      allowNull: true
     },
     uploaded_at: {
       type: DataTypes.DATE,
@@ -63,13 +59,6 @@ module.exports = function(sequelize, DataTypes) {
         fields: [
           { name: "criteria_code" },
           { name: "criteria_master_id" },
-        ]
-      },
-      {
-        name: "fk_file_user",
-        using: "BTREE",
-        fields: [
-          { name: "uploaded_by" },
         ]
       },
     ]
