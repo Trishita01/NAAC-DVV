@@ -1,6 +1,12 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_4_4_1_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_7_1_10', {
+    sl_no: {
+      autoIncrement: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      primaryKey: true
+    },
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -9,15 +15,9 @@ module.exports = function(sequelize, DataTypes) {
         key: 'id'
       }
     },
-    sl_no: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true
-    },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,38 +27,46 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
+    options: {
+      type: DataTypes.ENUM('0','1','2','3','4'),
+      allowNull: false
+    },
     year: {
       type: DataTypes.DATE,
       allowNull: false
     },
-    budget_allocated_infra: {
-      type: DataTypes.DECIMAL(15,2),
+    code_published: {
+      type: DataTypes.BOOLEAN,
       allowNull: true
     },
-    expenditure_infra_lakhs: {
-      type: DataTypes.DECIMAL(15,2),
+    monitoring_committee: {
+      type: DataTypes.BOOLEAN,
       allowNull: true
     },
-    total_exp_infra_lakhs: {
-      type: DataTypes.DECIMAL(15,2),
+    ethics_programs: {
+      type: DataTypes.BOOLEAN,
       allowNull: true
     },
-    exp_maintainance_acad: {
-      type: DataTypes.DECIMAL(15,2),
+    awareness_programs: {
+      type: DataTypes.BOOLEAN,
       allowNull: true
     },
-    exp_maintainance_physical: {
-      type: DataTypes.DECIMAL(15,2),
+    report_links: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    additional_info: {
+      type: DataTypes.TEXT,
       allowNull: true
     },
     submitted_at: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
-    tableName: 'response_4_4_1_data',
+    tableName: 'response_7_1_10',
     timestamps: false,
     indexes: [
       {
@@ -70,7 +78,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "idx_r441_criteria",
+        name: "fk_r7110_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

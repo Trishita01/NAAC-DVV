@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_6_5_3_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_7_1_2', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,36 +27,15 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    initiative_type: {
+    facility_type: {
       type: DataTypes.ENUM('0','1','2','3','4'),
-      allowNull: false,
-      primaryKey: true
-    },
-    year: {
-      type: DataTypes.DATE,
       allowNull: false
     },
-    reg_meetings_of_the_IQAC_head: {
-      type: DataTypes.TEXT,
+    photo_link: {
+      type: DataTypes.STRING(500),
       allowNull: true
     },
-    conf_seminar_workshops_on_quality_edu: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    collab_quality_initiatives: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    participatipn_in_NIRF: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    from_to_date: {
-      type: DataTypes.DATEONLY,
-      allowNull: true
-    },
-    other_quality_audit: {
+    additional_info: {
       type: DataTypes.TEXT,
       allowNull: true
     },
@@ -67,7 +46,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_6_5_3_data',
+    tableName: 'response_7_1_2',
     timestamps: false,
     indexes: [
       {
@@ -76,11 +55,10 @@ module.exports = function(sequelize, DataTypes) {
         using: "BTREE",
         fields: [
           { name: "sl_no" },
-          { name: "initiative_type" },
         ]
       },
       {
-        name: "fk_r653_master",
+        name: "fk_r712_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

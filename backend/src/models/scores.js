@@ -40,8 +40,8 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     session: {
-      type: DataTypes.DATE,
-      allowNull: false
+      type: DataTypes.DATEONLY,
+      allowNull: true
     },
     cycle_year: {
       type: DataTypes.TINYINT,

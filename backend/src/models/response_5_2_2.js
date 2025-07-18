@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_5_2_3_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {   
+  return sequelize.define('response_5_2_2', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -31,56 +31,20 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    registeration_number: {
-      type: DataTypes.TEXT,
+    student_name: {
+      type: DataTypes.STRING(255),
       allowNull: false
     },
-    exam_net: {
-      type: DataTypes.TEXT,
+    program_graduated_from: {
+      type: DataTypes.STRING(255),
       allowNull: false
     },
-    exam_slet: {
-      type: DataTypes.TEXT,
+    institution_joined: {
+      type: DataTypes.STRING(255),
       allowNull: false
     },
-    exam_gate: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    exam_gmat: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    exam_cat: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    exam_gre: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    exam_jam: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    exam_ielts: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    exam_toefl: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    exam_civil_services: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    exam_state_services: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    exam_other: {
-      type: DataTypes.TEXT,
+    program_admitted_to: {
+      type: DataTypes.STRING(255),
       allowNull: false
     },
     submitted_at: {
@@ -90,7 +54,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_5_2_3_data',
+    tableName: 'response_5_2_2',
     timestamps: false,
     indexes: [
       {
@@ -102,7 +66,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r523_master",
+        name: "fk_r522_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

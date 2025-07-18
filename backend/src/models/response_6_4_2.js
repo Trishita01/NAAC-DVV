@@ -1,6 +1,12 @@
 import Sequelize from 'sequelize';
 export default function(sequelize, DataTypes) {
-  return sequelize.define('response_3_3_3', {
+  return sequelize.define('response_6_4_2', {
+    sl_no: {
+      autoIncrement: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      primaryKey: true
+    },
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -9,15 +15,9 @@ export default function(sequelize, DataTypes) {
         key: 'id'
       }
     },
-    sl_no: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true
-    },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,38 +27,26 @@ export default function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    activity_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false
-    },
-    collaborating_agency: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    },
-    scheme_name: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    },
-    activity_type: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    },
-    student_count: {
-      type: DataTypes.INTEGER,
-      allowNull: true
-    },
     year: {
       type: DataTypes.DATE,
+      allowNull: false
+    },
+    donor_name: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    grant_amount_lakhs: {
+      type: DataTypes.DECIMAL(12,2),
       allowNull: true
     },
     submitted_at: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
-    tableName: 'response_3_3_3',
+    tableName: 'response_6_4_2',
     timestamps: false,
     indexes: [
       {
@@ -70,7 +58,7 @@ export default function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "idx_r333_criteria",
+        name: "fk_r642_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

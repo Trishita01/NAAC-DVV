@@ -1,4 +1,4 @@
-import Sequelize from "sequelize";
+import Sequelize from 'sequelize';
 export default function(sequelize, DataTypes) {
   return sequelize.define('criteria_master', {
     id: {

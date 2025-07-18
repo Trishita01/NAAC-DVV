@@ -1,6 +1,12 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_5_2_1_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_6_5_3', {
+    sl_no: {
+      autoIncrement: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      primaryKey: true
+    },
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -9,15 +15,9 @@ module.exports = function(sequelize, DataTypes) {
         key: 'id'
       }
     },
-    sl_no: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true
-    },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,24 +27,37 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
+    initiative_type: {
+      type: DataTypes.ENUM('0','1','2','3','4'),
+      allowNull: false,
+      primaryKey: true
+    },
     year: {
       type: DataTypes.DATE,
       allowNull: false
     },
-    student_name_contact: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    program_graduated_from: {
+    reg_meetings_of_the_IQAC_head: {
       type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    conf_seminar_workshops_on_quality_edu: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    collab_quality_initiatives: {
+      type: DataTypes.DATE,
       allowNull: false
     },
-    employer_details: {
-      type: DataTypes.TEXT,
-      allowNull: false
+    participatipn_in_NIRF: {
+      type: DataTypes.STRING(500),
+      allowNull: true
     },
-    pay_package_inr: {
-      type: DataTypes.DECIMAL(15,2),
+    from_to_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    other_quality_audit: {
+      type: DataTypes.STRING(255),
       allowNull: true
     },
     submitted_at: {
@@ -54,7 +67,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_5_2_1_data',
+    tableName: 'response_6_5_3',
     timestamps: false,
     indexes: [
       {
@@ -63,10 +76,11 @@ module.exports = function(sequelize, DataTypes) {
         using: "BTREE",
         fields: [
           { name: "sl_no" },
+          { name: "initiative_type" },
         ]
       },
       {
-        name: "fk_r521_master",
+        name: "fk_r653_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

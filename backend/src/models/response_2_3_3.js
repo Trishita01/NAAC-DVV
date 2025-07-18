@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_6_4_2_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_2_3_3', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,26 +27,37 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    year: {
-      type: DataTypes.DATE,
+    name_of_the_full_time_teacher: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    designation: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    year_of_appointment: {
+      type: DataTypes.INTEGER,
       allowNull: false
     },
-    donor_name: {
-      type: DataTypes.TEXT,
+    nature_of_appointment: {
+      type: DataTypes.STRING(255),
       allowNull: true
     },
-    grant_amount_lakhs: {
-      type: DataTypes.DECIMAL(15,2),
+    name_of_department: {
+      type: DataTypes.STRING(100),
       allowNull: true
     },
-    submitted_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
+    total_number_of_years_of_experience_in_the_same_institution: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    is_the_teacher_still_serving_the_institution: {
+      type: DataTypes.STRING(255),
+      allowNull: true
     }
   }, {
     sequelize,
-    tableName: 'response_6_4_2_data',
+    tableName: 'response_2_3_3',
     timestamps: false,
     indexes: [
       {
@@ -58,7 +69,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r642_master",
+        name: "idx_r233_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

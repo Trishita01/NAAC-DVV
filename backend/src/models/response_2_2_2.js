@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_6_2_3_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_2_2_2', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,26 +27,37 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    implimentation: {
-      type: DataTypes.ENUM('0','1','2','3','4'),
-      allowNull: false
-    },
-    area_of_e_governance: {
-      type: DataTypes.TEXT,
+    name_of_the_full_time_teacher: {
+      type: DataTypes.STRING(255),
       allowNull: true
     },
-    year_of_implementation: {
-      type: DataTypes.DATE,
+    designation: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    year_of_appointment: {
+      type: DataTypes.INTEGER,
       allowNull: false
     },
-    submitted_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
+    nature_of_appointment: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    name_of_department: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    total_number_of_years_of_experience_in_the_same_institution: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    is_the_teacher_still_serving_the_institution: {
+      type: DataTypes.STRING(255),
+      allowNull: true
     }
   }, {
     sequelize,
-    tableName: 'response_6_2_3_data',
+    tableName: 'response_2_2_2',
     timestamps: false,
     indexes: [
       {
@@ -58,7 +69,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r623_master",
+        name: "idx_r222_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

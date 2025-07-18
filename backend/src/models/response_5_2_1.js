@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_5_1_1_5_1_2_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_5_2_1', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -31,26 +31,20 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    scheme_name: {
-      type: DataTypes.TEXT,
+    student_name_contact: {
+      type: DataTypes.STRING(500),
       allowNull: false
     },
-    gov_students_count: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0
+    program_graduated_from: {
+      type: DataTypes.STRING(255),
+      allowNull: false
     },
-    gov_amount: {
-      type: DataTypes.DECIMAL(15,2),
-      allowNull: true
+    employer_details: {
+      type: DataTypes.STRING(500),
+      allowNull: false
     },
-    inst_students_count: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0
-    },
-    inst_amount: {
-      type: DataTypes.DECIMAL(15,2),
+    pay_package_inr: {
+      type: DataTypes.DECIMAL(10,2),
       allowNull: true
     },
     submitted_at: {
@@ -60,7 +54,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_5_1_1_5_1_2_data',
+    tableName: 'response_5_2_1',
     timestamps: false,
     indexes: [
       {
@@ -72,7 +66,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r511_master",
+        name: "fk_r521_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

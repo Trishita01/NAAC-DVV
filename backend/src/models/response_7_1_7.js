@@ -1,6 +1,12 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_5_1_3_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_7_1_7', {
+    sl_no: {
+      autoIncrement: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      primaryKey: true
+    },
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -9,15 +15,9 @@ module.exports = function(sequelize, DataTypes) {
         key: 'id'
       }
     },
-    sl_no: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true
-    },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,22 +27,21 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    program_name: {
+    feature: {
+      type: DataTypes.ENUM('0','1','2','3','4'),
+      allowNull: false
+    },
+    photo_link: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
+    support_document: {
       type: DataTypes.TEXT,
-      allowNull: false
+      allowNull: true
     },
-    implementation_date: {
-      type: DataTypes.DATEONLY,
-      allowNull: false
-    },
-    students_enrolled: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0
-    },
-    agency_name: {
+    software_used: {
       type: DataTypes.TEXT,
-      allowNull: false
+      allowNull: true
     },
     submitted_at: {
       type: DataTypes.DATE,
@@ -51,7 +50,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_5_1_3_data',
+    tableName: 'response_7_1_7',
     timestamps: false,
     indexes: [
       {
@@ -63,7 +62,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r513_master",
+        name: "fk_r717_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

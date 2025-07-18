@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_7_1_10_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_2_4_3', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,46 +27,37 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    options: {
-      type: DataTypes.ENUM('0','1','2','3','4'),
+    name_of_the_full_time_teacher: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    designation: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    year_of_appointment: {
+      type: DataTypes.INTEGER,
       allowNull: false
     },
-    year: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    code_published: {
-      type: DataTypes.BOOLEAN,
+    nature_of_appointment: {
+      type: DataTypes.STRING(255),
       allowNull: true
     },
-    monitoring_committee: {
-      type: DataTypes.BOOLEAN,
+    name_of_department: {
+      type: DataTypes.STRING(100),
       allowNull: true
     },
-    ethics_programs: {
-      type: DataTypes.BOOLEAN,
+    total_number_of_years_of_experience_in_the_same_institution: {
+      type: DataTypes.INTEGER,
       allowNull: true
     },
-    awareness_programs: {
-      type: DataTypes.BOOLEAN,
+    is_the_teacher_still_serving_the_institution: {
+      type: DataTypes.STRING(255),
       allowNull: true
-    },
-    report_links: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    additional_info: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    submitted_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
-    tableName: 'response_7_1_10_data',
+    tableName: 'response_2_4_3',
     timestamps: false,
     indexes: [
       {
@@ -78,7 +69,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r7110_master",
+        name: "idx_r243_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

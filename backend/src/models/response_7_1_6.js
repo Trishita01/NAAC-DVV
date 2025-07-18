@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_6_3_2_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_7_1_6', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,24 +27,20 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    year: {
-      type: DataTypes.DATE,
+    audit_type: {
+      type: DataTypes.ENUM('0','1','2','3','4'),
       allowNull: false
     },
-    teacher_name: {
+    report_link: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
+    certification: {
       type: DataTypes.STRING(255),
-      allowNull: false
-    },
-    conference_name: {
-      type: DataTypes.TEXT,
       allowNull: true
     },
-    professional_body: {
+    additional_info: {
       type: DataTypes.TEXT,
-      allowNull: true
-    },
-    amt_of_spt_received: {
-      type: DataTypes.DECIMAL(15,2),
       allowNull: true
     },
     submitted_at: {
@@ -54,7 +50,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_6_3_2_data',
+    tableName: 'response_7_1_6',
     timestamps: false,
     indexes: [
       {
@@ -66,7 +62,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r632_master",
+        name: "fk_r716_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

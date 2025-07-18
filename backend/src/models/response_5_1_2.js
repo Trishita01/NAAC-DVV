@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_5_1_4_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_5_1_2', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -31,14 +31,29 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    activity_name: {
-      type: DataTypes.TEXT,
+    scheme_name: {
+      type: DataTypes.STRING(255),
       allowNull: false
     },
-    students_participated: {
+    gov_students_count: {
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: 0
+    },
+    gov_amount: {
+      type: DataTypes.DECIMAL(12,2),
+      allowNull: true,
+      defaultValue: 0.00
+    },
+    inst_students_count: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
+    },
+    inst_amount: {
+      type: DataTypes.DECIMAL(12,2),
+      allowNull: true,
+      defaultValue: 0.00
     },
     submitted_at: {
       type: DataTypes.DATE,
@@ -47,7 +62,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_5_1_4_data',
+    tableName: 'response_5_1_2',
     timestamps: false,
     indexes: [
       {
@@ -59,7 +74,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r514_master",
+        name: "fk_r512_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

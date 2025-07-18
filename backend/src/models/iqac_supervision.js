@@ -1,4 +1,4 @@
-import Sequelize from "sequelize";
+import Sequelize from 'sequelize';
 export default function(sequelize, DataTypes) {
   return sequelize.define('iqac_supervision', {
     id: {
@@ -50,17 +50,11 @@ export default function(sequelize, DataTypes) {
     phone_number: {
       type: DataTypes.STRING(15),
       allowNull: false
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
     tableName: 'iqac_supervision',
-    timestamps: false,
-    underscored: true,
+    timestamps: true,
     indexes: [
       {
         name: "PRIMARY",

@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_6_3_3_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_6_3_4', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,17 +27,17 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    from_to_date: {
-      type: DataTypes.DATEONLY,
+    teacher_name: {
+      type: DataTypes.STRING(255),
       allowNull: false,
       primaryKey: true
     },
-    title_of_prof_dev: {
-      type: DataTypes.TEXT,
+    program_title: {
+      type: DataTypes.STRING(255),
       allowNull: true
     },
-    title_of_add_training: {
-      type: DataTypes.TEXT,
+    from_to_date: {
+      type: DataTypes.DATEONLY,
       allowNull: true
     },
     submitted_at: {
@@ -47,7 +47,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_6_3_3_data',
+    tableName: 'response_6_3_4',
     timestamps: false,
     indexes: [
       {
@@ -56,11 +56,11 @@ module.exports = function(sequelize, DataTypes) {
         using: "BTREE",
         fields: [
           { name: "sl_no" },
-          { name: "from_to_date" },
+          { name: "teacher_name" },
         ]
       },
       {
-        name: "fk_r633_master",
+        name: "fk_r634_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

@@ -1,6 +1,6 @@
 import Sequelize from 'sequelize';
 export default function(sequelize, DataTypes) {
-  return sequelize.define('response_3_3_3', {
+  return sequelize.define('response_5_1_1', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -16,8 +16,8 @@ export default function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,38 +27,42 @@ export default function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    activity_name: {
-      type: DataTypes.STRING(255),
+    year: {
+      type: DataTypes.DATE,
       allowNull: false
-    },
-    collaborating_agency: {
-      type: DataTypes.STRING(255),
-      allowNull: true
     },
     scheme_name: {
       type: DataTypes.STRING(255),
-      allowNull: true
+      allowNull: false
     },
-    activity_type: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    },
-    student_count: {
+    gov_students_count: {
       type: DataTypes.INTEGER,
-      allowNull: true
+      allowNull: true,
+      defaultValue: 0
     },
-    year: {
-      type: DataTypes.DATE,
-      allowNull: true
+    gov_amount: {
+      type: DataTypes.DECIMAL(12,2),
+      allowNull: true,
+      defaultValue: 0.00
+    },
+    inst_students_count: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
+    },
+    inst_amount: {
+      type: DataTypes.DECIMAL(12,2),
+      allowNull: true,
+      defaultValue: 0.00
     },
     submitted_at: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
-    tableName: 'response_3_3_3',
+    tableName: 'response_5_1_1',
     timestamps: false,
     indexes: [
       {
@@ -70,7 +74,7 @@ export default function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "idx_r333_criteria",
+        name: "fk_r511_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

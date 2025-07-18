@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_4_1_3_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_4_4_1', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,12 +27,28 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    room_identifier: {
-      type: DataTypes.TEXT,
+    year: {
+      type: DataTypes.DATE,
       allowNull: false
     },
-    typeict_facility: {
-      type: DataTypes.TEXT,
+    budget_allocated_infra: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: false
+    },
+    expenditure_infra_lakhs: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: false
+    },
+    total_exp_infra_lakhs: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: false
+    },
+    exp_maintainance_acad: {
+      type: DataTypes.DECIMAL(10,2),
+      allowNull: false
+    },
+    exp_maintainance_physical: {
+      type: DataTypes.DECIMAL(10,2),
       allowNull: false
     },
     submitted_at: {
@@ -42,7 +58,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_4_1_3_data',
+    tableName: 'response_4_4_1',
     timestamps: false,
     indexes: [
       {
@@ -54,7 +70,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "idx_r413_criteria",
+        name: "idx_r441_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

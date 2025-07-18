@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_5_1_1_5_1_2_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_5_3_1', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -31,27 +31,25 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    scheme_name: {
-      type: DataTypes.TEXT,
+    award_name: {
+      type: DataTypes.STRING(255),
       allowNull: false
     },
-    gov_students_count: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0
+    team_or_individual: {
+      type: DataTypes.ENUM('Team','Individual'),
+      allowNull: false
     },
-    gov_amount: {
-      type: DataTypes.DECIMAL(15,2),
-      allowNull: true
+    level: {
+      type: DataTypes.ENUM('University','State','National','International'),
+      allowNull: false
     },
-    inst_students_count: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0
+    activity_type: {
+      type: DataTypes.ENUM('Sports','Cultural'),
+      allowNull: false
     },
-    inst_amount: {
-      type: DataTypes.DECIMAL(15,2),
-      allowNull: true
+    student_name: {
+      type: DataTypes.STRING(255),
+      allowNull: false
     },
     submitted_at: {
       type: DataTypes.DATE,
@@ -60,7 +58,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_5_1_1_5_1_2_data',
+    tableName: 'response_5_3_1',
     timestamps: false,
     indexes: [
       {
@@ -72,7 +70,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r511_master",
+        name: "fk_r531_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

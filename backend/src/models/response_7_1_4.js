@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_7_1_2_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_7_1_4', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -32,7 +32,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     photo_link: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING(500),
       allowNull: true
     },
     additional_info: {
@@ -46,7 +46,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_7_1_2_data',
+    tableName: 'response_7_1_4',
     timestamps: false,
     indexes: [
       {
@@ -58,7 +58,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r712_master",
+        name: "fk_r714_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

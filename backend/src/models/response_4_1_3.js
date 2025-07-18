@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_5_3_1_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_4_1_3', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,38 +27,22 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    year: {
-      type: DataTypes.DATE,
+    room_identifier: {
+      type: DataTypes.STRING(255),
       allowNull: false
     },
-    award_name: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    team_or_individual: {
-      type: DataTypes.ENUM('Team','Individual'),
-      allowNull: false
-    },
-    level: {
-      type: DataTypes.ENUM('University','State','National','International'),
-      allowNull: false
-    },
-    activity_type: {
-      type: DataTypes.ENUM('Sports','Cultural'),
-      allowNull: false
-    },
-    student_name: {
-      type: DataTypes.TEXT,
+    typeict_facility: {
+      type: DataTypes.STRING(255),
       allowNull: false
     },
     submitted_at: {
       type: DataTypes.DATE,
-      allowNull: true,
+      allowNull: false,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
-    tableName: 'response_5_3_1_data',
+    tableName: 'response_4_1_3',
     timestamps: false,
     indexes: [
       {
@@ -70,7 +54,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r531_master",
+        name: "idx_r413_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

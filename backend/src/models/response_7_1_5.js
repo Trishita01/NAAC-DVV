@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_7_1_6_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_7_1_5', {
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,20 +27,16 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    audit_type: {
+    initiative: {
       type: DataTypes.ENUM('0','1','2','3','4'),
       allowNull: false
     },
-    report_link: {
-      type: DataTypes.TEXT,
+    photo_link: {
+      type: DataTypes.STRING(500),
       allowNull: true
     },
-    certification: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    additional_info: {
-      type: DataTypes.TEXT,
+    document_link: {
+      type: DataTypes.STRING(500),
       allowNull: true
     },
     submitted_at: {
@@ -50,7 +46,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_7_1_6_data',
+    tableName: 'response_7_1_5',
     timestamps: false,
     indexes: [
       {
@@ -62,7 +58,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r716_master",
+        name: "fk_r715_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

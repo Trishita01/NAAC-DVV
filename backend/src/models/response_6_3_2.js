@@ -1,6 +1,12 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_5_2_2_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_6_3_2', {
+    sl_no: {
+      autoIncrement: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      primaryKey: true
+    },
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -9,15 +15,9 @@ module.exports = function(sequelize, DataTypes) {
         key: 'id'
       }
     },
-    sl_no: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true
-    },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -31,21 +31,21 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    student_name: {
+    teacher_name: {
       type: DataTypes.STRING(255),
       allowNull: false
     },
-    program_graduated_from: {
-      type: DataTypes.STRING(255),
-      allowNull: false
-    },
-    institution_joined: {
+    conference_name: {
       type: DataTypes.TEXT,
-      allowNull: false
+      allowNull: true
     },
-    program_admitted_to: {
+    professional_body: {
       type: DataTypes.TEXT,
-      allowNull: false
+      allowNull: true
+    },
+    amt_of_spt_received: {
+      type: DataTypes.STRING(10),
+      allowNull: true
     },
     submitted_at: {
       type: DataTypes.DATE,
@@ -54,7 +54,7 @@ module.exports = function(sequelize, DataTypes) {
     }
   }, {
     sequelize,
-    tableName: 'response_5_2_2_data',
+    tableName: 'response_6_3_2',
     timestamps: false,
     indexes: [
       {
@@ -66,7 +66,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "fk_r522_master",
+        name: "fk_r632_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

@@ -1,6 +1,6 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('response_4_1_4_data', {
+import Sequelize from 'sequelize';
+export default function(sequelize, DataTypes) {
+  return sequelize.define('response_5_3_3', {
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -16,8 +16,8 @@ module.exports = function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -27,38 +27,26 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false
     },
-    year: {
-      type: DataTypes.DATE,
+    event_date: {
+      type: DataTypes.DATEONLY,
       allowNull: false
     },
-    budget_allocated_infra_aug: {
-      type: DataTypes.DECIMAL(15,2),
-      allowNull: true
+    event_name: {
+      type: DataTypes.STRING(255),
+      allowNull: false
     },
-    expenditure_infra_aug: {
-      type: DataTypes.DECIMAL(15,2),
-      allowNull: true
-    },
-    total_expenditure_excl_salary: {
-      type: DataTypes.DECIMAL(15,2),
-      allowNull: true
-    },
-    expenditure_academic_maint: {
-      type: DataTypes.DECIMAL(15,2),
-      allowNull: true
-    },
-    expenditure_physical_maint: {
-      type: DataTypes.DECIMAL(15,2),
-      allowNull: true
+    student_name: {
+      type: DataTypes.STRING(255),
+      allowNull: false
     },
     submitted_at: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
-    tableName: 'response_4_1_4_data',
+    tableName: 'response_5_3_3',
     timestamps: false,
     indexes: [
       {
@@ -70,7 +58,7 @@ module.exports = function(sequelize, DataTypes) {
         ]
       },
       {
-        name: "idx_r414_criteria",
+        name: "fk_r533_master",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },
