@@ -1,6 +1,9 @@
-import Sequelize from 'sequelize';
-export default function(sequelize, DataTypes) {
-  return sequelize.define('response_7_1_5', {
+import _sequelize from 'sequelize';
+const { Model, Sequelize } = _sequelize;
+
+export default class response_7_1_5 extends Model {
+  static init(sequelize, DataTypes) {
+  return super.init({
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +19,8 @@ export default function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -25,7 +28,7 @@ export default function(sequelize, DataTypes) {
     },
     session: {
       type: DataTypes.DATE,
-      allowNull: false
+      allowNull: true
     },
     initiative: {
       type: DataTypes.ENUM('0','1','2','3','4'),
@@ -67,4 +70,5 @@ export default function(sequelize, DataTypes) {
       },
     ]
   });
-};
+  }
+}

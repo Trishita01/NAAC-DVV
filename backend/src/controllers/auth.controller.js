@@ -116,7 +116,12 @@ const iqacRegister = asyncHandler(async (req, res) => {
   }
 })
 
+const iqacLogin = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+})
+
 
 export {
-    iqacRegister
+    iqacRegister,
+    iqacLogin
 }

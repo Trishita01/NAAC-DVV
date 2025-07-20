@@ -1,6 +1,9 @@
-import Sequelize from 'sequelize';
-export default function(sequelize, DataTypes) {
-  return sequelize.define('response_4_2_2', {
+import _sequelize from 'sequelize';
+const { Model, Sequelize } = _sequelize;
+
+export default class response_4_2_2 extends Model {
+  static init(sequelize, DataTypes) {
+  return super.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -16,8 +19,8 @@ export default function(sequelize, DataTypes) {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -25,7 +28,7 @@ export default function(sequelize, DataTypes) {
     },
     session: {
       type: DataTypes.DATE,
-      allowNull: false
+      allowNull: true
     },
     year: {
       type: DataTypes.DATE,
@@ -75,4 +78,5 @@ export default function(sequelize, DataTypes) {
       },
     ]
   });
-};
+  }
+}

@@ -1,15 +1,9 @@
 import _sequelize from 'sequelize';
 const { Model, Sequelize } = _sequelize;
 
-export default class response_6_5_3 extends Model {
+export default class response_4_1_4 extends Model {
   static init(sequelize, DataTypes) {
   return super.init({
-    sl_no: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true
-    },
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -17,6 +11,12 @@ export default class response_6_5_3 extends Model {
         model: 'criteria_master',
         key: 'id'
       }
+    },
+    sl_no: {
+      autoIncrement: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      primaryKey: true
     },
     criteria_code: {
       type: DataTypes.STRING(20),
@@ -28,49 +28,40 @@ export default class response_6_5_3 extends Model {
     },
     session: {
       type: DataTypes.DATE,
-      allowNull: true
-    },
-    initiative_type: {
-      type: DataTypes.ENUM('0','1','2','3','4'),
-      allowNull: false,
-      primaryKey: true
+      allowNull: false
     },
     year: {
       type: DataTypes.DATE,
       allowNull: false
     },
-    reg_meetings_of_the_IQAC_head: {
-      type: DataTypes.STRING(255),
+    budget_allocated_infra_aug: {
+      type: DataTypes.DECIMAL(10,2),
       allowNull: true
     },
-    conf_seminar_workshops_on_quality_edu: {
-      type: DataTypes.STRING(255),
+    expenditure_infra_aug: {
+      type: DataTypes.DECIMAL(10,2),
       allowNull: true
     },
-    collab_quality_initiatives: {
-      type: DataTypes.DATE,
-      allowNull: false
-    },
-    participatipn_in_NIRF: {
-      type: DataTypes.STRING(500),
+    total_expenditure_excl_salary: {
+      type: DataTypes.DECIMAL(10,2),
       allowNull: true
     },
-    from_to_date: {
-      type: DataTypes.DATEONLY,
+    expenditure_academic_maint: {
+      type: DataTypes.DECIMAL(10,2),
       allowNull: true
     },
-    other_quality_audit: {
-      type: DataTypes.STRING(255),
+    expenditure_physical_maint: {
+      type: DataTypes.DECIMAL(10,2),
       allowNull: true
     },
     submitted_at: {
       type: DataTypes.DATE,
-      allowNull: true,
+      allowNull: false,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
-    tableName: 'response_6_5_3',
+    tableName: 'response_4_1_4',
     timestamps: false,
     indexes: [
       {
@@ -79,11 +70,10 @@ export default class response_6_5_3 extends Model {
         using: "BTREE",
         fields: [
           { name: "sl_no" },
-          { name: "initiative_type" },
         ]
       },
       {
-        name: "fk_r653_master",
+        name: "idx_r414_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

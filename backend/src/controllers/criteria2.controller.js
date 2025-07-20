@@ -7,11 +7,13 @@ import apiError from "../utils/apiError.js";
 const Criteria211 = db.response_2_1_1;
 const Criteria212 = db.response_2_1_2;
 // const Criteria241243222233 = db.response_2_4_1_2_4_3_2_2_2_2_3_3;
-// const Criteria222 = db.response_2_2_2;
-// const Criteria233 = db.response_2_3_3;
-// const Criteria242 = db.response_2_4_2;
-// const Criteria263 = db.response_2_6_3;
-// const Criteria271 = db.response_2_7_1;
+const Criteria241 = db.response_2_4_1;
+const Criteria243 = db.response_2_4_3;
+const Criteria222 = db.response_2_2_2;
+const Criteria233 = db.response_2_3_3;
+const Criteria242 = db.response_2_4_2;
+const Criteria263 = db.response_2_6_3;
+const Criteria271 = db.response_2_7_1;
 const Score = db.scores;
 const CriteriaMaster = db.criteria_master;
 
@@ -22,21 +24,28 @@ const convertToPaddedFormat = (code) => {
   // Pad each part to 2 digits and join
   return parts.map(part => part.padStart(2, '0')).join('');
 };
-function getTeacherCount(responses) {
-  let fullTimeTeacherCount = 0;
 
-  responses.forEach(response => {
+// Helper function to calculate total number of teachers
+const getTeacherCount = async () => {
+  const responses = await Criteria211.findAll();
+  return responses.reduce((count, response) => {
     if (response.name_of_full_time_teachers) {
       const names = response.name_of_full_time_teachers
         .split(',')
         .map(name => name.trim())
         .filter(name => name.length > 0);
-      fullTimeTeacherCount += names.length;
+      return count + names.length;
     }
-  });
-
-  return fullTimeTeacherCount;
-}
+    return count;
+  }, 0);
+};
+// Helper function to calculate total number of students
+const getTotalStudents = async () => {
+  const responses = await Criteria211.findAll();
+  return responses.reduce((total, response) => {
+      return total + (response.no_of_students || 0);
+   }, 0);
+};
 
 // // Example usage:
 // // const responses = await Criteria241243222233.findAll();
@@ -91,7 +100,7 @@ const createResponse211 = asyncHandler(async (req, res) => {
           const entry = await Criteria211.create({
             id: criteria.id,
             criteria_code: criteria.criteria_code,
-            session: year,  // Store as Date object
+            session: sessionDate,  // Store as Date object
             year: year,        // Store as Date object
             programme_name,
             programme_code,
@@ -371,57 +380,56 @@ res.status(200).json(
 //   );
 // });
 
-// /**
-// * @route POST /api/response/2.4.1and2.4.3and2.2.2and2.3.3
-// * @description Create a new response for criteria 2.4.1 and 2.4.3 and 2.2.2 and 2.3.3
-// * @access Private/Admin
-// */
-// const createResponse241243222233 = asyncHandler(async (req, res) => {
-//       console.log(CriteriaMaster)
-//       const criteria = await CriteriaMaster.findOne({
-//           where: {
-//             sub_sub_criterion_id: '020401'||'020403'||'020202'||'020303',
-//             sub_criterion_id: '0204'||'0202'||'0203',
-//             criterion_id: '02'
-//           }
-//         });
-    
-//         if (!criteria) {
-//           throw new apiError(404, "Criteria not found");
-//         }
-    
-//         // Validate required fields
-//         const {session,name_of_the_fulltime_teachers,designation, year_of_appointment,nature_of_appointment,name_of_department,total_number_of_years_of_experience_in_the_same_institution,is_the_teacprogramme_name} = req.body;
-//         if (!year_of_appointment || !name_of_the_fulltime_teachers || !designation || !nature_of_appointment || !name_of_department || !total_number_of_years_of_experience_in_the_same_institution || !is_the_teacprogramme_name) {
-//           throw new apiError(400, "Missing required fields");
-//         }
+/**
+* @route POST /api/response/2.4.1and2.4.3and2.2.2and2.3.3
+* @description Create a new response for criteria 2.4.1 and 2.4.3 and 2.2.2 and 2.3.3
+* @access Private/Admin
+*/
+  const createResponse241 = asyncHandler(async (req, res) => {
+        console.log(CriteriaMaster)
+        const criteria = await CriteriaMaster.findOne({
+            where: {
+              sub_sub_criterion_id: '020401',
+              sub_criterion_id: '0204',
+              criterion_id: '02'
+            }
+          });
+      
+          if (!criteria) {
+            throw new apiError(404, "Criteria not found");
+          }
+      
+          // Validate required fields
+          const {session,name_of_the_fulltime_teachers,designation, year_of_appointment,nature_of_appointment,name_of_department,total_number_of_years_of_experience_in_the_same_institution,is_the_teacprogramme_name} = req.body;
+          if (!year_of_appointment || !name_of_the_fulltime_teachers || !designation || !nature_of_appointment || !name_of_department || !total_number_of_years_of_experience_in_the_same_institution || !is_the_teacprogramme_name) {
+            throw new apiError(400, "Missing required fields");
+          }
 
-//         if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
-//           throw new apiError(400, "Year must be between 1990 and current year");
-//         }
+          if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
+            throw new apiError(400, "Year must be between 1990 and current year");
+          }
 
-//         // Create proper Date objects for session
-//         const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
-//         console.log(criteria.criteria_code)
-//         // Insert into response_2_4_1and2_4_3and2_2_2and2_3_3_data
-//         const entry = await Criteria241243222233.create({
-//           id: criteria.id,
-//           criteria_code: criteria.criteria_code,
-//           session: sessionDate,  // Store as Date object
-//           year_of_appointment: year_of_appointment,        // Store as Date object
-//           name_of_the_fulltime_teachers,
-//           designation,
-//           nature_of_appointment,
-//           name_of_department,
-//           total_number_of_years_of_experience_in_the_same_institution,
-//           is_the_teacprogramme_name
-//         });
-    
-//         res.status(201).json(
-//           new apiResponse(201, entry, "Response created successfully")
-//         );
-
-// });
+          // Create proper Date objects for session
+          const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
+          console.log(criteria.criteria_code)
+          // Insert into response_2_4_1and2_4_3and2_2_2and2_3_3_data
+          const entry = await Criteria241.create({
+            id: criteria.id,
+            criteria_code: criteria.criteria_code,
+            session: sessionDate,  // Store as Date object
+            year_of_appointment: year_of_appointment,        // Store as Date object
+            name_of_the_fulltime_teachers,
+            designation,
+            nature_of_appointment,
+            name_of_department,
+            total_number_of_years_of_experience_in_the_same_institution,
+            is_the_teacprogramme_name
+          });
+      
+          res.status(201).json(
+            new apiResponse(201, entry, "Response created successfully")
+          );
+  });
 // /**
 // * @route GET /api/response/2.4.1and2.4.3and2.2.2and2.3.3/:criteriaCode
 // * @description Get all responses for a specific criteria code
@@ -511,7 +519,51 @@ res.status(200).json(
 //   );
 
 // });
+const createResponse243 = asyncHandler(async (req, res) => {
+  console.log(CriteriaMaster)
+  const criteria = await CriteriaMaster.findOne({
+      where: {
+        sub_sub_criterion_id: '020403',
+        sub_criterion_id: '0204',
+        criterion_id: '02'
+      }
+    });
 
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
+
+    // Validate required fields
+    const {session,name_of_the_fulltime_teachers,designation, year_of_appointment,nature_of_appointment,name_of_department,total_number_of_years_of_experience_in_the_same_institution,is_the_teacprogramme_name} = req.body;
+    if (!year_of_appointment || !name_of_the_fulltime_teachers || !designation || !nature_of_appointment || !name_of_department || !total_number_of_years_of_experience_in_the_same_institution || !is_the_teacprogramme_name) {
+      throw new apiError(400, "Missing required fields");
+    }
+
+    if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
+      throw new apiError(400, "Year must be between 1990 and current year");
+    }
+
+    // Create proper Date objects for session
+    const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
+    console.log(criteria.criteria_code)
+    // Insert into response_2_4_1and2_4_3and2_2_2and2_3_3_data
+    const entry = await Criteria243.create({
+      id: criteria.id,
+      criteria_code: criteria.criteria_code,
+      session: sessionDate,  // Store as Date object
+      year_of_appointment: year_of_appointment,        // Store as Date object
+      name_of_the_fulltime_teachers,
+      designation,
+      nature_of_appointment,
+      name_of_department,
+      total_number_of_years_of_experience_in_the_same_institution,
+      is_the_teacprogramme_name
+    });
+
+    res.status(201).json(
+      new apiResponse(201, entry, "Response created successfully")
+    );
+});
   //score 243
   const score243 = asyncHandler(async (req, res) => {
     /*
@@ -591,56 +643,141 @@ res.status(200).json(
     );
   });
 
+  const createResponse222 = asyncHandler(async (req, res) => {
+    console.log(CriteriaMaster)
+    const criteria = await CriteriaMaster.findOne({
+        where: {
+          sub_sub_criterion_id: '020202',
+          sub_criterion_id: '0202',
+          criterion_id: '02'
+        }
+      });
+  
+      if (!criteria) {
+        throw new apiError(404, "Criteria not found");
+      }
+  
+      // Validate required fields
+      const {session,name_of_full_time_teachers,designation, year_of_appointment,nature_of_appointment,name_of_department,total_number_of_years_of_experience_in_the_same_institution,is_the_teacprogramme_name} = req.body;
+      if (!year_of_appointment || !name_of_full_time_teachers || !designation || !nature_of_appointment || !name_of_department || !total_number_of_years_of_experience_in_the_same_institution || !is_the_teacprogramme_name) {
+        throw new apiError(400, "Missing required fields");
+      }
+
+      if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
+        throw new apiError(400, "Year must be between 1990 and current year");
+      }
+
+      // Create proper Date objects for session
+      const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
+      console.log(criteria.criteria_code)
+      // Insert into response_2_2_2_data
+      const entry = await Criteria222.create({
+        id: criteria.id,
+        criteria_code: criteria.criteria_code,
+        session: sessionDate,  // Store as Date object
+        year_of_appointment: year_of_appointment,        // Store as Date object
+        name_of_full_time_teachers,
+        designation,
+        nature_of_appointment,
+        name_of_department,
+        total_number_of_years_of_experience_in_the_same_institution,
+        is_the_teacprogramme_name
+      });
+  
+      res.status(201).json(
+        new apiResponse(201, entry, "Response created successfully")
+      );
+});
 
 //   //score 222
-//   const score222 = asyncHandler(async (req, res) => {
-//     /*
-//     1. get the user input from the req body
-//     2. query the criteria_master table to get the id and criteria_code 
-//     3. validate the user input
-//     4. create a new response
-//     5. return the response
-//     */
-//     const criteria_code = convertToPaddedFormat("2.1.2");
-//     console.log(criteria_code)
-//     console.log(CriteriaMaster)
-//     const criteria = await CriteriaMaster.findOne({
-//       where: { 
-//         sub_sub_criterion_id: criteria_code
-//       }
-//     });
-//     const responses = await Criteria222.findAll({
-//       attributes: ['number_of_seats_earmarked_for_reserved_category_as_per_GOI', 'number_of_students_admitted_from_the_reserved_category'],  // Only get the option_selected field
-//       where: {
-//           criteria_code:criteria.criteria_code  
-//       }
-//   });
+const score222 = asyncHandler(async (req, res) => {
+  /*
+  1. get the user input from the req body
+  2. query the criteria_master table to get the id and criteria_code 
+  3. validate the user input
+  4. create a new response
+  5. return the response
+  */
+  const criteria_code = convertToPaddedFormat("2.2.2");
+  console.log(criteria_code)
+  console.log(CriteriaMaster)
+  const criteria = await CriteriaMaster.findOne({
+    where: { 
+      sub_sub_criterion_id: criteria_code
+    }
+  });
+  const totalStudents = getTotalStudents();
+  const teacherCount = getTeacherCount();
+  
+  // Calculate and format student-teacher ratio (students per teacher)
+  const ratio = teacherCount > 0 ? Math.round(totalStudents / teacherCount) : 0;
+  const score = ratio + ":1";
+  
+  const currentYear = new Date().getFullYear();
+  const sessionDate = new Date(currentYear, 0, 1); 
+  const entry = await Score.create({
+    criteria_code: criteria.criteria_code,
+    criteria_id: criteria.criterion_id,
+    sub_criteria_id: criteria.sub_criterion_id,
+    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+    score_criteria: 0,
+    score_sub_criteria: 0,
+    score_sub_sub_criteria: score,
+    session: sessionDate,
+    year: currentYear,
+    cycle_year: 1
+  });
+  res.status(200).json(
+    new apiResponse(200, { entry, totalStudents, teacherCount, score }, "Response created successfully")
+     );
+});
 
+const createResponse233 = asyncHandler(async (req, res) => {
+  console.log(CriteriaMaster)
+  const criteria = await CriteriaMaster.findOne({
+      where: {
+        sub_sub_criterion_id: '020303',
+        sub_criterion_id: '0204',
+        criterion_id: '02'
+      }
+    });
 
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
 
-//   // score 233
-//  const score233 = asyncHandler(async (req, res) => {
-//     /*
-//     1. get the user input from the req body
-//     2. query the criteria_master table to get the id and criteria_code 
-//     3. validate the user input
-//     4. create a new response
-//     5. return the response
-//     */
-//     const criteria_code = convertToPaddedFormat("2.3.3");
-//     console.log(criteria_code)
-//     console.log(CriteriaMaster)
-//     const criteria = await CriteriaMaster.findOne({
-//       where: { 
-//         sub_sub_criterion_id: criteria_code
-//       }
-//     });
-//     const responses = await Criteria212.findAll({
-//       attributes: ['number_of_seats_earmarked_for_reserved_category_as_per_GOI', 'number_of_students_admitted_from_the_reserved_category'],  // Only get the option_selected field
-//       where: {
-//           criteria_code:criteria.criteria_code  
-//       }
-//   });
+    // Validate required fields
+    const {session,name_of_the_fulltime_teachers,designation, year_of_appointment,nature_of_appointment,name_of_department,total_number_of_years_of_experience_in_the_same_institution,is_the_teacprogramme_name} = req.body;
+    if (!year_of_appointment || !name_of_the_fulltime_teachers || !designation || !nature_of_appointment || !name_of_department || !total_number_of_years_of_experience_in_the_same_institution || !is_the_teacprogramme_name) {
+      throw new apiError(400, "Missing required fields");
+    }
+
+    if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
+      throw new apiError(400, "Year must be between 1990 and current year");
+    }
+
+    // Create proper Date objects for session
+    const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
+    console.log(criteria.criteria_code)
+    // Insert into response_2_4_1and2_4_3and2_2_2and2_3_3_data
+    const entry = await Criteria241.create({
+      id: criteria.id,
+      criteria_code: criteria.criteria_code,
+      session: sessionDate,  // Store as Date object
+      year_of_appointment: year_of_appointment,        // Store as Date object
+      name_of_the_fulltime_teachers,
+      designation,
+      nature_of_appointment,
+      name_of_department,
+      total_number_of_years_of_experience_in_the_same_institution,
+      is_the_teacprogramme_name
+    });
+
+    res.status(201).json(
+      new apiResponse(201, entry, "Response created successfully")
+    );
+});
+
 
 
 
@@ -655,55 +792,54 @@ res.status(200).json(
 //   );
 // });
 
-// /**
-// * @route POST /api/response/2.4.2
-// * @description Create a new response for criteria 2.4.2
-// * @access Private/Admin
-// */
-// const createResponse242 = asyncHandler(async (req, res) => {
-//       console.log(CriteriaMaster)
-//       const criteria = await CriteriaMaster.findOne({
-//           where: {
-//             sub_sub_criterion_id: '020402',
-//             sub_criterion_id: '0204',
-//             criterion_id: '02'
-//           }
-//         });
+/**
+* @route POST /api/response/2.4.2
+* @description Create a new response for criteria 2.4.2
+* @access Private/Admin
+*/
+const createResponse242 = asyncHandler(async (req, res) => {
+      console.log(CriteriaMaster)
+      const criteria = await CriteriaMaster.findOne({
+          where: {
+            sub_sub_criterion_id: '020402',
+            sub_criterion_id: '0204',
+            criterion_id: '02'
+          }
+        });
     
-//         if (!criteria) {
-//           throw new apiError(404, "Criteria not found");
-//         }
+        if (!criteria) {
+          throw new apiError(404, "Criteria not found");
+        }
     
-//         // Validate required fields
-//         const {session,number_of_full_time_teachers,qualification,year_of_obtaining_the_qualification, whether_recognised_as_research_guide, year_of_recognition_as_research_guide } = req.body;
-//         if (!session || !number_of_full_time_teachers || !qualification || !year_of_obtaining_the_qualification || !whether_recognised_as_research_guide || !year_of_recognition_as_research_guide) {
-//           throw new apiError(400, "Missing required fields");
-//         }
+        // Validate required fields
+        const {session,number_of_full_time_teachers,qualification,year_of_obtaining_the_qualification, whether_recognised_as_research_guide, year_of_recognition_as_research_guide } = req.body;
+        if (!session || !number_of_full_time_teachers || !qualification || !year_of_obtaining_the_qualification || !whether_recognised_as_research_guide || !year_of_recognition_as_research_guide) {
+          throw new apiError(400, "Missing required fields");
+        }
 
-//         if (year_of_obtaining_the_qualification < 1990 || year_of_obtaining_the_qualification > new Date().getFullYear()) {
-//           throw new apiError(400, "Year must be between 1990 and current year");
-//         }
+        if (year_of_obtaining_the_qualification < 1990 || year_of_obtaining_the_qualification > new Date().getFullYear()) {
+          throw new apiError(400, "Year must be between 1990 and current year");
+        }
 
-//         // Create proper Date objects for session
-//         const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
-//         console.log(criteria.criteria_code)
-//         // Insert into response_2_4_2_data
-//         const entry = await Criteria242.create({
-//           id: criteria.id,
-//           criteria_code: criteria.criteria_code,
-//           session: sessionDate,  // Store as Date object
-//           number_of_full_time_teachers,
-//           qualification,
-//           year_of_obtaining_the_qualification,
-//           whether_recognised_as_research_guide,
-//           year_of_recognition_as_research_guide
-//         });
+        // Create proper Date objects for session
+        const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
+        console.log(criteria.criteria_code)
+        // Insert into response_2_4_2_data
+        const entry = await Criteria242.create({
+          id: criteria.id,
+          criteria_code: criteria.criteria_code,
+          session: sessionDate,  // Store as Date object
+          number_of_full_time_teachers,
+          qualification,
+          year_of_obtaining_the_qualification,
+          whether_recognised_as_research_guide,
+          year_of_recognition_as_research_guide
+        });
     
-//         res.status(201).json(
-//           new apiResponse(201, entry, "Response created successfully")
-//         );
-
-// });
+        res.status(201).json(
+          new apiResponse(201, entry, "Response created successfully")
+        );
+});
 // /**
 // * @route GET /api/response/2.4.2/:criteriaCode
 // * @description Get all responses for a specific criteria code
@@ -731,73 +867,73 @@ res.status(200).json(
 //       next(error);
 //   }
 // });
-// //score 242
-// const score242 = asyncHandler(async (req, res) => {
-//   /*
-//   1. get the user input from the req body
-//   2. query the criteria_master table to get the id and criteria_code 
-//   3. validate the user input
-//   4. create a new response
-//   5. return the response
-//   */
-//   const criteria_code = convertToPaddedFormat("2.4.2");
-//   console.log(criteria_code)
-//   console.log(CriteriaMaster)
-//   const criteria = await CriteriaMaster.findOne({
-//     where: { 
-//       sub_sub_criterion_id: criteria_code
-//     }
-//   });
-//   const responses = await Criteria242.findAll({
-//     attributes: ['number_of_full_time_teachers'],  // Only get the option_selected field
-//     where: {
-//         criteria_code:criteria.criteria_code  
-//     }
-// });
 
-// const total_full_time_teachers = responses.reduce((total, response) => total + (response.number_of_full_time_teachers || 0), 0);
-// const count = getTeacherCount(responses);
-// console.log(count); 
-// let score = 0;
-// if (total_full_time_teachers > 0) {
-//   score = (total_full_time_teachers / count) * 100;
-// }
-// //array of scores of 5 years
-// let scores = [];
-// if (total_seats > 0) {
-//   score = (total_students / total_seats) * 100;
-// }
-// for (let i = 0; i < 5; i++) {
-//   scores.push(score);
-// }
-// let average = 0;
-// let years=scores.length;
-// average = scores.reduce((sum, value) => sum + value, 0) / years;
+//score 242
+const score242 = asyncHandler(async (req, res) => {
+  /*
+  1. get the user input from the req body
+  2. query the criteria_master table to get the id and criteria_code 
+  3. validate the user input
+  4. create a new response
+  5. return the response
+  */
+  const criteria_code = convertToPaddedFormat("2.4.2");
+  console.log(criteria_code)
+  console.log(CriteriaMaster)
+  const criteria = await CriteriaMaster.findOne({
+    where: { 
+      sub_sub_criterion_id: criteria_code
+    }
+  });
+  const responses = await Criteria242.findAll({
+    attributes: ['number_of_full_time_teachers'],  // Only get the option_selected field
+    where: {
+        criteria_code:criteria.criteria_code  
+    }
+});
 
-// console.log("Average:", average);
+const total_full_time_teachers = responses.reduce((total, response) => total + (response.number_of_full_time_teachers || 0), 0);
+const count = getTeacherCount(responses);
+console.log(count); 
+let score = 0;
+if (total_full_time_teachers > 0) {
+  score = (total_full_time_teachers / count) * 100;
+}
+//array of scores of 5 years
+let scores = [];
+if (total_seats > 0) {
+  score = (total_students / total_seats) * 100;
+}
+for (let i = 0; i < 5; i++) {
+  scores.push(score);
+}
+let average = 0;
+let years=scores.length;
+average = scores.reduce((sum, value) => sum + value, 0) / years;
 
-// const currentYear = new Date().getFullYear();
-// const sessionDate = new Date(currentYear, 0, 1); 
-// const entry = await Score.create(
-//   {
-//     criteria_code: criteria.criteria_code,
-//     criteria_id: criteria.criterion_id,
-//     sub_criteria_id: criteria.sub_criterion_id,
-//     sub_sub_criteria_id: criteria.sub_sub_criterion_id,
-//     score_criteria: 0,
-//     score_sub_criteria: 0,
-//     score_sub_sub_criteria: average,
-//     session: sessionDate,
-//     year: currentYear,
-//     cycle_year: 1
-//   }
-// );
+console.log("Average:", average);
 
-// res.status(200).json(
-//   new apiResponse(200, entry, "Response created successfully")
-// )
+const currentYear = new Date().getFullYear();
+const sessionDate = new Date(currentYear, 0, 1); 
+const entry = await Score.create(
+  {
+    criteria_code: criteria.criteria_code,
+    criteria_id: criteria.criterion_id,
+    sub_criteria_id: criteria.sub_criterion_id,
+    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+    score_criteria: 0,
+    score_sub_criteria: 0,
+    score_sub_sub_criteria: average,
+    session: sessionDate,
+    year: currentYear,
+    cycle_year: 1
+  }
+);
 
-// });
+res.status(200).json(
+  new apiResponse(200, entry, "Response created successfully")
+   )
+});
   
 
 
@@ -1058,8 +1194,15 @@ export {
   score211,
   // getAllCriteria212,
   createResponse212,
+  createResponse233,
+  createResponse222,
+  createResponse242,
+  createResponse243,
   // getResponsesByCriteriaCode212,
   score212,
+  score222,
+  score242,
+  score243,
   // getAllCriteria241243222233 ,
   // createResponse241243222233,
   // getResponsesByCriteriaCode241243222233,

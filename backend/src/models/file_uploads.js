@@ -1,6 +1,9 @@
-import Sequelize from 'sequelize';
-export default function(sequelize, DataTypes) {
-  return sequelize.define('file_uploads', {
+import _sequelize from 'sequelize';
+const { Model, Sequelize } = _sequelize;
+
+export default class file_uploads extends Model {
+  static init(sequelize, DataTypes) {
+  return super.init({
     id: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -9,7 +12,7 @@ export default function(sequelize, DataTypes) {
     },
     criteria_code: {
       type: DataTypes.STRING(20),
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -63,4 +66,5 @@ export default function(sequelize, DataTypes) {
       },
     ]
   });
-};
+  }
+}

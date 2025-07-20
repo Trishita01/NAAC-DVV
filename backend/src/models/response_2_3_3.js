@@ -1,6 +1,9 @@
-import Sequelize from 'sequelize';
-export default function(sequelize, DataTypes) {
-  return sequelize.define('response_2_3_3', {
+import _sequelize from 'sequelize';
+const { Model, Sequelize } = _sequelize;
+
+export default class response_2_3_3 extends Model {
+  static init(sequelize, DataTypes) {
+  return super.init({
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -16,8 +19,8 @@ export default function(sequelize, DataTypes) {
       }
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -25,35 +28,19 @@ export default function(sequelize, DataTypes) {
     },
     session: {
       type: DataTypes.DATE,
-      allowNull: false
-    },
-    name_of_the_full_time_teacher: {
-      type: DataTypes.STRING(255),
       allowNull: true
     },
-    designation: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    year_of_appointment: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
-    nature_of_appointment: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    },
-    name_of_department: {
-      type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    total_number_of_years_of_experience_in_the_same_institution: {
+    year: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    is_the_teacher_still_serving_the_institution: {
-      type: DataTypes.STRING(255),
-      allowNull: true
+    No_of_mentors: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    No_of_mentee: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     }
   }, {
     sequelize,
@@ -78,4 +65,5 @@ export default function(sequelize, DataTypes) {
       },
     ]
   });
-};
+  }
+}

@@ -1,6 +1,9 @@
-import Sequelize from 'sequelize';
-export default function(sequelize, DataTypes) {
-  return sequelize.define('criteria_master', {
+import _sequelize from 'sequelize';
+const { Model, Sequelize } = _sequelize;
+
+export default class criteria_master extends Model {
+  static init(sequelize, DataTypes) {
+  return super.init({
     id: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -72,4 +75,5 @@ export default function(sequelize, DataTypes) {
       },
     ]
   });
-};
+  }
+}

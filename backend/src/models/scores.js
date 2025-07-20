@@ -1,6 +1,9 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('scores', {
+import _sequelize from 'sequelize';
+const { Model, Sequelize } = _sequelize;
+
+export default class scores extends Model {
+  static init(sequelize, DataTypes) {
+  return super.init({
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -40,7 +43,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     session: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: true
     },
     cycle_year: {
@@ -55,6 +58,14 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
+    },
+    sub_sub_cr_grade: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    weighted_cr_score: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     }
   }, {
     sequelize,
@@ -78,4 +89,5 @@ module.exports = function(sequelize, DataTypes) {
       },
     ]
   });
-};
+  }
+}

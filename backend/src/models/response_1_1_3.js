@@ -1,6 +1,9 @@
-import Sequelize from 'sequelize';
-export default function(sequelize, DataTypes) {
-  return sequelize.define('response_1_1_3', {
+import _sequelize from 'sequelize';
+const { Model, Sequelize } = _sequelize;
+
+export default class response_1_1_3 extends Model {
+  static init(sequelize, DataTypes) {
+  return super.init({
     sl_no: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -24,11 +27,11 @@ export default function(sequelize, DataTypes) {
       }
     },
     session: {
-      type: DataTypes.DATEONLY,
-      allowNull: false
+      type: DataTypes.DATE,
+      allowNull: true
     },
     year: {
-      type: DataTypes.TEXT,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     teacher_name: {
@@ -71,4 +74,5 @@ export default function(sequelize, DataTypes) {
       },
     ]
   });
-};
+  }
+}
