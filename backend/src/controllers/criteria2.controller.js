@@ -330,14 +330,16 @@ const createResponse212 = asyncHandler(async (req, res) => {
           throw new apiError(400, "Missing required fields");
         }
 
+        if (session < 1990 || session > new Date().getFullYear()) {
+          throw new apiError(400, "Session must be between 1990 and current year");
+        }
+
         if (year < 1990 || year > new Date().getFullYear()) {
           throw new apiError(400, "Year must be between 1990 and current year");
         }
-
-        // Create proper Date objects for session
-        const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
         console.log(criteria.criteria_code)
         // Insert into response_2_1_2_data
+
         const entry = await Criteria212.create({
           id: criteria.id,
           criteria_code: criteria.criteria_code,
@@ -882,7 +884,6 @@ const createResponse233 = asyncHandler(async (req, res) => {
 * @access Private/Admin
 */
 const createResponse242 = asyncHandler(async (req, res) => {
-      console.log(CriteriaMaster)
       const criteria = await CriteriaMaster.findOne({
           where: {
             sub_sub_criterion_id: '020402',
