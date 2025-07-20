@@ -43,7 +43,7 @@ export default class scores extends Model {
       allowNull: false
     },
     session: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     cycle_year: {

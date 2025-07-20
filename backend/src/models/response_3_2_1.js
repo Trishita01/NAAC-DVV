@@ -27,7 +27,7 @@ export default class response_3_2_1 extends Model {
       }
     },
     session: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     paper_title: {

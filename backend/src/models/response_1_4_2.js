@@ -27,7 +27,7 @@ export default class response_1_4_2 extends Model {
       }
     },
     session: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     option_selected: {

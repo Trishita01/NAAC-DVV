@@ -27,7 +27,7 @@ export default class response_3_4_1 extends Model {
       }
     },
     session: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     title_of_activity: {

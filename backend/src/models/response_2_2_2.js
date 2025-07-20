@@ -27,7 +27,7 @@ export default class response_2_2_2 extends Model {
       }
     },
     session: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     name_of_the_full_time_teacher: {

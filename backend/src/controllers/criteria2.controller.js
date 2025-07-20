@@ -3,6 +3,7 @@ import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import apiResponse from "../utils/apiResponse.js";
 import apiError from "../utils/apiError.js";
+import Sequelize from "sequelize";
 
 const Criteria211 = db.response_2_1_1;
 const Criteria212 = db.response_2_1_2;
@@ -39,6 +40,7 @@ const getTeacherCount = async () => {
     return count;
   }, 0);
 };
+
 // Helper function to calculate total number of students
 const getTotalStudents = async () => {
   const responses = await Criteria211.findAll();
@@ -46,11 +48,6 @@ const getTotalStudents = async () => {
       return total + (response.no_of_students || 0);
    }, 0);
 };
-
-// // Example usage:
-// // const responses = await Criteria241243222233.findAll();
-// // const count = getTeacherCount(responses);
-// // console.log(count); // You can now use count wherever needed
 
 
 // const getAllCriteria211 = asyncHandler(async (req, res) => {
@@ -84,29 +81,80 @@ const createResponse211 = asyncHandler(async (req, res) => {
           }
       
           // Validate required fields
-          const {year,programme_name, programme_code, no_of_seats, no_of_students } = req.body;
-          if (!year || !programme_name || !programme_code || !no_of_seats || !no_of_students) {
+          const {session, year,programme_name, programme_code, no_of_seats, no_of_students } = req.body;
+          if (!session || !year || !programme_name || !programme_code || !no_of_seats || !no_of_students) {
             throw new apiError(400, "Missing required fields");
           }
 
-          if (year < 1990 || year > new Date().getFullYear()) {
-            throw new apiError(400, "Year must be between 1990 and current year");
+          if (year < 1990 || year > new Date().getFullYear() && session < 1990 || session > new Date().getFullYear()) {
+            throw new apiError(400, "Year and session must be between 1990 and current year");
           }
 
+          if(no_of_seats < 0 || no_of_students < 0) {
+            throw new apiError(400, "Number of seats and students cannot be negative");
+          }
+
+          if(no_of_seats < no_of_students) {
+            throw new apiError(400, "Number of seats cannot be less than number of students");
+          }
+
+          const programmeNameInDB = await Criteria211.findOne({
+            where: {
+              session: session,
+              year: year,
+              programme_name: programme_name
+            }
+          });
+          if (programmeNameInDB) {
+            throw new apiError(400, "Programme name already exists");
+          }
+
+          const programmeCodeInDB = await Criteria211.findOne({
+            where: {
+              session: session,
+              year: year,
+              programme_code: programme_code
+            }
+          });
+          if (programmeCodeInDB) {
+            throw new apiError(400, "Programme code already exists");
+          }
           // Create proper Date objects for session
-          const sessionDate = new Date(year, 0, 1); // Jan 1st of the given year
           console.log(criteria.criteria_code)
           // Insert into response_2_1_1_data
-          const entry = await Criteria211.create({
-            id: criteria.id,
-            criteria_code: criteria.criteria_code,
-            session: sessionDate,  // Store as Date object
-            year: year,        // Store as Date object
-            programme_name,
-            programme_code,
-            no_of_seats,
-            no_of_students
+          const [entry, created] = await Criteria211.findOrCreate({
+            where: {
+              session: session,
+              year: year,
+              programme_name: programme_name,
+              programme_code: programme_code
+            },
+            defaults: {
+              id: criteria.id,
+              criteria_code: criteria.criteria_code,
+              session: session,
+              year: year,
+              programme_name,
+              programme_code,
+              no_of_seats,
+              no_of_students
+            }
           });
+
+          if (!created) {
+            const updatedEntry = await Criteria211.update({
+              no_of_seats,
+              no_of_students
+            }, {
+              where: {
+                session: session,
+                year: year,
+                programme_name: programme_name,
+                programme_code: programme_code
+              }
+            });
+            entry = updatedEntry;
+          }
       
           res.status(201).json(
             new apiResponse(201, entry, "Response created successfully")
@@ -141,70 +189,106 @@ const createResponse211 = asyncHandler(async (req, res) => {
 // };
 
 const score211 = asyncHandler(async (req, res) => {
-  /*
-  1. get the user input from the req body
-  2. query the criteria_master table to get the id and criteria_code 
-  3. validate the user input
-  4. create a new response
-  5. return the response
-  */
   const criteria_code = convertToPaddedFormat("2.1.1");
-  console.log(criteria_code)
-  console.log(CriteriaMaster)
+
   const criteria = await CriteriaMaster.findOne({
-    where: { 
-      sub_sub_criterion_id: criteria_code
+    where: { sub_sub_criterion_id: criteria_code }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  const currentYear = new Date().getFullYear();
+  const fiveYearsAgo = currentYear - 5;
+
+  // Fetch all responses from the last 5 years
+  const responses = await Criteria211.findAll({
+    attributes: ['no_of_seats', 'no_of_students', 'year'],
+    where: {
+      criteria_code: criteria.criteria_code,
+      year: {
+        [Sequelize.Op.gte]: fiveYearsAgo
+      }
+    },
+    order: [['year', 'DESC']]
+  });
+
+  // Group responses by year
+  const groupedByYear = {};
+  responses.forEach(response => {
+    const year = response.year;
+    if (!groupedByYear[year]) {
+      groupedByYear[year] = { seats: 0, students: 0 };
+    }
+    groupedByYear[year].seats += response.no_of_seats || 0;
+    groupedByYear[year].students += response.no_of_students || 0;
+  });
+
+  console.log(groupedByYear);
+  // Calculate score for each year
+  const scores = [];
+  for (const year of Object.keys(groupedByYear).sort((a, b) => b - a)) {
+    const { seats, students } = groupedByYear[year];
+    if (seats > 0) {
+      const yearlyScore = ((students / seats) * 100);
+      scores.push(yearlyScore);
+    }
+  }
+  console.log(scores);
+  if (scores.length === 0) {
+    throw new apiError(400, "No valid data to compute score");
+  }
+
+  const average = (scores.reduce((sum, val) => sum + val, 0) / scores.length).toFixed(3);
+  console.log("Average:", average);
+  console.log("Scores:", scores);
+  const scoreData = {
+    score_sub_sub_criteria: average,
+    computed_at: new Date()
+  };
+
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: currentYear,
+      cycle_year: 1
+    },
+    defaults: {
+      ...scoreData,
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      session: currentYear,
+      cycle_year: 1
     }
   });
-  const responses = await Criteria211.findAll({
-    attributes: ['no_of_seats', 'no_of_students'],  // Only get the option_selected field
-    where: {
-        criteria_code:criteria.criteria_code  
-    }
-});
-
-const total_seats = responses.reduce((total, response) => total + (response.no_of_seats || 0), 0);
-const total_students = responses.reduce((total, response) => total + (response.no_of_students || 0), 0);
-
-let score = 0;
-if (total_seats > 0) {
-  score = (total_students / total_seats) * 100;
-}
-//array of scores of 5 years
-let scores = [];
-if (total_seats > 0) {
-  score = (total_students / total_seats) * 100;
-}
-for (let i = 0; i < 5; i++) {
-  scores.push(score);
-}
-let average = 0;
-let years=scores.length;
-average = scores.reduce((sum, value) => sum + value, 0) / years;
-
-console.log("Average:", average);
-console.log("Score:", Score);
-const currentYear = new Date().getFullYear();
-const sessionDate = new Date(currentYear, 0, 1); 
-const entry = await Score.create(
-  {
-    criteria_code: criteria.criteria_code,
-    criteria_id: criteria.criterion_id,
-    sub_criteria_id: criteria.sub_criterion_id,
-    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
-    score_criteria: 0,
-    score_sub_criteria: 0,
-    score_sub_sub_criteria: average,
-    session: sessionDate,
-    year: currentYear,
-    cycle_year: 1
+  
+  if (!created) {
+    await Score.update(scoreData, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: currentYear,
+        cycle_year: 1
+      }
+    });
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: currentYear,
+        cycle_year: 1
+      }
+    });
   }
-);
-
-res.status(200).json(
-  new apiResponse(200, entry, "Response created successfully")
-)
+  
+  res.status(200).json(
+    new apiResponse(200, entry, created ? "Response created successfully" : "Response updated successfully")
+  );
 });
+
 
 
  
