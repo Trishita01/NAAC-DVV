@@ -16,6 +16,7 @@ const Criteria242 = db.response_2_4_2;
 const Criteria263 = db.response_2_6_3;
 const Criteria271 = db.response_2_7_1;
 const Score = db.scores;
+const IIQA = db.iiqa_form;
 const CriteriaMaster = db.criteria_master;
 
 // Helper function to convert criteria code to padded format
@@ -199,8 +200,16 @@ const score211 = asyncHandler(async (req, res) => {
     throw new apiError(404, "Criteria not found");
   }
   // 5 Years should be calculated form IIQA session DB
-  const currentYear = new Date().getFullYear();
-  const fiveYearsAgo = currentYear - 5;
+  const currentIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']] // Get the most recent IIQA form
+  });
+  
+  if (!currentIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+  
+  const fiveYearsAgo = currentIIQA.session_end_year - 5;
 
   // Fetch all responses from the last 5 years
   const responses = await Criteria211.findAll({
@@ -251,7 +260,7 @@ const score211 = asyncHandler(async (req, res) => {
   let [entry, created] = await Score.findOrCreate({
     where: {
       criteria_code: criteria.criteria_code,
-      session: currentYear,
+      session: currentIIQA.session_end_year,
       cycle_year: 1
     },
     defaults: {
@@ -262,7 +271,7 @@ const score211 = asyncHandler(async (req, res) => {
       sub_sub_criteria_id: criteria.sub_sub_criterion_id,
       score_criteria: 0,
       score_sub_criteria: 0,
-      session: currentYear,
+      session: currentIIQA.session_end_year,
       cycle_year: 1
     }
   });
@@ -337,22 +346,72 @@ const createResponse212 = asyncHandler(async (req, res) => {
         if (year < 1990 || year > new Date().getFullYear()) {
           throw new apiError(400, "Year must be between 1990 and current year");
         }
+
+        const currentIIQA = await IIQA.findOne({
+          attributes: ['session_end_year'],
+          order: [['created_at', 'DESC']] // Get the most recent IIQA form
+        });
+        
+        if (!currentIIQA) {
+          throw new apiError(404, "No IIQA form found");
+        }
+        const endYear = currentIIQA.session_end_year;
+        console.log("endYear", endYear)
+        const startYear = endYear - 4;
+        console.log("startYear", startYear)
+        if( endYear < session || session < startYear) {
+          throw new apiError(400, "Session must be between IIQA start year and end year");
+        }
+
+        if(number_of_seats_earmarked_for_reserved_category_as_per_GOI < 0 || number_of_students_admitted_from_the_reserved_category < 0) {
+          throw new apiError(400, "Number of seats and students cannot be negative");
+        }
+
+        if (number_of_seats_earmarked_for_reserved_category_as_per_GOI < number_of_students_admitted_from_the_reserved_category) {
+          throw new apiError(400, "Number of seats cannot be less than number of students");
+        }
         console.log(criteria.criteria_code)
         // Insert into response_2_1_2_data
 
-        const entry = await Criteria212.create({
-          id: criteria.id,
-          criteria_code: criteria.criteria_code,
-          session: sessionDate,  // Store as Date object
-          year: year,        // Store as Date object
-          number_of_seats_earmarked_for_reserved_category_as_per_GOI,
-          number_of_students_admitted_from_the_reserved_category
+        const [entry, created] = await Criteria212.findOrCreate({
+          where: {
+            criteria_code: criteria.criteria_code,
+            session: session,
+            year: year
+          },
+          defaults: {
+            id: criteria.id,
+            criteria_code: criteria.criteria_code,
+            session: session,  // Store as Date object
+            year: year,        // Store as Date object
+            number_of_seats_earmarked_for_reserved_category_as_per_GOI,
+            number_of_students_admitted_from_the_reserved_category
+          }
         });
-    
-        res.status(201).json(
-          new apiResponse(201, entry, "Response created successfully")
-        );
 
+        if(!created){
+          await Criteria212.update({
+            number_of_seats_earmarked_for_reserved_category_as_per_GOI,
+            number_of_students_admitted_from_the_reserved_category
+          }, {
+            where: {
+              criteria_code: criteria.criteria_code,
+              session: session,
+              year: year
+            }
+          });
+          entry = await Criteria212.findOne({
+            where: {
+              criteria_code: criteria.criteria_code,
+              session: session,
+              year: year
+            }
+          });
+        }
+  
+        res.status(201).json(
+          new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
+        );
 });
 // /**
 // * @route GET /api/response/2.1.2/:criteriaCode
@@ -385,6 +444,8 @@ const createResponse212 = asyncHandler(async (req, res) => {
 1. There should be one year for one req body
 
 */
+
+// TOTALLY ACCURATE
 const score212 = asyncHandler(async (req, res) => {
   /*
   1. get the user input from the req body
@@ -393,6 +454,9 @@ const score212 = asyncHandler(async (req, res) => {
   4. create a new response
   5. return the response
   */
+
+  let session = new Date().getFullYear();
+  console.log(session)
   const criteria_code = convertToPaddedFormat("2.1.2");
   console.log(criteria_code)
   console.log(CriteriaMaster)
@@ -401,54 +465,95 @@ const score212 = asyncHandler(async (req, res) => {
       sub_sub_criterion_id: criteria_code
     }
   });
-  const responses = await Criteria212.findAll({
-    attributes: ['number_of_seats_earmarked_for_reserved_category_as_per_GOI', 'number_of_students_admitted_from_the_reserved_category'],  // Only get the option_selected field
-    where: {
-        criteria_code:criteria.criteria_code  
-    }
-});
-const total_seats = responses.reduce((total, response) => total + (response.number_of_seats_earmarked_for_reserved_category_as_per_GOI || 0), 0);
-const total_students = responses.reduce((total, response) => total + (response.number_of_students_admitted_from_the_reserved_category || 0), 0);
 
-let score = 0;
-if (total_seats > 0) {
-  score = (total_students / total_seats) * 100;
-}
-//array of scores of 5 years
-let scores = [];
-if (total_seats > 0) {
-  score = (total_students / total_seats) * 100;
-}
-for (let i = 0; i < 5; i++) {
-  scores.push(score);
-}
+  const currentIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']] // Get the most recent IIQA form
+  });
+  
+  if (!currentIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+  const endYear = currentIIQA.session_end_year;
+  console.log("endYear", endYear)
+  const startYear = endYear - 4;
+  console.log("startYear", startYear)
+  if( endYear < session || session < startYear) {
+    throw new apiError(400, "Session must be between IIQA start year and end year");
+  }
+
+  const responses = await Criteria212.findAll({
+    attributes: ['number_of_seats_earmarked_for_reserved_category_as_per_GOI', 'number_of_students_admitted_from_the_reserved_category','session'],  // Only get the option_selected field
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: {
+        [Sequelize.Op.gte]: startYear
+      }
+    },
+    order: [['session', 'DESC']]
+});
+
+const groupedByYear = responses.reduce((acc, response) => {
+  const year = response.session;
+  if (!acc[year]) {
+    acc[year] = { totalSeats: 0, totalStudents: 0 };
+  }
+  acc[year].totalSeats += response.number_of_seats_earmarked_for_reserved_category_as_per_GOI;
+  acc[year].totalStudents += response.number_of_students_admitted_from_the_reserved_category;
+  return acc;
+}, {});
+
+const scores = Object.values(groupedByYear).map(yearData => {
+  const score = yearData.totalStudents / yearData.totalSeats;
+  return score;
+});
 let average = 0;
-let years=scores.length;
-average = scores.reduce((sum, value) => sum + value, 0) / years;
+average = scores.reduce((sum, value) => sum + value, 0) / scores.length;
 
 console.log("Average:", average);
+console.log("Scores:", scores);
+console.log("Grouped by year:", groupedByYear);
 
-const currentYear = new Date().getFullYear();
-const sessionDate = new Date(currentYear, 0, 1); 
-const entry = await Score.create(
+let [entry, created] = await Score.findOrCreate(
   {
-    criteria_code: criteria.criteria_code,
-    criteria_id: criteria.criterion_id,
-    sub_criteria_id: criteria.sub_criterion_id,
-    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
-    score_criteria: 0,
-    score_sub_criteria: 0,
-    score_sub_sub_criteria: average,
-    session: sessionDate,
-    year: currentYear,
-    cycle_year: 1
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: session,
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: average,
+      session: session,
+    }
   }
 );
 
-res.status(200).json(
-  new apiResponse(200, entry, "Response created successfully")
-)
+if(!created){
+  await Score.update({
+    score_sub_sub_criteria: average,
+    session: session,
+  }, {
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: session,
+    }
+  });
+  entry = await Score.findOne({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: session
+    }
+  });
+}
 
+res.status(200).json(
+  new apiResponse(200, entry, created ? "Response created successfully" : "Response updated successfully")
+  )
 });
 
 
