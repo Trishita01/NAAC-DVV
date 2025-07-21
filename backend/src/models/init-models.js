@@ -3,6 +3,11 @@ const DataTypes = _sequelize.DataTypes;
 import _criteria_master from  "./criteria_master.js";
 import _file_uploads from  "./file_uploads.js";
 import _hdr from  "./hdr.js";
+import _iiqa_departments from  "./iiqa_departments.js";
+import _iiqa_form from  "./iiqa_form.js";
+import _iiqa_programme_count from  "./iiqa_programme_count.js";
+import _iiqa_staff_details from  "./iiqa_staff_details.js";
+import _iiqa_student_details from  "./iiqa_student_details.js";
 import _iqac_supervision from  "./iqac_supervision.js";
 import _response_1_1_3 from  "./response_1_1_3.js";
 import _response_1_2_1 from  "./response_1_2_1.js";
@@ -63,6 +68,11 @@ export default function initModels(sequelize) {
   const criteria_master = _criteria_master.init(sequelize, DataTypes);
   const file_uploads = _file_uploads.init(sequelize, DataTypes);
   const hdr = _hdr.init(sequelize, DataTypes);
+  const iiqa_departments = _iiqa_departments.init(sequelize, DataTypes);
+  const iiqa_form = _iiqa_form.init(sequelize, DataTypes);
+  const iiqa_programme_count = _iiqa_programme_count.init(sequelize, DataTypes);
+  const iiqa_staff_details = _iiqa_staff_details.init(sequelize, DataTypes);
+  const iiqa_student_details = _iiqa_student_details.init(sequelize, DataTypes);
   const iqac_supervision = _iqac_supervision.init(sequelize, DataTypes);
   const response_1_1_3 = _response_1_1_3.init(sequelize, DataTypes);
   const response_1_2_1 = _response_1_2_1.init(sequelize, DataTypes);
@@ -337,11 +347,24 @@ export default function initModels(sequelize) {
   criteria_master.hasMany(response_7_1_7, { as: "id_response_7_1_7s", foreignKey: "id"});
   scores.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(scores, { as: "scores", foreignKey: "criteria_code"});
+  iiqa_departments.belongsTo(iiqa_form, { as: "iiqa_form", foreignKey: "iiqa_form_id"});
+  iiqa_form.hasMany(iiqa_departments, { as: "iiqa_departments", foreignKey: "iiqa_form_id"});
+  iiqa_programme_count.belongsTo(iiqa_form, { as: "iiqa_form", foreignKey: "iiqa_form_id"});
+  iiqa_form.hasMany(iiqa_programme_count, { as: "iiqa_programme_counts", foreignKey: "iiqa_form_id"});
+  iiqa_staff_details.belongsTo(iiqa_form, { as: "iiqa_form", foreignKey: "iiqa_form_id"});
+  iiqa_form.hasMany(iiqa_staff_details, { as: "iiqa_staff_details", foreignKey: "iiqa_form_id"});
+  iiqa_student_details.belongsTo(iiqa_form, { as: "iiqa_form", foreignKey: "iiqa_form_id"});
+  iiqa_form.hasMany(iiqa_student_details, { as: "iiqa_student_details", foreignKey: "iiqa_form_id"});
 
   return {
     criteria_master,
     file_uploads,
     hdr,
+    iiqa_departments,
+    iiqa_form,
+    iiqa_programme_count,
+    iiqa_staff_details,
+    iiqa_student_details,
     iqac_supervision,
     response_1_1_3,
     response_1_2_1,

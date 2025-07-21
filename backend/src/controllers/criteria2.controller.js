@@ -198,7 +198,7 @@ const score211 = asyncHandler(async (req, res) => {
   if (!criteria) {
     throw new apiError(404, "Criteria not found");
   }
-
+  // 5 Years should be calculated form IIQA session DB
   const currentYear = new Date().getFullYear();
   const fiveYearsAgo = currentYear - 5;
 
