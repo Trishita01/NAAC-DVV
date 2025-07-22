@@ -868,7 +868,7 @@ const createResponse243 = asyncHandler(async (req, res) => {
     );
 });
   //score 243
-  const score243 = asyncHandler(async (req, res) => {
+const score243 = asyncHandler(async (req, res) => {
     /*
     1. get the user input from the req body
     2. query the criteria_master table to get the id and criteria_code 
@@ -946,51 +946,138 @@ const createResponse243 = asyncHandler(async (req, res) => {
     );
   });
 
-  const createResponse222 = asyncHandler(async (req, res) => {
-    
-    console.log(CriteriaMaster)
-    const criteria = await CriteriaMaster.findOne({
+
+const createResponse222_241_243 = asyncHandler(async (req, res) => {
+    const {
+      session,
+      name_of_the_full_time_teacher,
+      designation,
+      year_of_appointment,
+      nature_of_appointment,
+      name_of_department,
+      total_number_of_years_of_experience_in_the_same_institution,
+      is_the_teacher_still_serving
+    } = req.body;
+  
+    // Validate required fields
+    if (
+      !year_of_appointment ||
+      !name_of_the_full_time_teacher ||
+      !designation ||
+      !nature_of_appointment ||
+      !name_of_department ||
+      !total_number_of_years_of_experience_in_the_same_institution ||
+      is_the_teacher_still_serving === undefined
+    ) {
+      throw new apiError(400, "Missing required fields");
+    }
+  
+    if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
+      throw new apiError(400, "Year must be between 1990 and current year");
+    }
+  
+    if (session < 1990 || session > new Date().getFullYear()) {
+      throw new apiError(400, "Session must be between 1990 and current year");
+    }
+  
+    // Get IIQA session range for validation
+    const latestIIQA = await IIQA.findOne({
+      attributes: ["session_end_year"],
+      order: [["created_at", "DESC"]],
+    });
+  
+    if (!latestIIQA) {
+      throw new apiError(404, "No IIQA form found");
+    }
+  
+    const endYear = latestIIQA.session_end_year;
+    const startYear = endYear - 4;
+  
+    if (session < startYear || session > endYear) {
+      throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+    }
+  
+    // Step 1: Get all 3 criteria from CriteriaMaster
+    const criteriaList = await CriteriaMaster.findAll({
+      where: {
+        sub_sub_criterion_id: { [Sequelize.Op.in]: ['020202', '020401', '020403'] },
+        sub_criterion_id: { [Sequelize.Op.in]: ['0202', '0204'] },
+        criterion_id: '02'
+      }
+    });
+  
+    if (!criteriaList || criteriaList.length !== 3) {
+      throw new apiError(404, "One or more criteria not found");
+    }
+  
+    // Step 2: Map sub_sub_criterion_id to model
+    const modelMap = {
+      '020202': Criteria222,
+      '020401': Criteria241,
+      '020403': Criteria243
+    };
+  
+    const responses = [];
+  
+    for (const criteria of criteriaList) {
+      const Model = modelMap[criteria.sub_sub_criterion_id];
+  
+      if (!Model) continue;
+  
+      const [entry, created] = await Model.findOrCreate({
         where: {
-          sub_sub_criterion_id: '020202',
-          sub_criterion_id: '0202',
-          criterion_id: '02'
+          id: criteria.id,
+          criteria_code: criteria.criteria_code,
+          session: session,
+        },
+        defaults: {
+          id: criteria.id,
+          criteria_code: criteria.criteria_code,
+          session: session,
+          year_of_appointment,
+          name_of_the_full_time_teacher,
+          designation,
+          nature_of_appointment,
+          name_of_department,
+          total_number_of_years_of_experience_in_the_same_institution,
+          is_the_teacher_still_serving_the_institution: is_the_teacher_still_serving,
         }
       });
   
-      if (!criteria) {
-        throw new apiError(404, "Criteria not found");
-      }
+      if (!created) {
+        await Model.update({
+          year_of_appointment,
+          name_of_the_full_time_teacher,
+          designation,
+          nature_of_appointment,
+          name_of_department,
+          total_number_of_years_of_experience_in_the_same_institution,
+          is_the_teacher_still_serving_the_institution: is_the_teacher_still_serving
+        }, {
+          where: {
+            id: criteria.id,
+            criteria_code: criteria.criteria_code,
+            session: session
+          }
+        });
   
-      // Validate required fields
-      const {session,name_of_full_time_teachers,designation, year_of_appointment,nature_of_appointment,name_of_department,total_number_of_years_of_experience_in_the_same_institution,is_the_teacprogramme_name} = req.body;
-      if (!year_of_appointment || !name_of_full_time_teachers || !designation || !nature_of_appointment || !name_of_department || !total_number_of_years_of_experience_in_the_same_institution || !is_the_teacprogramme_name) {
-        throw new apiError(400, "Missing required fields");
-      }
-
-      if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
-        throw new apiError(400, "Year must be between 1990 and current year");
-      }
-
-      // Create proper Date objects for session
-      const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
-      console.log(criteria.criteria_code)
-      // Insert into response_2_2_2_data
-      const entry = await Criteria222.create({
-        id: criteria.id,
-        criteria_code: criteria.criteria_code,
-        session: sessionDate,  // Store as Date object
-        year_of_appointment: year_of_appointment,        // Store as Date object
-        name_of_full_time_teachers,
-        designation,
-        nature_of_appointment,
-        name_of_department,
-        total_number_of_years_of_experience_in_the_same_institution,
-        is_the_teacprogramme_name
-      });
+        const updated = await Model.findOne({
+          where: {
+            id: criteria.id,
+            criteria_code: criteria.criteria_code,
+            session: session
+          }
+        });
   
-      res.status(201).json(
-        new apiResponse(201, entry, "Response created successfully")
-      );
+        responses.push(updated);
+      } else {
+        responses.push(entry);
+      }
+    }
+  
+    return res.status(200).json(
+      new apiResponse(200, responses, "Responses created/updated successfully in 222, 241, 243")
+    );
 });
 
 //   //score 222
@@ -1498,9 +1585,8 @@ export {
   // getAllCriteria212,
   createResponse212,
   createResponse233,
-  createResponse222,
+  createResponse222_241_243,
   createResponse242,
-  createResponse243,
   // getResponsesByCriteriaCode212,
   score212,
   score222,
