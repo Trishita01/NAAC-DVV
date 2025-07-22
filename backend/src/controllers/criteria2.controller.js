@@ -501,7 +501,7 @@ const score212 = asyncHandler(async (req, res) => {
 
   const session = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("2.1.2");
-
+  console.log("Current year session",session)
   // Step 1: Get corresponding criteria from master
   const criteria = await CriteriaMaster.findOne({
     where: { sub_sub_criterion_id: criteria_code }
@@ -764,6 +764,27 @@ const score222 = asyncHandler(async (req, res) => {
       sub_sub_criterion_id: criteria_code
     }
   });
+
+  if (!criteria){
+    throw new apiError
+  }
+
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 4;
+
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+  }
+
   const totalStudents = await getTotalStudents();
   const teacherCount = await getTeacherCount();
 
@@ -948,6 +969,114 @@ const createResponse242 = asyncHandler(async (req, res) => {
   return res.status(created ? 201 : 200).json(
     new apiResponse(created ? 201 : 200, entry, 
       created ? "Response created successfully" : "Response updated successfully")
+  );
+});
+
+//score 242
+const score242 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("2.4.2");
+
+  // 1. Get criteria details
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // 2. Get latest IIQA session
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "IIQA not found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 4;
+
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+  }
+
+  // 3. Fetch 2.4.2 responses in that 5-year range
+  const responses = await Criteria242.findAll({
+    attributes: ['session', 'number_of_full_time_teachers'],
+    where: {
+      session: {
+        [Sequelize.Op.between]: [startYear, endYear]
+      }
+    },
+    raw: true
+  });
+
+  if (!responses.length) {
+    throw new apiError(404, "No responses found for the given criteria 2.4.2 and session range");
+  }
+
+  // 4. Group responses by session
+  const grouped = {};
+  for (const res of responses) {
+    if (!grouped[res.session]) {
+      grouped[res.session] = 0;
+    }
+    grouped[res.session] += res.number_of_full_time_teachers || 0;
+  }
+
+  // 5. Compute yearly score array and average
+  const yearlyScores = Object.values(grouped).map(val => val); // All are just values
+  const total = yearlyScores.reduce((sum, val) => sum + val, 0);
+  const count = yearlyScores.length;
+
+  let average = 0;
+  if (count > 0) {
+    average = parseFloat((total / count).toFixed(2));
+  }
+
+  // 6. Upsert into Score table
+  let entry = await Score.findOne({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: session
+    }
+  });
+
+  if (!entry) {
+    entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: average,
+      session: session,
+      cycle_year: 1
+    });
+  } else {
+    await Score.update({
+      score_sub_sub_criteria: average
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
+  }
+
+  res.status(200).json(
+    new apiResponse(200, entry, "Score 2.4.2 calculated and updated successfully")
   );
 });
 
@@ -1394,73 +1523,6 @@ const createResponse233 = asyncHandler(async (req, res) => {
 //   }
 // });
 
-//score 242
-const score242 = asyncHandler(async (req, res) => {
-  /*
-  1. get the user input from the req body
-  2. query the criteria_master table to get the id and criteria_code 
-  3. validate the user input
-  4. create a new response
-  5. return the response
-  */
-  const criteria_code = convertToPaddedFormat("2.4.2");
-  console.log(criteria_code)
-  console.log(CriteriaMaster)
-  const criteria = await CriteriaMaster.findOne({
-    where: { 
-      sub_sub_criterion_id: criteria_code
-    }
-  });
-  const responses = await Criteria242.findAll({
-    attributes: ['number_of_full_time_teachers'],  // Only get the option_selected field
-    where: {
-        criteria_code:criteria.criteria_code  
-    }
-});
-
-const total_full_time_teachers = responses.reduce((total, response) => total + (response.number_of_full_time_teachers || 0), 0);
-const count = getTeacherCount(responses);
-console.log(count); 
-let score = 0;
-if (total_full_time_teachers > 0) {
-  score = (total_full_time_teachers / count) * 100;
-}
-//array of scores of 5 years
-let scores = [];
-if (total_seats > 0) {
-  score = (total_students / total_seats) * 100;
-}
-for (let i = 0; i < 5; i++) {
-  scores.push(score);
-}
-let average = 0;
-let years=scores.length;
-average = scores.reduce((sum, value) => sum + value, 0) / years;
-
-console.log("Average:", average);
-
-const currentYear = new Date().getFullYear();
-const sessionDate = new Date(currentYear, 0, 1); 
-const entry = await Score.create(
-  {
-    criteria_code: criteria.criteria_code,
-    criteria_id: criteria.criterion_id,
-    sub_criteria_id: criteria.sub_criterion_id,
-    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
-    score_criteria: 0,
-    score_sub_criteria: 0,
-    score_sub_sub_criteria: average,
-    session: sessionDate,
-    year: currentYear,
-    cycle_year: 1
-  }
-);
-
-res.status(200).json(
-  new apiResponse(200, entry, "Response created successfully")
-   )
-});
-  
 
 
 // const getAllCriteria263 = asyncHandler(async (req, res) => {
