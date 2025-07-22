@@ -214,6 +214,15 @@ const createIIQAForm = asyncHandler(async (req, res) => {
     }
 });
 
+const getSessions = asyncHandler(async (req, res) => {
+        const sessions = await IIQAForm.findAll({
+            attributes: ['session_start_year', 'session_end_year'],
+            group: ['session_start_year', 'session_end_year'],
+            order: [['session_start_year', 'DESC']]
+        });
+        res.status(200).json(new apiResponse(200, sessions, "Sessions retrieved successfully"));
+});
 export {
-    createIIQAForm
+    createIIQAForm,
+    getSessions
 }
