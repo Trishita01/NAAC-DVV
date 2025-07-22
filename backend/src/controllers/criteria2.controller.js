@@ -816,6 +816,169 @@ const score222 = asyncHandler(async (req, res) => {
   );
 });
 
+/**
+* @route POST /api/response/2.4.2
+* @description Create a new response for criteria 2.4.2
+* @access Private/Admin
+*/
+const createResponse242 = asyncHandler(async (req, res) => {
+  const {
+    session,
+    year,
+    number_of_full_time_teachers,
+    qualification,
+    year_of_obtaining_the_qualification,
+    whether_recognised_as_research_guide,
+    year_of_recognition_as_research_guide
+  } = req.body;
+
+  // Convert to numbers in case values come as strings
+  const sessionYear = Number(session);
+  const entryYear = Number(year);
+  const numberoffulltimeteachers = Number(number_of_full_time_teachers);
+  const qualificationValue = Number(qualification); // Changed variable name to avoid conflict
+  const yearOfQualification = Number(year_of_obtaining_the_qualification);
+  const isResearchGuide = Number(whether_recognised_as_research_guide);
+  const yearOfRecognition = Number(year_of_recognition_as_research_guide);
+
+  // Validate required fields
+  if (!sessionYear || !entryYear || !numberoffulltimeteachers || 
+      isNaN(qualificationValue) || !yearOfQualification || 
+      isNaN(isResearchGuide) || !yearOfRecognition) {
+    throw new apiError(400, "Missing or invalid required fields");
+  }
+
+  if (sessionYear < 1990 || sessionYear > new Date().getFullYear()) {
+    throw new apiError(400, "Session year must be between 1990 and current year");
+  }
+
+  if (entryYear < 1990 || entryYear > new Date().getFullYear()) {
+    throw new apiError(400, "Entry year must be between 1990 and current year");
+  }
+
+  if (qualificationValue < 0) {
+    throw new apiError(400, "Qualification cannot be negative");
+  }
+
+  if (yearOfQualification < 1990 || yearOfQualification > new Date().getFullYear()) {
+    throw new apiError(400, "Year of obtaining the qualification must be between 1990 and current year");
+  }
+
+  if (yearOfRecognition < 1990 || yearOfRecognition > new Date().getFullYear()) {
+    throw new apiError(400, "Year of recognition as research guide must be between 1990 and current year");
+  }
+
+  if (yearOfRecognition < yearOfQualification) {
+    throw new apiError(400, "Year of recognition as research guide must be greater than or equal to year of obtaining the qualification");
+  }
+
+  // Fetch Criteria Code from Master Table
+  const criteria = await CriteriaMaster.findOne({
+    where: {
+      sub_sub_criterion_id: '020402',
+      sub_criterion_id: '0204',
+      criterion_id: '02'
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // Get IIQA session range for validation
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "IIQA not found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 4;
+
+  if (sessionYear < startYear || sessionYear > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+  }
+
+  // Create or update entry
+  let [entry, created] = await Criteria242.findOrCreate({
+    where: {
+      session: sessionYear,
+      criteria_code: criteria.criteria_code
+    },
+    defaults: {
+      id: criteria.id,
+      criteria_code: criteria.criteria_code,
+      session: sessionYear,
+      number_of_full_time_teachers: numberoffulltimeteachers,
+      qualification: qualificationValue,
+      year_of_obtaining_the_qualification: yearOfQualification,
+      whether_recognised_as_research_guide: isResearchGuide,
+      year_of_recognition_as_research_guide: yearOfRecognition
+    }
+  });
+
+  // If entry exists, update it
+  if (!created) {
+    await Criteria242.update({
+      number_of_full_time_teachers: numberoffulltimeteachers,
+      qualification: qualificationValue,
+      year_of_obtaining_the_qualification: yearOfQualification,
+      whether_recognised_as_research_guide: isResearchGuide,
+      year_of_recognition_as_research_guide: yearOfRecognition
+    }, {
+      where: {
+        session: sessionYear,
+        criteria_code: criteria.criteria_code
+      },
+      returning: true
+    });
+
+    // Fetch the updated entry
+    entry = await Criteria242.findOne({
+      where: {
+        session: sessionYear,
+        criteria_code: criteria.criteria_code
+      }
+    });
+  }
+
+  return res.status(created ? 201 : 200).json(
+    new apiResponse(created ? 201 : 200, entry, 
+      created ? "Response created successfully" : "Response updated successfully")
+  );
+});
+
+// /**
+// * @route GET//api/response/2.4.2/:criteriaCode
+// * @description Get all responses for a specific criteria code
+// * @access public
+// */
+//  const getResponseByCriteriaCode242 = async (req, res, next) => {
+//   try {
+//       const { criteriaCode } = req.params;
+      
+//       const responses = await db.response_2_4_2.findAll({
+//           where: { criteria_code: criteriaCode },
+//           include: [{
+//               model: db.criteria_master,
+//               as: 'criteria',
+//               attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
+//           }],
+//           order: [['submitted_at', 'DESC']]
+//       });
+
+//       return res.status(200).json(
+//           new apiResponse(200, responses, 'Responses retrieved successfully')
+//       );
+
+//   } catch (error) {
+//       next(error);
+//   }
+// };
+
 
 // /**
 //  * @route GET /api/response/2.1.1/:criteriaCode
@@ -918,56 +1081,56 @@ const score222 = asyncHandler(async (req, res) => {
 //   );
 // });
 
-/**
-* @route POST /api/response/2.4.1and2.4.3and2.2.2and2.3.3
-* @description Create a new response for criteria 2.4.1 and 2.4.3 and 2.2.2 and 2.3.3
-* @access Private/Admin
-*/
-  const createResponse241 = asyncHandler(async (req, res) => {
-        console.log(CriteriaMaster)
-        const criteria = await CriteriaMaster.findOne({
-            where: {
-              sub_sub_criterion_id: '020401',
-              sub_criterion_id: '0204',
-              criterion_id: '02'
-            }
-          });
+// /**
+// * @route POST /api/response/2.4.1and2.4.3and2.2.2and2.3.3
+// * @description Create a new response for criteria 2.4.1 and 2.4.3 and 2.2.2 and 2.3.3
+// * @access Private/Admin
+// */
+//   const createResponse241 = asyncHandler(async (req, res) => {
+//         console.log(CriteriaMaster)
+//         const criteria = await CriteriaMaster.findOne({
+//             where: {
+//               sub_sub_criterion_id: '020401',
+//               sub_criterion_id: '0204',
+//               criterion_id: '02'
+//             }
+//           });
       
-          if (!criteria) {
-            throw new apiError(404, "Criteria not found");
-          }
+//           if (!criteria) {
+//             throw new apiError(404, "Criteria not found");
+//           }
       
-          // Validate required fields
-          const {session,name_of_the_fulltime_teachers,designation, year_of_appointment,nature_of_appointment,name_of_department,total_number_of_years_of_experience_in_the_same_institution,is_the_teacprogramme_name} = req.body;
-          if (!year_of_appointment || !name_of_the_fulltime_teachers || !designation || !nature_of_appointment || !name_of_department || !total_number_of_years_of_experience_in_the_same_institution || !is_the_teacprogramme_name) {
-            throw new apiError(400, "Missing required fields");
-          }
+//           // Validate required fields
+//           const {session,name_of_the_fulltime_teachers,designation, year_of_appointment,nature_of_appointment,name_of_department,total_number_of_years_of_experience_in_the_same_institution,is_the_teacprogramme_name} = req.body;
+//           if (!year_of_appointment || !name_of_the_fulltime_teachers || !designation || !nature_of_appointment || !name_of_department || !total_number_of_years_of_experience_in_the_same_institution || !is_the_teacprogramme_name) {
+//             throw new apiError(400, "Missing required fields");
+//           }
 
-          if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
-            throw new apiError(400, "Year must be between 1990 and current year");
-          }
+//           if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
+//             throw new apiError(400, "Year must be between 1990 and current year");
+//           }
 
-          // Create proper Date objects for session
-          const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
-          console.log(criteria.criteria_code)
-          // Insert into response_2_4_1and2_4_3and2_2_2and2_3_3_data
-          const entry = await Criteria241.create({
-            id: criteria.id,
-            criteria_code: criteria.criteria_code,
-            session: sessionDate,  // Store as Date object
-            year_of_appointment: year_of_appointment,        // Store as Date object
-            name_of_the_fulltime_teachers,
-            designation,
-            nature_of_appointment,
-            name_of_department,
-            total_number_of_years_of_experience_in_the_same_institution,
-            is_the_teacprogramme_name
-          });
+//           // Create proper Date objects for session
+//           const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
+//           console.log(criteria.criteria_code)
+//           // Insert into response_2_4_1and2_4_3and2_2_2and2_3_3_data
+//           const entry = await Criteria241.create({
+//             id: criteria.id,
+//             criteria_code: criteria.criteria_code,
+//             session: sessionDate,  // Store as Date object
+//             year_of_appointment: year_of_appointment,        // Store as Date object
+//             name_of_the_fulltime_teachers,
+//             designation,
+//             nature_of_appointment,
+//             name_of_department,
+//             total_number_of_years_of_experience_in_the_same_institution,
+//             is_the_teacprogramme_name
+//           });
       
-          res.status(201).json(
-            new apiResponse(201, entry, "Response created successfully")
-          );
-  });
+//           res.status(201).json(
+//             new apiResponse(201, entry, "Response created successfully")
+//           );
+//   });
 // /**
 // * @route GET /api/response/2.4.1and2.4.3and2.2.2and2.3.3/:criteriaCode
 // * @description Get all responses for a specific criteria code
@@ -1202,48 +1365,7 @@ const createResponse233 = asyncHandler(async (req, res) => {
 * @description Create a new response for criteria 2.4.2
 * @access Private/Admin
 */
-const createResponse242 = asyncHandler(async (req, res) => {
-      const criteria = await CriteriaMaster.findOne({
-          where: {
-            sub_sub_criterion_id: '020402',
-            sub_criterion_id: '0204',
-            criterion_id: '02'
-          }
-        });
-    
-        if (!criteria) {
-          throw new apiError(404, "Criteria not found");
-        }
-    
-        // Validate required fields
-        const {session,number_of_full_time_teachers,qualification,year_of_obtaining_the_qualification, whether_recognised_as_research_guide, year_of_recognition_as_research_guide } = req.body;
-        if (!session || !number_of_full_time_teachers || !qualification || !year_of_obtaining_the_qualification || !whether_recognised_as_research_guide || !year_of_recognition_as_research_guide) {
-          throw new apiError(400, "Missing required fields");
-        }
 
-        if (year_of_obtaining_the_qualification < 1990 || year_of_obtaining_the_qualification > new Date().getFullYear()) {
-          throw new apiError(400, "Year must be between 1990 and current year");
-        }
-
-        // Create proper Date objects for session
-        const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
-        console.log(criteria.criteria_code)
-        // Insert into response_2_4_2_data
-        const entry = await Criteria242.create({
-          id: criteria.id,
-          criteria_code: criteria.criteria_code,
-          session: sessionDate,  // Store as Date object
-          number_of_full_time_teachers,
-          qualification,
-          year_of_obtaining_the_qualification,
-          whether_recognised_as_research_guide,
-          year_of_recognition_as_research_guide
-        });
-    
-        res.status(201).json(
-          new apiResponse(201, entry, "Response created successfully")
-        );
-});
 // /**
 // * @route GET /api/response/2.4.2/:criteriaCode
 // * @description Get all responses for a specific criteria code
