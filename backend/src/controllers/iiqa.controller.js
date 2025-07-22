@@ -86,23 +86,45 @@ const createIIQAForm = asyncHandler(async (req, res) => {
                 throw new apiError(400, `Missing required department fields: ${missingDeptFields.join(', ')}`);
             }
         }
-
         // Create main IIQA form
         try {
-            const form = await IIQAForm.create({
-                institution_id,
-                session_start_year,
-                session_end_year,
-                year_filled,
-                naac_cycle,
-                desired_grade,
-                has_mou,
-                mou_file_url: has_mou ? mou_file_url : null
-            }, { transaction });
-            console.log('IIQA form created successfully');
-            
-            // Create programme count with all fields
-            await IIQAProgrammeCount.create({
+            console.log("→ Checking if IIQAForm exists...");
+        
+            let form = await IIQAForm.findOne({
+                where: {
+                    institution_id,
+                    session_start_year,
+                    session_end_year,
+                    year_filled
+                },
+                transaction
+            });
+        
+            if (form) {
+                console.log("→ Existing IIQAForm found. Updating...");
+                await form.update({
+                    naac_cycle,
+                    desired_grade,
+                    has_mou,
+                    mou_file_url: has_mou ? mou_file_url : null
+                }, { transaction });
+            } else {
+                console.log("→ Creating new IIQAForm...");
+                form = await IIQAForm.create({
+                    institution_id,
+                    session_start_year,
+                    session_end_year,
+                    year_filled,
+                    naac_cycle,
+                    desired_grade,
+                    has_mou,
+                    mou_file_url: has_mou ? mou_file_url : null
+                }, { transaction });
+            }
+        
+            // Upsert programme count
+            console.log("→ Upserting programme count...");
+            await IIQAProgrammeCount.upsert({
                 iiqa_form_id: form.id,
                 ug: programmeCount.ug || 0,
                 pg: programmeCount.pg || 0,
@@ -114,10 +136,11 @@ const createIIQAForm = asyncHandler(async (req, res) => {
                 diploma: programmeCount.diploma || 0,
                 certificate: programmeCount.certificate || 0
             }, { transaction });
-            console.log('Programme count created successfully');
-
-            // Create departments
-            const departmentPromises = departments.map(dept => 
+        
+            // Replace departments
+            console.log("→ Replacing departments...");
+            await IIQADepartments.destroy({ where: { iiqa_form_id: form.id }, transaction });
+            await Promise.all(departments.map(dept =>
                 IIQADepartments.create({
                     iiqa_form_id: form.id,
                     department: dept.department,
@@ -127,12 +150,11 @@ const createIIQAForm = asyncHandler(async (req, res) => {
                     affiliation_status: dept.affiliation_status,
                     specialization: dept.specialization || null
                 }, { transaction })
-            );
-            await Promise.all(departmentPromises);
-            console.log('Departments created successfully');
-
-            // Create staff details with all fields
-            await IIQAStaffDetails.create({
+            ));
+        
+            // Upsert staff details
+            console.log("→ Upserting staff details...");
+            await IIQAStaffDetails.upsert({
                 iiqa_form_id: form.id,
                 perm_male: staffDetails.perm_male || 0,
                 perm_female: staffDetails.perm_female || 0,
@@ -144,22 +166,22 @@ const createIIQAForm = asyncHandler(async (req, res) => {
                 non_female: staffDetails.non_female || 0,
                 non_trans: staffDetails.non_trans || 0
             }, { transaction });
-            console.log('Staff details created successfully');
-
-            // Create student details with all fields
-            await IIQAStudentDetails.create({
+        
+            // Upsert student details
+            console.log("→ Upserting student details...");
+            await IIQAStudentDetails.upsert({
                 iiqa_form_id: form.id,
                 regular_male: studentDetails.regular_male || 0,
                 regular_female: studentDetails.regular_female || 0,
                 regular_trans: studentDetails.regular_trans || 0
             }, { transaction });
-            console.log('Student details created successfully');
-
-            // Commit the transaction
+        
+            // Final commit
             await transaction.commit();
-            console.log('Transaction committed successfully');
-
-            // Fetch the complete form data with all relations
+            console.log("→ Transaction committed.");
+        
+            // Fetch full data
+            console.log("→ Fetching full form with includes...");
             const completeForm = await IIQAForm.findByPk(form.id, {
                 include: [
                     { model: IIQAProgrammeCount, as: 'iiqa_programme_counts' },
@@ -168,24 +190,22 @@ const createIIQAForm = asyncHandler(async (req, res) => {
                     { model: IIQAStudentDetails, as: 'iiqa_student_details' }
                 ]
             });
-
+        
             res.status(201).json(
-                new apiResponse(201, completeForm, "IIQA form created successfully")
+                new apiResponse(201, completeForm, form._options.isNewRecord ? "IIQA form created" : "IIQA form updated")
             );
-
+        
         } catch (dbError) {
-            console.error('Database error:', dbError);
-            // Rollback the transaction in case of error
+            console.error('→ DB Error:', dbError);
             await transaction.rollback();
-            
-            // Handle validation errors specifically
+        
             if (dbError.name === 'SequelizeValidationError') {
                 const errors = dbError.errors.map(err => err.message);
-                console.error('Validation errors:', errors);
-                throw new apiError(400, errors.join(', '));
+                console.error('→ Validation errors:', errors);
+                return res.status(400).json(new apiResponse(400, {}, errors.join(', ')));
             }
-            
-            throw dbError;
+        
+            return res.status(500).json(new apiResponse(500, {}, "Internal Server Error"));
         }
 
     } catch (error) {
