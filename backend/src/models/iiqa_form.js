@@ -15,15 +15,15 @@ export default class iiqa_form extends Model {
       allowNull: false
     },
     session_start_year: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DATE,
       allowNull: false
     },
     session_end_year: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DATE,
       allowNull: false
     },
     year_filled: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DATE,
       allowNull: false
     },
     naac_cycle: {
@@ -52,8 +52,6 @@ export default class iiqa_form extends Model {
     sequelize,
     tableName: 'iiqa_form',
     timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
     indexes: [
       {
         name: "PRIMARY",

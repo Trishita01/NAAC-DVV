@@ -47,8 +47,8 @@ export default class scores extends Model {
       allowNull: true
     },
     cycle_year: {
-      type: DataTypes.TINYINT,
-      allowNull: false
+      type: DataTypes.INTEGER,
+      allowNull: true
     },
     computed_by: {
       type: DataTypes.CHAR(36),
