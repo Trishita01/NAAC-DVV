@@ -11,12 +11,11 @@ const IIQAForm = db.iiqa_form;
 const createExtendedProfile = asyncHandler(async (req, res) => {
     try {
         // Get current year
-        const currentYear = new Date().getFullYear();
-        console.log("1. Current year:", currentYear);
         console.log("2. Request body:", JSON.stringify(req.body, null, 2));
         
         // Extract all fields from request body
         const {
+            year,
             number_of_courses_offered,
             total_students,
             reserved_category_seats,
@@ -48,8 +47,8 @@ const createExtendedProfile = asyncHandler(async (req, res) => {
         });
         
         // Validate year
-        if (latestIIQA.year_filled!== currentYear) {
-            throw new apiError(400, `IIQA form year (${latestIIQA.year_filled}) does not match current year (${currentYear})`);
+        if (latestIIQA.year_filled!== year) {
+            throw new apiError(400, `IIQA form year (${latestIIQA.year_filled}) does not match current year (${year})`);
         }
         
         // Use the existing iiqaForm.id directly in the create call
@@ -57,7 +56,7 @@ const createExtendedProfile = asyncHandler(async (req, res) => {
         // Create extended profile
         const profile = await ExtendedProfile.create({
             iiqa_form_id: latestIIQA.id,
-            year: currentYear,
+            year: year,
             number_of_courses_offered,
             total_students,
             reserved_category_seats,
