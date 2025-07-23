@@ -77,23 +77,6 @@ const getTotalStudents = async () => {
   return totalStudents;
 };
 
-
-// const getAllCriteria211 = asyncHandler(async (req, res) => {
-//     const criteria = await Criteria211.findAll();
-//     if (!criteria) {
-//         throw new apiError(404, "Criteria not found");
-//     }
-    
-//     res.status(200).json(
-//         new apiResponse(200, criteria, "Criteria found")
-//     );
-// });
-
-/**
- * @route POST /api/response/2.1.1
- * @description Create a new response for criteria 2.1.1
- * @access Private/Admin
- */
 const createResponse211 = asyncHandler(async (req, res) => {
   /*
     1. Extract input from req.body
@@ -702,7 +685,6 @@ const createResponse222_241_243 = asyncHandler(async (req, res) => {
               name_of_department
           },
           defaults: {
-              id: criteria.id,
               criteria_code: criteria.criteria_code,
               session,
               year_of_appointment,
@@ -720,7 +702,11 @@ const createResponse222_241_243 = asyncHandler(async (req, res) => {
             is_the_teacher_still_serving_the_institution
         }, {
             where: {
-                id: entry.id
+                session,
+                year_of_appointment,
+                name_of_the_full_time_teacher: normalizedTeacherName,
+                designation,
+                name_of_department
             }
         });
         const updated = await Model.findByPk(entry.id);
@@ -831,11 +817,6 @@ const score222 = asyncHandler(async (req, res) => {
   );
 });
 
-/**
-* @route POST /api/response/2.4.2
-* @description Create a new response for criteria 2.4.2
-* @access Private/Admin
-*/
 const createResponse242 = asyncHandler(async (req, res) => {
   const {
     session,
@@ -849,24 +830,26 @@ const createResponse242 = asyncHandler(async (req, res) => {
   // Convert to numbers in case values come as strings
   const sessionYear = Number(session);
   const numberoffulltimeteachers = Number(number_of_full_time_teachers);
-  const qualificationValue = Number(qualification); // Changed variable name to avoid conflict
+  const qualificationValue = String(qualification); // Changed variable name to avoid conflict
   const yearOfQualification = Number(year_of_obtaining_the_qualification);
-  const isResearchGuide = Number(whether_recognised_as_research_guide);
+  const isResearchGuide = String(whether_recognised_as_research_guide);
+  const formattedIsResearchGuide = isResearchGuide.toUpperCase();
   const yearOfRecognition = Number(year_of_recognition_as_research_guide);
 
   // Validate required fields
-  if (!sessionYear || !numberoffulltimeteachers || 
-      isNaN(qualificationValue) || !yearOfQualification || 
-      isNaN(isResearchGuide) || !yearOfRecognition) {
+  if (
+    !sessionYear ||
+    !numberoffulltimeteachers ||
+    !qualificationValue ||
+    !yearOfQualification ||
+    !formattedIsResearchGuide ||
+    !yearOfRecognition
+  ) {
     throw new apiError(400, "Missing or invalid required fields");
   }
 
   if (sessionYear < 1990 || sessionYear > new Date().getFullYear()) {
     throw new apiError(400, "Session year must be between 1990 and current year");
-  }
-
-  if (qualificationValue < 0) {
-    throw new apiError(400, "Qualification cannot be negative");
   }
 
   if (yearOfQualification < 1990 || yearOfQualification > new Date().getFullYear()) {
@@ -924,7 +907,7 @@ const createResponse242 = asyncHandler(async (req, res) => {
       number_of_full_time_teachers: numberoffulltimeteachers,
       qualification: qualificationValue,
       year_of_obtaining_the_qualification: yearOfQualification,
-      whether_recognised_as_research_guide: isResearchGuide,
+      whether_recognised_as_research_guide: formattedIsResearchGuide,
       year_of_recognition_as_research_guide: yearOfRecognition
     }
   });
@@ -935,7 +918,7 @@ const createResponse242 = asyncHandler(async (req, res) => {
       number_of_full_time_teachers: numberoffulltimeteachers,
       qualification: qualificationValue,
       year_of_obtaining_the_qualification: yearOfQualification,
-      whether_recognised_as_research_guide: isResearchGuide,
+      whether_recognised_as_research_guide: formattedIsResearchGuide,
       year_of_recognition_as_research_guide: yearOfRecognition
     }, {
       where: {
@@ -960,7 +943,6 @@ const createResponse242 = asyncHandler(async (req, res) => {
   );
 });
 
-//score 242
 const score242 = asyncHandler(async (req, res) => {
   const session = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("2.4.2");
@@ -1067,121 +1049,6 @@ const score242 = asyncHandler(async (req, res) => {
     new apiResponse(200, entry, "Score 2.4.2 calculated and updated successfully")
   );
 });
-
-// /**
-// * @route GET//api/response/2.4.2/:criteriaCode
-// * @description Get all responses for a specific criteria code
-// * @access public
-// */
-//  const getResponseByCriteriaCode242 = async (req, res, next) => {
-//   try {
-//       const { criteriaCode } = req.params;
-      
-//       const responses = await db.response_2_4_2.findAll({
-//           where: { criteria_code: criteriaCode },
-//           include: [{
-//               model: db.criteria_master,
-//               as: 'criteria',
-//               attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
-//           }],
-//           order: [['submitted_at', 'DESC']]
-//       });
-
-//       return res.status(200).json(
-//           new apiResponse(200, responses, 'Responses retrieved successfully')
-//       );
-
-//   } catch (error) {
-//       next(error);
-//   }
-// };
-
-
-// /**
-//  * @route GET /api/response/2.1.1/:criteriaCode
-//  * @description Get all responses for a specific criteria code
-//  * @access Public
-//  */
-// const getResponsesByCriteriaCode = async (req, res, next) => {
-//     try {
-//         const { criteriaCode } = req.params;
-        
-//         const responses = await db.response_2_1_1.findAll({
-//             where: { criteria_code: criteriaCode },
-//             include: [{
-//                 model: db.criteria_master,
-//                 as: 'criteria',
-//                 attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
-//             }],
-//             order: [['submitted_at', 'DESC']]
-//         });
-
-//         return res.status(200).json(
-//             new apiResponse(200, responses, 'Responses retrieved successfully')
-//         );
-
-//     } catch (error) {
-//         next(error);
-//     }
-// };
-
-
-
- 
-// //2.1.2
-
-//  const getAllCriteria212 = asyncHandler(async (req, res) => {
-//   const criteria = await Criteria212.findAll();
-//   if (!criteria) {
-//       throw new apiError(404, "Criteria not found");
-//   }
-  
-//   res.status(200).json(
-//       new apiResponse(200, criteria, "Criteria found")
-//   );
-// });
-
-/**
-* @route POST /api/response/2.1.2
-* @description Create a new response for criteria 2.1.2
-* @access Private/Admin
-*/
-
-// /**
-// * @route GET /api/response/2.1.2/:criteriaCode
-// * @description Get all responses for a specific criteria code
-// * @access Public
-// */
-// const getResponsesByCriteriaCode212 = async (req, res, next) => {
-//   try {
-//       const { criteriaCode } = req.params;
-      
-//       const responses = await db.response_2_1_2.findAll({
-//           where: { criteria_code: criteriaCode },
-//           include: [{
-//               model: db.criteria_master,
-//               as: 'criteria',
-//               attributes: ['criterion_id', 'sub_criterion_id', 'sub_sub_criterion_id']
-//           }],
-//           order: [['submitted_at', 'DESC']]
-//       });
-
-//       return res.status(200).json(
-//           new apiResponse(200, responses, 'Responses retrieved successfully')
-//       );
-
-//   } catch (error) {
-//       next(error);
-//   }
-// };
-/* DEBUG 
-1. There should be one year for one req body
-
-*/
-
-// TOTALLY ACCURATE
-
-
 
 
 // // response 241242222233
@@ -1415,7 +1282,7 @@ const score243 = asyncHandler(async (req, res) => {
     res.status(200).json(
       new apiResponse(200, { entry, fullTimeTeacherCount, experienceCount, score }, "Response created successfully")
     );
-  });
+});
 
 const createResponse233 = asyncHandler(async (req, res) => {
   console.log(CriteriaMaster)
