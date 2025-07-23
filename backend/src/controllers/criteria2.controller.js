@@ -650,82 +650,88 @@ const createResponse222_241_243 = asyncHandler(async (req, res) => {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
-  // Step 1: Get all 3 criteria from CriteriaMaster
-  const criteriaList = await CriteriaMaster.findAll({
-    where: {
-      sub_sub_criterion_id: { [Sequelize.Op.in]: ['020202', '020401', '020403'] },
-      sub_criterion_id: { [Sequelize.Op.in]: ['0202', '0204'] },
-      criterion_id: '02'
+  // Start a transaction
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    // Step 1: Get all 3 criteria from CriteriaMaster
+    const criteriaList = await CriteriaMaster.findAll({
+      where: {
+        sub_sub_criterion_id: { [Sequelize.Op.in]: ['020202', '020401', '020403'] },
+        sub_criterion_id: { [Sequelize.Op.in]: ['0202', '0204'] },
+        criterion_id: '02'
+      },
+      transaction
+    });
+
+    if (!criteriaList || criteriaList.length !== 3) {
+      await transaction.rollback();
+      throw new apiError(404, "One or more criteria not found");
     }
-  });
 
-  if (!criteriaList || criteriaList.length !== 3) {
-    throw new apiError(404, "One or more criteria not found");
-  }
+    // Step 2: Map sub_sub_criterion_id to model
+    const modelMap = {
+      '020202': { model: Criteria222, name: '2.2.2' },
+      '020401': { model: Criteria241, name: '2.4.1' },
+      '020403': { model: Criteria243, name: '2.4.3' }
+    };
 
-  // Step 2: Map sub_sub_criterion_id to model
-  const modelMap = {
-    '020202': Criteria222,
-    '020401': Criteria241,
-    '020403': Criteria243
-  };
+    const responses = [];
 
-  const responses = [];
+    for (const criteria of criteriaList) {
+      const { model: Model, name } = modelMap[criteria.sub_sub_criterion_id];
+      if (!Model) continue;
 
-  for (const criteria of criteriaList) {
-    const Model = modelMap[criteria.sub_sub_criterion_id];
-    if (!Model) continue;
-
-    try {
-      const [entry, created] = await Model.findOrCreate({
+      try {
+        const [entry, created] = await Model.findOrCreate({
           where: {
-              session,
-              year_of_appointment,
-              name_of_the_full_time_teacher: normalizedTeacherName,
-              designation,
-              name_of_department
+            session,
+            year_of_appointment,
+            name_of_the_full_time_teacher: normalizedTeacherName,
+            designation,
+            name_of_department
           },
           defaults: {
-              criteria_code: criteria.criteria_code,
-              session,
-              year_of_appointment,
-              name_of_the_full_time_teacher: normalizedTeacherName,
-              designation,
-              nature_of_appointment,
-              name_of_department,
-              total_number_of_years_of_experience_in_the_same_institution,
-              is_the_teacher_still_serving_the_institution
-          }
-      });
-      if (entry && !created) {
-        await Model.update({
+            id: criteria.id, // Add the criteria ID
+            criteria_code: criteria.criteria_code,
+            session,
+            year_of_appointment,
+            name_of_the_full_time_teacher: normalizedTeacherName,
+            designation,
+            nature_of_appointment,
+            name_of_department,
             total_number_of_years_of_experience_in_the_same_institution,
             is_the_teacher_still_serving_the_institution
-        }, {
-            where: {
-                session,
-                year_of_appointment,
-                name_of_the_full_time_teacher: normalizedTeacherName,
-                designation,
-                name_of_department
-            }
+          },
+          transaction
         });
-        const updated = await Model.findByPk(entry.id);
-        responses.push(updated);
-    } else if (entry) {
-        responses.push(entry);
-    } else {
-      console.log("No entry found for criteria:", criteria);
-      responses.push(null);
-    }
-    } catch (error) {
-      console.error("Error creating/updating response:", error);
-    }
-}
 
-  return res.status(200).json(
-    new apiResponse(200, responses, "Responses created/updated successfully in 222, 241, 243")
-  );
+        responses.push({
+          criteria: name,
+          entry,
+          created,
+          message: created ? "Entry created successfully" : "Entry already exists"
+        });
+
+      } catch (error) {
+        // Rollback and throw error
+        await transaction.rollback();
+        throw new apiError(400, `Error creating entry for criteria ${name}: ${error.message}`);
+      }
+    }
+
+    // If we get here, all operations were successful
+    await transaction.commit();
+
+    return res.status(200).json(
+      new apiResponse(200, { responses }, "Operation completed successfully")
+    );
+
+  } catch (error) {
+    // If we get here, the transaction has already been rolled back
+    // in one of the inner catch blocks
+    throw error; // Let the error handler deal with it
+  }
 });
 
 const score222 = asyncHandler(async (req, res) => {
@@ -1372,37 +1378,6 @@ const fullTimeTeacherCount = latestExtendedProfile.full_time_teachers;
   );
 });
 
-const createResponse233 = asyncHandler(async (req, res) => {
-console.log(CriteriaMaster)
-const criteria = await CriteriaMaster.findOne({
-    where: {
-      sub_sub_criterion_id: '020303',
-      sub_criterion_id: '0204',
-      criterion_id: '02'
-    }
-  });
-
-  if (!criteria) {
-    throw new apiError(404, "Criteria not found");
-  }
-  // Insert into response_2_4_1and2_4_3and2_2_2and2_3_3_data
-  const entry = await Criteria241.create({
-    id: criteria.id,
-    criteria_code: criteria.criteria_code,
-    session: sessionDate,  // Store as Date object
-    year_of_appointment: year_of_appointment,        // Store as Date object
-    name_of_the_fulltime_teachers,
-    designation,
-    nature_of_appointment,
-    name_of_department,
-    total_number_of_years_of_experience_in_the_same_institution,
-    is_the_teacprogramme_name
-  });
-
-  res.status(201).json(
-    new apiResponse(201, entry, "Response created successfully")
-  );
-});
 
 const score241 = asyncHandler(async (req, res) => {
   const currentYear = new Date().getFullYear();
@@ -1520,6 +1495,13 @@ const score241 = asyncHandler(async (req, res) => {
     }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
+
+const createResponse233 = asyncHandler(async (req, res) => {
+  
+})
+const score233 = asyncHandler(async (req, res) => {
+  
+})
 
 
 // // response 241242222233
