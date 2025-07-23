@@ -9,7 +9,9 @@ const IIQAStaffDetails = db.iiqa_staff_details;
 const IIQAStudentDetails = db.iiqa_student_details;
 const IIQADepartments = db.iiqa_departments;
 const IIQAProgrammeCount = db.iiqa_programme_count;
-
+// NEEDS VALIDATION
+// WHAT TO DO ABOUT INSTITUTION ID ??
+// NEED TO REMOVE REDUNDANT DATA
 const createIIQAForm = asyncHandler(async (req, res) => {
     // Start a transaction
     const transaction = await db.sequelize.transaction();

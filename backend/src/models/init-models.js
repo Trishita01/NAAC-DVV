@@ -1,6 +1,7 @@
 import _sequelize from "sequelize";
 const DataTypes = _sequelize.DataTypes;
 import _criteria_master from  "./criteria_master.js";
+import _extended_profile from  "./extended_profile.js";
 import _file_uploads from  "./file_uploads.js";
 import _hdr from  "./hdr.js";
 import _iiqa_departments from  "./iiqa_departments.js";
@@ -66,6 +67,7 @@ import _users from  "./users.js";
 
 export default function initModels(sequelize) {
   const criteria_master = _criteria_master.init(sequelize, DataTypes);
+  const extended_profile = _extended_profile.init(sequelize, DataTypes);
   const file_uploads = _file_uploads.init(sequelize, DataTypes);
   const hdr = _hdr.init(sequelize, DataTypes);
   const iiqa_departments = _iiqa_departments.init(sequelize, DataTypes);
@@ -347,6 +349,8 @@ export default function initModels(sequelize) {
   criteria_master.hasMany(response_7_1_7, { as: "id_response_7_1_7s", foreignKey: "id"});
   scores.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(scores, { as: "scores", foreignKey: "criteria_code"});
+  extended_profile.belongsTo(iiqa_form, { as: "iiqa_form", foreignKey: "iiqa_form_id"});
+  iiqa_form.hasMany(extended_profile, { as: "extended_profiles", foreignKey: "iiqa_form_id"});
   iiqa_departments.belongsTo(iiqa_form, { as: "iiqa_form", foreignKey: "iiqa_form_id"});
   iiqa_form.hasMany(iiqa_departments, { as: "iiqa_departments", foreignKey: "iiqa_form_id"});
   iiqa_programme_count.belongsTo(iiqa_form, { as: "iiqa_form", foreignKey: "iiqa_form_id"});
@@ -358,6 +362,7 @@ export default function initModels(sequelize) {
 
   return {
     criteria_master,
+    extended_profile,
     file_uploads,
     hdr,
     iiqa_departments,

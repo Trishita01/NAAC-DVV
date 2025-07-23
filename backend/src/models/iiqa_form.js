@@ -15,15 +15,15 @@ export default class iiqa_form extends Model {
       allowNull: false
     },
     session_start_year: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DATE,
       allowNull: false
     },
     session_end_year: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DATE,
       allowNull: false
     },
     year_filled: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DATE,
       allowNull: false
     },
     naac_cycle: {
@@ -47,21 +47,11 @@ export default class iiqa_form extends Model {
       type: DataTypes.ENUM('Pending','Submitted','Approved','Rejected'),
       allowNull: true,
       defaultValue: "Pending"
-    },
-    // created_at: {
-    //   type: DataTypes.DATE,
-    //   allowNull: false,
-    //   defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
-    // },
-    // updated_at: {
-    //   type: DataTypes.DATE,
-    //   allowNull: false,
-    //   defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
-    // }
+    }
   }, {
     sequelize,
     tableName: 'iiqa_form',
-    timestamps: false,
+    timestamps: true,
     indexes: [
       {
         name: "PRIMARY",
