@@ -623,7 +623,7 @@ const createResponse222_241_243 = asyncHandler(async (req, res) => {
     nature_of_appointment,
     name_of_department,
     total_number_of_years_of_experience_in_the_same_institution,
-    is_the_teacher_still_serving
+    is_the_teacher_still_serving_the_institution
   } = req.body;
 
   // Validate required fields
@@ -634,10 +634,12 @@ const createResponse222_241_243 = asyncHandler(async (req, res) => {
     !nature_of_appointment ||
     !name_of_department ||
     !total_number_of_years_of_experience_in_the_same_institution ||
-    is_the_teacher_still_serving === undefined
+    is_the_teacher_still_serving_the_institution === undefined
   ) {
     throw new apiError(400, "Missing required fields");
   }
+
+  const normalizedTeacherName = name_of_the_full_time_teacher.trim().toLowerCase();
 
   if (year_of_appointment < 1990 || year_of_appointment > new Date().getFullYear()) {
     throw new apiError(400, "Year must be between 1990 and current year");
@@ -688,59 +690,51 @@ const createResponse222_241_243 = asyncHandler(async (req, res) => {
 
   for (const criteria of criteriaList) {
     const Model = modelMap[criteria.sub_sub_criterion_id];
-
     if (!Model) continue;
 
-    const [entry, created] = await Model.findOrCreate({
-      where: {
-        id: criteria.id,
-        criteria_code: criteria.criteria_code,
-        session: session,
-      },
-      defaults: {
-        id: criteria.id,
-        criteria_code: criteria.criteria_code,
-        session: session,
-        year_of_appointment,
-        name_of_the_full_time_teacher,
-        designation,
-        nature_of_appointment,
-        name_of_department,
-        total_number_of_years_of_experience_in_the_same_institution,
-        is_the_teacher_still_serving_the_institution: is_the_teacher_still_serving,
-      }
-    });
-
-    if (!created) {
-      await Model.update({
-        year_of_appointment,
-        name_of_the_full_time_teacher,
-        designation,
-        nature_of_appointment,
-        name_of_department,
-        total_number_of_years_of_experience_in_the_same_institution,
-        is_the_teacher_still_serving_the_institution: is_the_teacher_still_serving
-      }, {
-        where: {
-          id: criteria.id,
-          criteria_code: criteria.criteria_code,
-          session: session
-        }
+    try {
+      const [entry, created] = await Model.findOrCreate({
+          where: {
+              session,
+              year_of_appointment,
+              name_of_the_full_time_teacher: normalizedTeacherName,
+              designation,
+              name_of_department
+          },
+          defaults: {
+              id: criteria.id,
+              criteria_code: criteria.criteria_code,
+              session,
+              year_of_appointment,
+              name_of_the_full_time_teacher: normalizedTeacherName,
+              designation,
+              nature_of_appointment,
+              name_of_department,
+              total_number_of_years_of_experience_in_the_same_institution,
+              is_the_teacher_still_serving_the_institution
+          }
       });
-
-      const updated = await Model.findOne({
-        where: {
-          id: criteria.id,
-          criteria_code: criteria.criteria_code,
-          session: session
-        }
-      });
-
-      responses.push(updated);
+      if (entry && !created) {
+        await Model.update({
+            total_number_of_years_of_experience_in_the_same_institution,
+            is_the_teacher_still_serving_the_institution
+        }, {
+            where: {
+                id: entry.id
+            }
+        });
+        const updated = await Model.findByPk(entry.id);
+        responses.push(updated);
+    } else if (entry) {
+        responses.push(entry);
     } else {
-      responses.push(entry);
+      console.log("No entry found for criteria:", criteria);
+      responses.push(null);
     }
-  }
+    } catch (error) {
+      console.error("Error creating/updating response:", error);
+    }
+}
 
   return res.status(200).json(
     new apiResponse(200, responses, "Responses created/updated successfully in 222, 241, 243")
@@ -845,7 +839,6 @@ const score222 = asyncHandler(async (req, res) => {
 const createResponse242 = asyncHandler(async (req, res) => {
   const {
     session,
-    year,
     number_of_full_time_teachers,
     qualification,
     year_of_obtaining_the_qualification,
@@ -855,7 +848,6 @@ const createResponse242 = asyncHandler(async (req, res) => {
 
   // Convert to numbers in case values come as strings
   const sessionYear = Number(session);
-  const entryYear = Number(year);
   const numberoffulltimeteachers = Number(number_of_full_time_teachers);
   const qualificationValue = Number(qualification); // Changed variable name to avoid conflict
   const yearOfQualification = Number(year_of_obtaining_the_qualification);
@@ -863,7 +855,7 @@ const createResponse242 = asyncHandler(async (req, res) => {
   const yearOfRecognition = Number(year_of_recognition_as_research_guide);
 
   // Validate required fields
-  if (!sessionYear || !entryYear || !numberoffulltimeteachers || 
+  if (!sessionYear || !numberoffulltimeteachers || 
       isNaN(qualificationValue) || !yearOfQualification || 
       isNaN(isResearchGuide) || !yearOfRecognition) {
     throw new apiError(400, "Missing or invalid required fields");
@@ -871,10 +863,6 @@ const createResponse242 = asyncHandler(async (req, res) => {
 
   if (sessionYear < 1990 || sessionYear > new Date().getFullYear()) {
     throw new apiError(400, "Session year must be between 1990 and current year");
-  }
-
-  if (entryYear < 1990 || entryYear > new Date().getFullYear()) {
-    throw new apiError(400, "Entry year must be between 1990 and current year");
   }
 
   if (qualificationValue < 0) {
@@ -1359,6 +1347,7 @@ const score243 = asyncHandler(async (req, res) => {
     4. create a new response
     5. return the response
     */
+    const session = new Date().getFullYear();
     const criteria_code = convertToPaddedFormat("2.4.3");
     console.log(criteria_code)
     console.log(CriteriaMaster)
@@ -1367,8 +1356,8 @@ const score243 = asyncHandler(async (req, res) => {
         sub_sub_criterion_id: criteria_code
       }
     });
-    const responses = await Criteria212.findAll({
-      attributes: ['name_of_full_time_teachers', 'total_number_of_years_of_experience_in_the_same_institution'],
+    const responses = await Criteria243.findAll({
+      attributes: ['name_of_the_full_time_teacher', 'total_number_of_years_of_experience_in_the_same_institution'],
       where: {
         criteria_code: criteria.criteria_code  
       }
@@ -1378,8 +1367,8 @@ const score243 = asyncHandler(async (req, res) => {
     function getFullTimeTeacherCount(responses) {
       let count = 0;
       responses.forEach(response => {
-        if (response.name_of_full_time_teachers) {
-          const names = response.name_of_full_time_teachers
+        if (response.name_of_the_full_time_teacher) {
+          const names = response.name_of_the_full_time_teacher
             .split(',')
             .map(name => name.trim())
             .filter(name => name.length > 0);
@@ -1392,8 +1381,8 @@ const score243 = asyncHandler(async (req, res) => {
     let fullTimeTeacherCount = getFullTimeTeacherCount(responses);
     let experienceCount = 0;
     responses.forEach(response => {
-      if (response.name_of_full_time_teachers) {
-        const names = response.name_of_full_time_teachers
+      if (response.name_of_the_full_time_teacher) {
+        const names = response.name_of_the_full_time_teacher
           .split(',')
           .map(name => name.trim())
           .filter(name => name.length > 0);
@@ -1401,6 +1390,7 @@ const score243 = asyncHandler(async (req, res) => {
         if (response.total_number_of_years_of_experience_in_the_same_institution) {
           experienceCount += Number(response.total_number_of_years_of_experience_in_the_same_institution) * names.length;
         }
+        console.log(experienceCount)
       }
     });
   
@@ -1408,9 +1398,8 @@ const score243 = asyncHandler(async (req, res) => {
     if (fullTimeTeacherCount > 0) {
       score = experienceCount / fullTimeTeacherCount;
     }
-  
-    const currentYear = new Date().getFullYear();
-    const sessionDate = new Date(currentYear, 0, 1); 
+    console.log(score)  
+    const currentYear = new Date().getFullYear(); 
     const entry = await Score.create({
       criteria_code: criteria.criteria_code,
       criteria_id: criteria.criterion_id,
@@ -1419,8 +1408,7 @@ const score243 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: score,
-      session: sessionDate,
-      year: currentYear,
+      session: currentYear,
       cycle_year: 1
     });
   
