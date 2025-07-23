@@ -1,6 +1,8 @@
 
 
 import React from "react";
+import ProtectedRoute from "./protectedroute.jsx";
+import { AuthContext, AuthProvider } from './contextprovider/authcontext.jsx';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard_admin from "./Dashboard_admin.jsx";
@@ -14,7 +16,8 @@ import UserManagement from "./usermanagement.jsx";
 import Dashboard_faculty from "./fac-dashboard.jsx";
 import Dashboard_HOD from "./hod-dashboard.jsx";
 import GPAAnalysis from "./gpa.jsx";
-
+import IIQA from "./iiqa.jsx";
+import { SessionProvider } from "./contextprovider/sessioncontext.jsx";
 
 import Criteria1_1_1 from "./criteria1/criteria1.1/criteria1.1.1.jsx";
 import Criteria1_1_2 from "./criteria1/criteria1.1/criteria1.1.2.jsx";
@@ -121,35 +124,43 @@ function App() {
   return (
     <div className="flex">
       <div className="flex-1">
-        
+      
+      <SessionProvider>
           <Routes>
+         
+            <Route path='/' element={<LandingPage/>}/>
+            <Route path='/login' element={<Login/>}/>
+            <Route path='/register' element={<Register/>}/>
 
-            
-             <Route path='/' element={<LandingPage/>}/>
-             <Route path='/login' element={<Login/>}/>
+            <Route element={<ProtectedRoute allowedRoles={['IQAC supervisor']} />}>
+              <Route path="/iqac-dashboard" element={<IqacDashboard />} />
+              <Route path="/gpa-analysis" element={<GPAAnalysis />} />
+            </Route>
+{/* 
+            <Route element={<ProtectedRoute allowedRoles={['college admin']} />}>
+              <Route path='/admin-dashboard' element={<Dashboard_admin/>} />
+              <Route path='/user-management' element={<UserManagement/>} />
+            </Route>
 
-             <Route path='/register' element={<Register/>}/>
-             <Route path='/iqac-dashboard' element={<IqacDashboard/>}/>
-              <Route path='/admin-dashboard' element={<Dashboard_admin/>}/>
+            <Route element={<ProtectedRoute allowedRoles={['Faculty']} />}>
+              <Route path='/fac-dashboard' element={<Dashboard_faculty/>} />
+            </Route>
 
-             <Route path='/user-management' element={<UserManagement/>}/>
-             <Route path='/fac-dashboard' element={<Dashboard_faculty/>}/>
-             <Route path='/hod-dashboard' element={<Dashboard_HOD/>}/>
-              <Route path='/gpa-analysis' element={<GPAAnalysis/>}/>
+            <Route element={<ProtectedRoute allowedRoles={['HOD']} />}>
+              <Route path='/hod-dashboard' element={<Dashboard_HOD/>} />
+            </Route> */}
 
-
-
-             <Route path='/criteria1.1.1' element={<Criteria1_1_1/>}/>
-             <Route path='/criteria1.1.2' element={<Criteria1_1_2/>}/>
-             <Route path='/criteria1.1.3' element={<Criteria1_1_3/>}/>
-             <Route path='/criteria1.2.1' element={<Criteria1_2_1/>}/>
-             <Route path='/criteria1.2.2' element={<Criteria1_2_2/>}/>
-             <Route path='/criteria1.2.3' element={<Criteria1_2_3/>}/>
-             <Route path='/criteria1.3.1' element={<Criteria1_3_1/>}/>
-             <Route path='/criteria1.3.2' element={<Criteria1_3_2/>}/>
-             <Route path='/criteria1.3.3' element={<Criteria1_3_3/>}/>
-             <Route path='/criteria1.4.1' element={<Criteria1_4_1/>}/>
-             <Route path='/criteria1.4.2' element={<Criteria1_4_2/>}/>
+            <Route path='/criteria1.1.1' element={<Criteria1_1_1/>}/>
+            <Route path='/criteria1.1.2' element={<Criteria1_1_2/>}/>
+            <Route path='/criteria1.1.3' element={<Criteria1_1_3/>}/>
+            <Route path='/criteria1.2.1' element={<Criteria1_2_1/>}/>
+            <Route path='/criteria1.2.2' element={<Criteria1_2_2/>}/>
+            <Route path='/criteria1.2.3' element={<Criteria1_2_3/>}/>
+            <Route path='/criteria1.3.1' element={<Criteria1_3_1/>}/>
+            <Route path='/criteria1.3.2' element={<Criteria1_3_2/>}/>
+            <Route path='/criteria1.3.3' element={<Criteria1_3_3/>}/>
+            <Route path='/criteria1.4.1' element={<Criteria1_4_1/>}/>
+            <Route path='/criteria1.4.2' element={<Criteria1_4_2/>}/>
 
              <Route path='/criteria2.1.1' element={<Criteria2_1_1/>}/>
              <Route path='/criteria2.1.2' element={<Criteria2_1_2/>}/>
@@ -252,14 +263,16 @@ function App() {
 
 
 
-
+            <Route path='/iiqa' element={<IIQA/>}/>
              <Route path='/dataentry' element={<Criteria1_1_1/>}/>
+             <Route path='/iiqa' element={<IIQA/>}/>
              <Route path='/notification' element={<Notification/>}/>
              <Route path='/helpsupport' element={<HelpSupport />} />
             
-
+            
           </Routes>
-       
+          </SessionProvider>
+         
       </div>
     </div>
   );

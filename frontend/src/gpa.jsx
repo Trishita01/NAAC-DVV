@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { TrendingUp, TrendingDown, Target, Award, AlertCircle, CheckCircle, BookOpen, Users, Building, Lightbulb, Heart, Briefcase, Globe } from 'lucide-react';
 
@@ -14,55 +15,54 @@ const Header = () => (
   </div>
 );
 
-const Breadcrumb = () => (
-  <div className="bg-gray-50 px-6 py-3 text-sm">
-    <span className="text-blue-600 hover:text-blue-800 cursor-pointer">Overview</span>
-    <span className="mx-2 text-gray-400">/</span>
-    <span className="text-blue-600 hover:text-blue-800 cursor-pointer">Analysis</span>
-    <span className="mx-2 text-gray-400">/</span>
-    <span className="font-medium text-gray-900">GPA Analysis</span>
-  </div>
-);
 
-const Sidebar = () => (
-  <div className="w-64 bg-slate-800 text-white min-h-screen">
-    <div className="p-4">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">NAAC</h1>
+
+const Sidebar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const navItems = [
+    { icon: 'tachometer-alt', text: 'Dashboard', path: '/iqac-dashboard' },
+    { icon: 'users', text: 'User Management', path: '/user-management' },
+    { icon: 'file-alt', text: 'Data Entry Forms', path: '/criteria1.1.1' },
+    { icon: 'chart-line', text: 'GPA Analysis', path: '/gpa-analysis' },
+    { icon: 'paper-plane', text: 'Final Submission', path: '/final-submission' },
+    { icon: 'download', text: 'Download Report', path: '/download-report' },
+    { icon: 'question-circle', text: 'Help and Support', path: '/helpsupport' },
+    { icon: 'cog', text: 'Configuration', path: '/configuration' },
+    { icon: 'sign-out-alt', text: 'Logout', path: '/logout' },
+  ];
+
+  return (
+    <div className={`bg-slate-800 text-white min-h-screen ${collapsed ? 'w-16' : 'w-64'} transition-all duration-300`}>
+      <div className="p-4 flex justify-between items-center">
+        {!collapsed && <h1 className="text-2xl font-bold text-white">NAAC</h1>}
+        <button 
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-white p-2 hover:bg-slate-700 rounded-md"
+        >
+          {collapsed ? '→' : '←'}
+        </button>
       </div>
       
-      <nav className="space-y-2">
-        <a href="#" className="block px-3 py-2 text-gray-300 hover:bg-slate-700 rounded-md">
-          Dashboard
-        </a>
-        <a href="#" className="block px-3 py-2 text-gray-300 hover:bg-slate-700 rounded-md">
-          User Management
-        </a>
-        <a href="#" className="block px-3 py-2 text-gray-300 hover:bg-slate-700 rounded-md">
-          Data Entry Forms
-        </a>
-        <a href="#" className="block px-3 py-2 bg-slate-700 text-white rounded-md font-medium">
-          GPA Analysis
-        </a>
-        <a href="#" className="block px-3 py-2 text-gray-300 hover:bg-slate-700 rounded-md">
-          Final Submission
-        </a>
-        <a href="#" className="block px-3 py-2 text-gray-300 hover:bg-slate-700 rounded-md">
-          Download Report
-        </a>
-        <a href="#" className="block px-3 py-2 text-gray-300 hover:bg-slate-700 rounded-md">
-          Help and Support
-        </a>
-        <a href="#" className="block px-3 py-2 text-gray-300 hover:bg-slate-700 rounded-md">
-          Configuration
-        </a>
-        <a href="#" className="block px-3 py-2 text-gray-300 hover:bg-slate-700 rounded-md">
-          Logout
-        </a>
+      <nav className="mt-8">
+        {navItems.map((item, index) => (
+          <div 
+            key={index}
+            onClick={() => navigate(item.path)}
+            className={`flex items-center px-4 py-3 cursor-pointer transition-colors ${
+              location.pathname === item.path ? 'bg-slate-700' : 'hover:bg-slate-700'
+            }`}
+          >
+            <i className={`fas fa-${item.icon} w-6 text-center`}></i>
+            {!collapsed && <span className="ml-3">{item.text}</span>}
+          </div>
+        ))}
       </nav>
     </div>
-  </div>
-);
+  );
+};
 
 const MetricCard = ({ title, value, grade, trend, icon: Icon, color }) => (
   <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -322,7 +322,7 @@ const GPAAnalysis = () => {
   return (
     <div className="w-screen min-h-screen bg-gray-50">
       <Header />
-      <Breadcrumb />
+     
       
       <div className="flex">
         <Sidebar />

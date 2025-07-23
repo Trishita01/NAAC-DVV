@@ -9,8 +9,8 @@ function UserManagement() {
     const [collapsed, setCollapsed] = useState(false);
     const navItems = [
       { icon: FaTachometerAlt , text: 'Dashboard', path: '/iqac-dashboard' },
-      { icon: FaUsers , text: 'User Management', path: '/usermanagement' },
-      { icon: FaFileAlt , text: 'Data Entry Forms', path: '/criteria1.1.1' },
+      { icon: FaUsers , text: 'User Management', path: '/user-management' },
+      { icon: FaFileAlt , text: 'Data Entry Forms', path: '/iiqa' },
       { icon: FaChartLine , text: 'GPA Analysis', path: '/gpa-analysis' },
       { icon: FaPaperPlane , text: 'Final Submission', path: '/final-submission' },
       { icon: FaDownload , text: 'Download Report', path: '/download-report' },
@@ -322,39 +322,19 @@ function UserManagement() {
             </nav>
           </div></div>
     
-          {/* Main Content */}
-           <div className={`transition-all duration-300 w-[1520px] ${collapsed ? 'ml-18' : 'ml-64'}`}>
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center ">
-                 
-                 
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="relative cursor-pointer">
-                    <FaBell className=" text-gray-600 text-xl"/>
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">1</span>
-                  </div>
-                  <div className="cursor-pointer">
-                    <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700">
-                      <FaUser className=""/>
-                    </div>
-                  </div>
-                </div>
-              </div>
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        {/* Header */}
-        <div className="bg-white border-b px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-semibold text-gray-900">NAAC DVV User Management</h1>
-          <div className="flex items-center text-sm text-gray-600">
-            Logged in as: IQAC Supervisor
-            <div className="ml-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-              1
+      
+      <div className={`transition-all duration-300 w-[1520px] ${collapsed ? 'ml-18' : 'ml-64'}`}>
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center h-[50px] w-[350px] shadow border  border-black/10 rounded-2xl">
+              <a href="#" className="text-gray-500 hover:text-gray-700 mr-2">
+                <i className="fas fa-arrow-left"></i>
+              </a>
+              <p className="text-2xl font-bold text-gray-800">IQAC Supervisor Dashboard</p>
             </div>
-          </div>
-        </div>
+            </div>
+           
 
         <div className="p-6">
           {/* Dashboard Overview */}
@@ -396,7 +376,7 @@ function UserManagement() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-gray-900">User Hierarchy</h2>
               <button 
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center text-sm font-medium hover:bg-blue-700"
+                className="!bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center text-sm font-medium hover:bg-blue-700"
                 onClick={() => setShowAddUserModal(true)}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -420,7 +400,7 @@ function UserManagement() {
               <div className="relative">
                 <button
                   onClick={() => setDepartmentDropdownOpen(!departmentDropdownOpen)}
-                  className="flex items-center justify-between w-48 px-4 py-2 border text-gray-950 border-gray-300 rounded-lg bg-white hover:bg-gray-50"
+                  className="flex items-center justify-between w-48 px-4 py-2 border text-gray-950 border-gray-300 rounded-lg !bg-white hover:bg-gray-50"
                 >
                   <span className="text-sm">{departmentFilter}</span>
                   <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -434,7 +414,7 @@ function UserManagement() {
                           setDepartmentFilter(dept);
                           setDepartmentDropdownOpen(false);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
+                        className="!bg-white w-full text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
                       >
                         {dept}
                       </button>
@@ -446,13 +426,13 @@ function UserManagement() {
               <div className="relative">
                 <button
                   onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                  className="flex items-center justify-between w-32 px-4 py-2 border text-gray-950 border-gray-300 rounded-lg bg-white hover:bg-gray-50"
+                  className="flex items-center justify-between w-32 px-4 py-2 border text-gray-950 border-gray-300 rounded-lg !bg-white hover:bg-gray-50"
                 >
                   <span className="text-sm">{roleFilter}</span>
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
                 {roleDropdownOpen && (
-                  <div className="absolute top-full mt-1 w-32 bg-white border text-gray-950 border-gray-300 rounded-lg shadow-lg z-10">
+                  <div className="absolute top-full mt-1 w-32 !bg-white border text-gray-950 border-gray-300 rounded-lg shadow-lg z-10">
                     {roles.map((role) => (
                       <button
                         key={role}
@@ -460,7 +440,7 @@ function UserManagement() {
                           setRoleFilter(role);
                           setRoleDropdownOpen(false);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
+                        className="w-full !bg-white text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
                       >
                         {role}
                       </button>
@@ -471,7 +451,7 @@ function UserManagement() {
             </div>
 
             {/* Hierarchical User List */}
-            <div className="bg-white rounded-lg shadow-sm">
+            <div className="!bg-white rounded-lg shadow-sm">
               <div className="p-4 border-b bg-gray-50">
                 <h3 className="font-medium text-gray-900">Organizational Hierarchy</h3>
                 <p className="text-sm text-gray-600 mt-1">Click on users with subordinates to expand their team</p>
@@ -636,10 +616,10 @@ function UserManagement() {
             </div>
 
             {/* Modal Actions */}
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end !bg-white gap-3 mt-6">
               <button
                 onClick={() => setShowAddUserModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 text-sm font-medium text-gray-700 !bg-white rounded-lg hover:bg-gray-200"
               >
                 Cancel
               </button>
@@ -655,7 +635,9 @@ function UserManagement() {
       )}
     </div>
     </div>
-  </div>
+    
+ 
+
   );
 }
 

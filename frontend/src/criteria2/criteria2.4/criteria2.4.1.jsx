@@ -1,16 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+// Import your Session Context here
+import { SessionContext } from "../../contextprovider/sessioncontext";  // adjust path accordingly
 
 const Criteria2_4_1 = () => {
+  const { sessions } = useContext(SessionContext);  // Get sessions from context
+  // sessions = ["2024-25", "2023-24", "2022-23", ...]
+
   const [yearData, setYearData] = useState({});
-  const [currentYear, setCurrentYear] = useState(2023);
+  const [currentYear, setCurrentYear] = useState(sessions?.[0] || "");
   const [formData, setFormData] = useState({
     name: "",
-    pan: "",
     designation: "",
     yearOfAppointment: "",
     appointmentNature: "",
@@ -25,15 +31,34 @@ const Criteria2_4_1 = () => {
     facultyList: null,
   });
 
-  const navigate = useNavigate();
-  const goToNextPage = () => {
-    navigate("/criteria2.4.2");
-  };
+  const [provisionalScore, setProvisionalScore] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const goToPreviousPage = () => {
-    navigate("/criteria2.3.3");
-  };
-  const years = [2020, 2021, 2022, 2023, 2024];
+  const navigate = useNavigate();
+  const goToNextPage = () => navigate("/criteria2.4.2");
+  const goToPreviousPage = () => navigate("/criteria2.3.3");
+
+  useEffect(() => {
+    async function fetchScore() {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get("http://localhost:3000/api/v1/criteria2/score241");
+        console.log("Fetched score data:", response.data);
+        setProvisionalScore({
+          score: response.data.data,
+          message: response.data.message,
+        });
+      } catch (error) {
+        console.error("Error fetching provisional score:", error);
+        setError(error.message || "Failed to fetch provisional score");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchScore();
+  }, []);
 
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
@@ -43,17 +68,58 @@ const Criteria2_4_1 = () => {
     setUploads({ ...uploads, [field]: file });
   };
 
-  const handleSubmit = () => {
-    const values = { ...formData };
-    if (Object.values(values).every((v) => v !== "" && v !== null)) {
+  const handleSubmit = async () => {
+    // Validate inputs first
+    if (
+      !formData.name ||
+      !formData.designation ||
+      !formData.yearOfAppointment ||
+      !formData.appointmentNature ||
+      !formData.department ||
+      !formData.experience
+    ) {
+      alert("Please fill in all fields.");
+      return;
+    }
+  
+    const sessionYear = parseInt(currentYear.split("-")[0]);
+    const yearOfAppointment = parseInt(formData.yearOfAppointment);
+    const experience = parseInt(formData.experience);
+  
+    if (yearOfAppointment < 1990 || yearOfAppointment > new Date().getFullYear()) {
+      alert("Year of Appointment must be between 1990 and current year.");
+      return;
+    }
+  
+      try {
+      const payload = {
+        session: sessionYear,
+        name_of_the_full_time_teacher: formData.name,
+        designation: formData.designation,
+        year_of_appointment: yearOfAppointment,
+        nature_of_appointment: formData.appointmentNature,
+        name_of_department: formData.department,
+        total_number_of_years_of_experience_in_the_same_institution: experience,
+        is_the_teacher_still_serving: formData.isServing ? 'Yes' : 'No',
+        year: currentYear,
+        criteria_code: '2.4.1',
+        submitted_at: new Date().toISOString()
+      };
+      
+      console.log('Sending payload:', JSON.stringify(payload, null, 2));
+      
+      await axios.post("http://localhost:3000/api/v1/criteria2/createResponse222_241_243", payload);
+  
+      // Update frontend state
       const updatedYearData = {
         ...yearData,
         [currentYear]: [...(yearData[currentYear] || []), formData],
       };
       setYearData(updatedYearData);
+  
+      // Reset form
       setFormData({
         name: "",
-        pan: "",
         designation: "",
         yearOfAppointment: "",
         appointmentNature: "",
@@ -61,11 +127,28 @@ const Criteria2_4_1 = () => {
         experience: "",
         isServing: false,
       });
-    } else {
-      alert("Please fill in all fields.");
+  
+      alert("Data submitted successfully!");
+    } catch (error) {
+      console.error("Error saving data:", error);
+      if (error.response) {
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
+        const errorMessage = error.response.data?.message || 
+                           error.response.data?.error || 
+                           'Unknown error occurred';
+        alert(`Submission failed: ${errorMessage}`);
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+        alert("No response from server. Please check your connection and try again.");
+      } else {
+        console.error('Error message:', error.message);
+        alert(`Failed to save data: ${error.message}`);
+      }
     }
   };
-
+  
+  
   return (
     <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden text-black">
       <Header />
@@ -86,19 +169,51 @@ const Criteria2_4_1 = () => {
             </ul>
           </div>
 
+          {/* Provisional Score */}
+          
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+  <div className="flex justify-center mb-4">
+    <div className="text-center">
+      <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
+      {loading ? (
+        <span className="text-gray-500">Loading...</span>
+      ) : error ? (
+        <span className="text-red-500">Error: {error}</span>
+      ) : provisionalScore?.data?.score_sub_sub_criteria !== undefined ? (
+        <div className="text-center">
+          <span className="text-blue-600 text-lg font-bold">
+            {typeof provisionalScore.data.score_sub_sub_criteria === 'number'
+              ? provisionalScore.data.score_sub_sub_criteria.toFixed(2)
+              : provisionalScore.data.score_sub_sub_criteria || 'N/A'}
+          </span>
+          {provisionalScore.message && (
+            <span className="block text-gray-700 text-sm">{provisionalScore.message}</span>
+          )}
+        </div>
+      ) : (
+        <span className="text-gray-500">Score not available</span>
+      )}
+    </div>
+  </div>
+</div>
+
           {/* Year selector */}
           <div className="mb-4">
             <label className="font-medium text-gray-800 mr-2">Select Year:</label>
             <select
               className="border px-3 py-1 rounded text-gray-900"
               value={currentYear}
-              onChange={(e) => setCurrentYear(Number(e.target.value))}
+              onChange={(e) => setCurrentYear(e.target.value)}
             >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
+              {sessions && sessions.length > 0 ? (
+                sessions.map((session) => (
+                  <option key={session} value={session}>
+                    {session}
+                  </option>
+                ))
+              ) : (
+                <option value="">No sessions available</option>
+              )}
             </select>
           </div>
 
@@ -107,7 +222,6 @@ const Criteria2_4_1 = () => {
             <thead className="bg-blue-100 text-black font-semibold">
               <tr>
                 <th className="border px-2 py-1">Full-time Teacher</th>
-                <th className="border px-2 py-1">PAN</th>
                 <th className="border px-2 py-1">Designation</th>
                 <th className="border px-2 py-1">Year of Appointment</th>
                 <th className="border px-2 py-1">Appointment Nature</th>
@@ -119,7 +233,15 @@ const Criteria2_4_1 = () => {
             </thead>
             <tbody>
               <tr className="bg-white text-black">
-                {["name", "pan", "designation", "yearOfAppointment", "appointmentNature", "department", "experience", "isServing"].map((field, i) => (
+                {[
+                  "name",
+                  "designation",
+                  "yearOfAppointment",
+                  "appointmentNature",
+                  "department",
+                  "experience",
+                  "isServing",
+                ].map((field, i) => (
                   <td key={i} className="border px-2 py-1">
                     {field === "isServing" ? (
                       <input
@@ -152,18 +274,15 @@ const Criteria2_4_1 = () => {
           </table>
 
           {/* Yearly submitted data */}
-          {years.map((year) => (
+          {sessions?.map((year) => (
             <div key={year} className="mb-8 border rounded overflow-x-auto">
-              <h3 className="bg-blue-100 px-4 py-2 font-semibold text-blue-800">
-                Year: {year}
-              </h3>
+              <h3 className="bg-blue-100 px-4 py-2 font-semibold text-blue-800">Year: {year}</h3>
               {yearData[year] && yearData[year].length > 0 ? (
                 <table className="w-full text-sm border text-black">
                   <thead className="bg-blue-50">
                     <tr>
                       <th className="border px-2 py-1">#</th>
                       <th className="border px-2 py-1">Name</th>
-                      <th className="border px-2 py-1">PAN</th>
                       <th className="border px-2 py-1">Designation</th>
                       <th className="border px-2 py-1">Year of Appointment</th>
                       <th className="border px-2 py-1">Appointment Nature</th>
@@ -177,7 +296,6 @@ const Criteria2_4_1 = () => {
                       <tr key={index} className="even:bg-gray-50">
                         <td className="border px-2 py-1">{index + 1}</td>
                         <td className="border px-2 py-1">{entry.name}</td>
-                        <td className="border px-2 py-1">{entry.pan}</td>
                         <td className="border px-2 py-1">{entry.designation}</td>
                         <td className="border px-2 py-1">{entry.yearOfAppointment}</td>
                         <td className="border px-2 py-1">{entry.appointmentNature}</td>
@@ -196,66 +314,34 @@ const Criteria2_4_1 = () => {
 
           {/* File Upload Section */}
           <div className="mt-10 border-t pt-6">
-            <h3 className="text-xl font-semibold text-blue-900 mb-4">
-              File Description (Upload)
-            </h3>
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1">
-                Year wise full time teachers and sanctioned posts for 5 years (Data Template):
-              </label>
-              <input
-                type="file"
-                onChange={(e) => handleFileChange("template", e.target.files[0])}
-                className="w-full border rounded px-3 py-2"
-              />
-              {uploads.template && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selected: {uploads.template.name}
-                </p>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1">
-                Any additional information:
-              </label>
-              <input
-                type="file"
-                onChange={(e) => handleFileChange("additionalInfo", e.target.files[0])}
-                className="w-full border rounded px-3 py-2"
-              />
-              {uploads.additionalInfo && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selected: {uploads.additionalInfo.name}
-                </p>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1">
-                List of the faculty members authenticated by the Head of HEI:
-              </label>
-              <input
-                type="file"
-                onChange={(e) => handleFileChange("facultyList", e.target.files[0])}
-                className="w-full border rounded px-3 py-2"
-              />
-              {uploads.facultyList && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selected: {uploads.facultyList.name}
-                </p>
-              )}
-            </div>
+            <h3 className="text-xl font-semibold text-blue-900 mb-4">File Description (Upload)</h3>
+            {["template", "additionalInfo", "facultyList"].map((field, i) => (
+              <div key={i} className="mb-4">
+                <label className="block font-medium mb-1 capitalize">
+                  {field === "template"
+                    ? "Year wise full time teachers and sanctioned posts for 5 years (Data Template):"
+                    : field === "additionalInfo"
+                    ? "Any additional information:"
+                    : "List of the faculty members authenticated by the Head of HEI:"}
+                </label>
+                <input
+                  type="file"
+                  onChange={(e) => handleFileChange(field, e.target.files[0])}
+                  className="w-full border rounded px-3 py-2"
+                />
+                {uploads[field] && (
+                  <p className="text-sm text-gray-600 mt-1">Selected: {uploads[field].name}</p>
+                )}
+              </div>
+            ))}
           </div>
 
-         <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
+          <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
             <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />
-          </div>
           </div>
         </div>
       </div>
-    
+    </div>
   );
 };
 

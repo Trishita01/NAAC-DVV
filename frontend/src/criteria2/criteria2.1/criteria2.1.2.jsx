@@ -1,43 +1,174 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react"; 
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { SessionContext } from "../../contextprovider/sessioncontext";
 
 const Criteria2_1_2 = () => {
   const navigate = useNavigate();
-  const years = ["2024-25", "2023-24", "2022-23", "2021-22", "2020-21"];
+
+  // Get sessions from context
+  const { sessions: availableSessions, isLoading: isLoadingSessions, error: sessionError } = useContext(SessionContext);
+
   const categories = ["SC", "ST", "OBC", "Divyangjan", "Gen", "Others"];
 
-  const [currentYear, setCurrentYear] = useState("2024-25");
+  // State declarations
+  const [currentYear, setCurrentYear] = useState("");
   const [yearData, setYearData] = useState({});
-  const [dataRows, setDataRows] = useState({
-    "2024-25": [
-      {
-        seats: { SC: "", ST: "", OBC: "", Divyangjan: "", Gen: "", Others: "" },
-        students: { SC: "", ST: "", OBC: "", Divyangjan: "", Gen: "", Others: "" },
-      },
-    ],
-  });
+  const [provisionalScore, setProvisionalScore] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dataRows, setDataRows] = useState({});
 
+  // Initialize currentYear and dataRows when sessions load
+  useEffect(() => {
+    if (availableSessions && availableSessions.length > 0) {
+      setCurrentYear(availableSessions[0]);
+
+      if (!dataRows[availableSessions[0]]) {
+        setDataRows({
+          [availableSessions[0]]: [
+            {
+              seats: { SC: "", ST: "", OBC: "", Divyangjan: "", Gen: "", Others: "" },
+              students: { SC: "", ST: "", OBC: "", Divyangjan: "", Gen: "", Others: "" },
+              year: ""
+            },
+          ],
+        });
+      }
+    }
+  }, [availableSessions]);
+
+  // Handle year/session dropdown change
+  const handleYearChange = (year) => {
+    setCurrentYear(year);
+    if (!dataRows[year]) {
+      setDataRows(prev => ({
+        ...prev,
+        [year]: [
+          {
+            seats: { SC: "", ST: "", OBC: "", Divyangjan: "", Gen: "", Others: "" },
+            students: { SC: "", ST: "", OBC: "", Divyangjan: "", Gen: "", Others: "" },
+            year: ""
+          },
+        ],
+      }));
+    }
+  };
+
+  // Fetch provisional score
+  const fetchScore = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get("http://localhost:3000/api/v1/criteria2/score212");
+      console.log("Fetched score data:", response.data);
+      // Update to handle both response structures
+      setProvisionalScore({
+        data: {
+          score_sub_sub_criteria: response.data.data?.score_sub_sub_criteria || response.data?.score?.score_sub_sub_criteria || 0
+        },
+        message: response.data.message || "Score loaded successfully"
+      });
+    } catch (error) {
+      console.error("Error fetching provisional score:", error);
+      setError(error.response?.data?.message || error.message || "Failed to fetch provisional score");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle seat/student data changes
   const handleChange = (year, rowIndex, type, category, value) => {
     const updatedRows = [...(dataRows[year] || [])];
     updatedRows[rowIndex][type][category] = value;
     setDataRows({ ...dataRows, [year]: updatedRows });
   };
 
+  // Handle year cell input change in table
+  const handleYearCellChange = (session, rowIndex, value) => {
+    const numericValue = value.replace(/\D/g, '').slice(0, 4);
+    const updated = [...(dataRows[session] || [])];
+    updated[rowIndex].year = numericValue ? parseInt(numericValue, 10) : "";
+    setDataRows({ ...dataRows, [session]: updated });
+  };
+
+  // Add new row for current session
   const addRow = () => {
     const updated = [...(dataRows[currentYear] || [])];
     updated.push({
       seats: { SC: "", ST: "", OBC: "", Divyangjan: "", Gen: "", Others: "" },
       students: { SC: "", ST: "", OBC: "", Divyangjan: "", Gen: "", Others: "" },
+      year: ""
     });
     setDataRows({ ...dataRows, [currentYear]: updated });
   };
 
-  const handleSubmit = () => {
-    setYearData({ ...yearData, [currentYear]: dataRows[currentYear] });
-    alert("Data saved successfully!");
+  // Submit form data to backend
+  const handleSubmit = async () => {
+    try {
+      const sessionYear = parseInt(currentYear.split("-")[0], 10);
+      const rows = dataRows[currentYear] || [];
+      const yearInput = rows[0]?.year ? Number(rows[0].year) : sessionYear;
+
+      if (isNaN(sessionYear) || sessionYear < 2000 || sessionYear > 2099) {
+        throw new Error("Invalid session year. Must be between 2000 and 2099.");
+      }
+      if (isNaN(yearInput) || yearInput < 2000 || yearInput > 2099) {
+        throw new Error("Invalid year input. Must be between 2000 and 2099.");
+      }
+      if (!rows || rows.length === 0) {
+        throw new Error("No data to submit. Please add at least one row.");
+      }
+
+      // Calculate totals
+      const totalSeats = rows.reduce((sumRows, row) => {
+        return sumRows + Object.values(row.seats || {}).reduce((sum, val) => sum + (Number(val) || 0), 0);
+      }, 0);
+      const totalStudents = rows.reduce((sumRows, row) => {
+        return sumRows + Object.values(row.students || {}).reduce((sum, val) => sum + (Number(val) || 0), 0);
+      }, 0);
+
+      // Prepare request data
+      const requestData = {
+        session: sessionYear,
+        year: yearInput,
+        number_of_seats_earmarked_for_reserved_category_as_per_GOI: Math.round(Number(totalSeats) || 0),
+        number_of_students_admitted_from_the_reserved_category: Math.round(Number(totalStudents) || 0),
+      };
+
+      console.log("Sending data to backend:", requestData);
+
+      const response = await axios.post(
+        "http://localhost:3000/api/v1/criteria2/createResponse212",
+        requestData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Response created for year totals:", response.data);
+
+      await fetchScore();
+
+      setYearData((prev) => ({
+        ...prev,
+        [currentYear]: rows,
+      }));
+
+      alert("All rows submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting:", error);
+      if (error.response && error.response.data) {
+        alert("Submission failed: " + error.response.data.message);
+      } else {
+        alert("Submission failed due to network/server error.");
+      }
+    }
   };
 
   const handleDraft = () => {
@@ -69,17 +200,58 @@ const Criteria2_1_2 = () => {
             </ul>
           </div>
 
-          {/* Year Selector */}
+          {/* Provisional Score */}
+  
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+  <div className="flex justify-center mb-4">
+    <div className="text-center">
+      <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
+      {loading ? (
+        <span className="text-gray-500">Loading...</span>
+      ) : error ? (
+        <span className="text-red-500">Error: {error}</span>
+      ) : provisionalScore?.data?.score_sub_sub_criteria !== undefined ? (
+        <div className="text-center">
+          <span className="text-blue-600 text-lg font-bold">
+            {typeof provisionalScore.data.score_sub_sub_criteria === 'number'
+              ? provisionalScore.data.score_sub_sub_criteria.toFixed(2)
+              : provisionalScore.data.score_sub_sub_criteria || 'N/A'}
+          </span>
+          {provisionalScore.message && (
+            <span className="block text-gray-700 text-sm">{provisionalScore.message}</span>
+          )}
+        </div>
+      ) : (
+        <span className="text-gray-500">Score not available</span>
+      )}
+    </div>
+  </div>
+</div>
+
+
+
+          {/* Session Selector */}
           <div className="mb-4">
-            <label className="font-medium text-gray-700 mr-2">Select Year:</label>
+            <label className="font-medium text-gray-700 mr-2">Select Session:</label>
             <select
               className="border px-3 py-1 rounded text-black"
               value={currentYear}
-              onChange={(e) => setCurrentYear(e.target.value)}
+              onChange={(e) => handleYearChange(e.target.value)}
+              disabled={isLoadingSessions}
             >
-              {years.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
+              {isLoadingSessions ? (
+                <option>Loading sessions...</option>
+              ) : sessionError ? (
+                <option>Error loading sessions</option>
+              ) : availableSessions && availableSessions.length > 0 ? (
+                availableSessions.map((sess) => (
+                  <option key={sess} value={sess}>
+                    {sess}
+                  </option>
+                ))
+              ) : (
+                <option>No sessions available</option>
+              )}
             </select>
           </div>
 
@@ -107,13 +279,24 @@ const Criteria2_1_2 = () => {
             <tbody>
               {(dataRows[currentYear] || []).map((row, index) => (
                 <tr key={index} className="even:bg-gray-50">
-                  <td className="border border-black px-2 py-1">{currentYear}</td>
+                  <td className="border border-black px-1">
+                    <input
+                      type="number"
+                      min="2000"
+                      max="2099"
+                      step="1"
+                      className="w-full p-1 border border-gray-300 rounded"
+                      value={row.year ?? ""}
+                      onChange={(e) => handleYearCellChange(currentYear, index, e.target.value)}
+                      placeholder="YYYY"
+                    />
+                  </td>
                   {categories.map((cat) => (
                     <td key={`seats-${index}-${cat}`} className="border border-black px-1">
                       <input
                         type="number"
                         className="w-full p-1 border border-gray-300 rounded"
-                        value={row.seats[cat]}
+                        value={row.seats[cat] ?? ""}
                         onChange={(e) =>
                           handleChange(currentYear, index, "seats", cat, e.target.value)
                         }
@@ -125,7 +308,7 @@ const Criteria2_1_2 = () => {
                       <input
                         type="number"
                         className="w-full p-1 border border-gray-300 rounded"
-                        value={row.students[cat]}
+                        value={row.students[cat] ?? ""}
                         onChange={(e) =>
                           handleChange(currentYear, index, "students", cat, e.target.value)
                         }
@@ -137,16 +320,19 @@ const Criteria2_1_2 = () => {
             </tbody>
           </table>
 
-          {/* Add Row Button (Black) */}
+          {/* Add Row Button */}
           <button
             className="bg-black text-white px-4 py-2 rounded hover:bg-gray-900 mb-6"
-            onClick={addRow}
+            onClick={async () => {
+              await handleSubmit();
+              addRow();
+            }}
           >
             Add Row
           </button>
 
           {/* Display Submitted Year Data */}
-          {years.map((year) => (
+          {availableSessions && availableSessions.map((year) => (
             <div key={year} className="border border-gray-400 rounded mb-4">
               <h3 className="bg-gray-200 text-lg font-semibold px-4 py-2">Year: {year}</h3>
               {yearData[year] && yearData[year].length > 0 ? (
@@ -182,36 +368,35 @@ const Criteria2_1_2 = () => {
             </div>
           ))}
 
-          {/* Navigation and Save Buttons (All Blue) */}
+          {/* Navigation and Save Buttons */}
           <div className="flex justify-between items-center mt-6 mb-10">
-  <button
-    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-    onClick={() => navigate("/criteria2.1.1")}
-  >
-    ← Previous
-  </button>
-  <div className="space-x-3">
-    <button
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      onClick={handleDraft}
-    >
-      Save draft
-    </button>
-    <button
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      onClick={handleSubmit}
-    >
-      Submit entry
-    </button>
-    <button
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      onClick={() => navigate("/criteria2.1.3")}
-    >
-      Next →
-    </button>
-  </div>
-</div>
-
+            <button
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              onClick={() => navigate("/criteria2.1.1")}
+            >
+              ← Previous
+            </button>
+            <div className="space-x-3">
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                onClick={handleDraft}
+              >
+                Save draft
+              </button>
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                onClick={handleSubmit}
+              >
+                Submit entry
+              </button>
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                onClick={() => navigate("/criteria2.1.3")}
+              >
+                Next →
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -219,5 +404,3 @@ const Criteria2_1_2 = () => {
 };
 
 export default Criteria2_1_2;
-
-

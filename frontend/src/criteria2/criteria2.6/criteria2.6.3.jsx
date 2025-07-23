@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { SessionContext } from "../../contextprovider/sessioncontext"; 
 
 const Criteria2_6_3 = () => {
+  const { sessions } = useContext(SessionContext);
   const [yearData, setYearData] = useState({});
-  const [currentYear, setCurrentYear] = useState(2023);
+  const [currentYear, setCurrentYear] = useState(sessions[0] || "");
   const [formData, setFormData] = useState({
     programCode: "",
     programName: "",
@@ -21,7 +24,9 @@ const Criteria2_6_3 = () => {
     annualReportLink: "",
   });
 
-  const years = [2020, 2021, 2022, 2023, 2024];
+  const [score, setScore] = useState(null);
+  const [loadingScore, setLoadingScore] = useState(true);
+
   const navigate = useNavigate();
 
   const goToNextPage = () => {
@@ -36,20 +41,44 @@ const Criteria2_6_3 = () => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const fields = Object.values(formData);
     if (fields.every((v) => v.trim() !== "")) {
-      const updatedYearData = {
-        ...yearData,
-        [currentYear]: [...(yearData[currentYear] || []), formData],
-      };
-      setYearData(updatedYearData);
-      setFormData({
-        programCode: "",
-        programName: "",
-        studentsAppeared: "",
-        studentsPassed: "",
-      });
+      try {
+        const sessionYear = parseInt(currentYear.split("-")[0], 10);
+
+        const submissionData = {
+          ...formData,
+          year: currentYear,
+          session: sessionYear,
+          studentsAppeared: Number(formData.studentsAppeared),
+          studentsPassed: Number(formData.studentsPassed),
+        };
+
+        console.log("Submitting data:", submissionData);
+
+        await axios.post("http://localhost:3000/api/v1/createResponse263", submissionData);
+
+        const updatedYearData = {
+          ...yearData,
+          [currentYear]: [...(yearData[currentYear] || []), formData],
+        };
+        setYearData(updatedYearData);
+        setFormData({
+          programCode: "",
+          programName: "",
+          studentsAppeared: "",
+          studentsPassed: "",
+        });
+
+        // ✅ Fetch updated score
+        await fetchScore();
+
+        alert("Data submitted successfully!");
+      } catch (error) {
+        console.error("Error submitting data:", error);
+        alert("Failed to submit data. Please try again.");
+      }
     } else {
       alert("Please fill in all fields.");
     }
@@ -58,6 +87,26 @@ const Criteria2_6_3 = () => {
   const handleFileChange = (field, file) => {
     setFileDescriptions({ ...fileDescriptions, [field]: file });
   };
+
+  const fetchScore = async () => {
+    try {
+      setLoadingScore(true);
+      const response = await axios.get("http://localhost:3000/api/v1/criteria2/score263");
+      console.log("Fetched score263:", response.data);
+
+      if (response.data && typeof response.data.score !== "undefined") {
+        setScore(response.data.score);
+      }
+    } catch (err) {
+      console.error("Error fetching score263:", err);
+    } finally {
+      setLoadingScore(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchScore();
+  }, []);
 
   return (
     <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden text-black">
@@ -80,7 +129,7 @@ const Criteria2_6_3 = () => {
             <ul className="list-disc pl-6 text-black mt-2 space-y-1">
               <li>Programme code</li>
               <li>Name of the Programme</li>
-              <li>Number of Student appeared</li>
+              <li>Number of Students appeared</li>
               <li>Number of Students passed</li>
               <li>Pass percentage</li>
             </ul>
@@ -90,14 +139,27 @@ const Criteria2_6_3 = () => {
             2.6.3 Average pass percentage of Students during last five years
           </h2>
 
+          {/* ✅ Score Display */}
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+            {loadingScore ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : score !== null ? (
+              <p className="text-lg font-semibold text-green-800">
+                Provisional Score (2.6.3): {score} %
+              </p>
+            ) : (
+              <p className="text-gray-600">No score data available.</p>
+            )}
+          </div>
+
           <div className="mb-4">
             <label className="font-medium text-black mr-2">Select Year:</label>
             <select
               className="border px-3 py-1 rounded text-black"
               value={currentYear}
-              onChange={(e) => setCurrentYear(Number(e.target.value))}
+              onChange={(e) => setCurrentYear(e.target.value)}
             >
-              {years.map((year) => (
+              {sessions.map((year) => (
                 <option key={year} value={year}>
                   {year}
                 </option>
@@ -110,12 +172,8 @@ const Criteria2_6_3 = () => {
               <tr className="text-black font-semibold">
                 <th className="border px-2 py-1">Program Code</th>
                 <th className="border px-2 py-1">Program Name</th>
-                <th className="border px-2 py-1">
-                  Number of students appeared in the final year examination
-                </th>
-                <th className="border px-2 py-1">
-                  Number of students passed in final year examination
-                </th>
+                <th className="border px-2 py-1">No. appeared</th>
+                <th className="border px-2 py-1">No. passed</th>
                 <th className="border px-2 py-1">Action</th>
               </tr>
             </thead>
@@ -169,7 +227,7 @@ const Criteria2_6_3 = () => {
             </tbody>
           </table>
 
-          {years.map((year) => (
+          {sessions.map((year) => (
             <div key={year} className="mb-8 border rounded">
               <h3 className="bg-blue-100 px-4 py-2 font-semibold text-black">
                 Year: {year}
@@ -204,13 +262,9 @@ const Criteria2_6_3 = () => {
           ))}
 
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              File Description (Upload)
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">File Description (Upload)</h3>
             <div className="mb-3">
-              <label className="block mb-1 text-black">
-                Data Template (Program & Students List)
-              </label>
+              <label className="block mb-1 text-black">Data Template (Program & Students List)</label>
               <input
                 type="file"
                 className="border px-3 py-1 rounded w-full text-black"
@@ -231,15 +285,13 @@ const Criteria2_6_3 = () => {
                 type="text"
                 placeholder="Paste Link Here"
                 value={fileDescriptions.annualReportLink}
-                onChange={(e) =>
-                  handleFileChange("annualReportLink", e.target.value)
-                }
+                onChange={(e) => handleFileChange("annualReportLink", e.target.value)}
                 className="border px-3 py-1 rounded w-full text-black"
               />
             </div>
           </div>
 
-         <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
+          <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
             <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />
           </div>
         </div>
@@ -249,4 +301,3 @@ const Criteria2_6_3 = () => {
 };
 
 export default Criteria2_6_3;
-

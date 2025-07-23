@@ -331,7 +331,7 @@ onClick={() => toggleTab(5)}
 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 {/* Company Info */}
 <div className="col-span-1">
-<h1 className="text-2xl font-bold mb-4">Smart NAAC Scoring System</h1>
+<h1 className="text-2xl font-bold mb-4"> NAAC DVV system</h1>
 <address className="not-italic text-gray-300 mb-6">
 IEM Consultancy Services<br />
 Godrej Genesis Building, 15th Floor, Unit No.1502,<br />

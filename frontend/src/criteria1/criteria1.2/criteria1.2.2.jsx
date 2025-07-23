@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Criteria1_2_2 = () => {
   const currentYear = new Date().getFullYear();
@@ -11,6 +12,11 @@ const Criteria1_2_2 = () => {
   const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`);
   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
   const [yearData, setYearData] = useState({});
+
+  // States for provisional score
+  const [provisionalScore, setProvisionalScore] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
     names: "",
@@ -24,6 +30,31 @@ const Criteria1_2_2 = () => {
   });
 
   const navigate = useNavigate();
+
+  // Fetch provisional score from backend
+  const fetchScore = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get("http://localhost:3000/api/v1/criteria1/score122");
+      setProvisionalScore({
+        score: response.data.data,
+        message: response.data.message,
+      });
+    } catch (error) {
+      setError(error.message || "Failed to fetch provisional score");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchScore();
+  }, []);
+
+  const handleCalculateScore = () => {
+    fetchScore();
+  };
   const years = ["2024-25", "2023-24", "2022-23", "2021-22", "2020-21"];
 
   const handleChange = (field, value, index = null) => {
@@ -36,14 +67,25 @@ const Criteria1_2_2 = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const { names, code, yearofoffering, times, duration, students, totalstudents } = formData;
     if (names && code && yearofoffering && times && duration && students && totalstudents) {
-      const updatedYearData = {
-        ...yearData,
-        [selectedYear]: [...(yearData[selectedYear] || []), formData],
-      };
-      setYearData(updatedYearData);
+      try {
+        const entryWithYear = { ...formData, year: selectedYear };
+        const response = await axios.post("http://localhost:3000/api/v1/criteria1/createResponse122", entryWithYear);
+        console.log("Response created:", response.data);
+        const updatedYearData = {
+          ...yearData,
+          [selectedYear]: [...(yearData[selectedYear] || []), entryWithYear],
+        };
+        setYearData(updatedYearData);
+        alert("Data submitted successfully!");
+        fetchScore();
+      } catch (error) {
+        console.error("Error submitting:", error);
+        alert("Submission failed. Please try again.");
+      }
+
       setFormData({
         names: "",
         code: "",
@@ -83,6 +125,22 @@ const Criteria1_2_2 = () => {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            {/* Provisional Score Banner */}
+            <div className="flex justify-center mb-4">
+              <div className="text-center">
+                <div className="text-lg font-medium text-green-500 bg-[#bee7c7] !w-[1000px] h-[50px] pt-[10px] rounded-lg">
+                  {loading ? (
+                    <span className="text-gray-500">Loading...</span>
+                  ) : error ? (
+                    <span className="text-red-500">Error: {error}</span>
+                  ) : provisionalScore ? (
+                    <>Provisional Score: {provisionalScore.score}</>
+                  ) : (
+                    "Score not available"
+                  )}
+                </div>
+              </div>
+            </div>
             <div className="mb-4">
               <h3 className="text-blue-600 font-medium mb-2">1.2.2 Metric Information</h3>
               <p className="text-sm text-gray-700">
@@ -219,6 +277,12 @@ const Criteria1_2_2 = () => {
               )}
             </div>
           ))}
+
+          <div className="flex justify-end mt-4 mb-6">
+            <button className="px-4 py-2 !bg-blue-600 text-white rounded hover:bg-blue-700" onClick={handleCalculateScore}>
+              Calculate Score
+            </button>
+          </div>
 
           <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
             <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />

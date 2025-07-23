@@ -67,6 +67,7 @@ const Criteria1_3_3 = () => {
       <Navbar />
       <div className="flex flex-1">
         <Sidebar />
+        
         <div className="flex-1 flex flex-col p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-medium text-gray-800">

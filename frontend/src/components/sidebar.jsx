@@ -62,12 +62,32 @@ const Sidebar = () => {
         {
           id: "2.2",
           name: "2.2 Catering to Student Diversity",
-          subItems: ["2.2.1", "2.2.2"],
+          subItems: ["2.2.1", "2.2.2", "2.2.3"],
         },
         {
           id: "2.3",
-          name: "2.3. Teaching- Learning Process (50)",
-          subItems: ["2.3.1", "2.3.2","2.3.3"],
+          name: "2.3 Teaching- Learning Process",
+          subItems: ["2.3.1", "2.3.2", "2.3.3"],
+        },
+        {
+          id: "2.4",
+          name: "2.4 Teacher Profile and Quality",
+          subItems: ["2.4.1", "2.4.2", "2.4.3"],
+        },
+        {
+          id: "2.5",
+          name: "2.5 Teacher Profile and Quality",
+          subItems: ["2.5.1", "2.5.2", "2.5.3"],
+        },
+        {
+          id: "2.6",
+          name: "2.6 Student Performance and Learning Outcome",
+          subItems: ["2.6.1", "2.6.2", "2.6.3"],
+        },
+        {
+          id: "2.7",
+          name: "2.7 Student Performance and Learning Outcome",
+          subItems: ["2.7.1"],
         },
       ],
     },
@@ -78,13 +98,19 @@ const Sidebar = () => {
         {
           id: "3.1",
           name: "3.1 Promotion of Research",
-          subItems: ["3.1.1", "3.1.2","3.1.3"],
+          subItems: ["3.1.1", "3.1.2"],
         },
         {
-          id: "3.2",
-          name: " 3.2- Research Publication and Awards",
-          subItems: ["3.2.1", "3.2.2"],
+          id: "3.3",
+          name: "3.3 Extension Activities",
+          subItems: ["3.3.1", "3.3.2", "3.3.3","3.3.4"],
         },
+        {
+          id: "3.4",
+          name: "3.4 Collaboration",
+          subItems: ["3.4.1", "3.4.2"]
+        },
+        
       ],
     },
     {
@@ -93,25 +119,14 @@ const Sidebar = () => {
       subCriteria: [
         {
           id: "4.1",
-          name: "4.1 Physical Facilities",
-          subItems: ["4.1.1", "4.1.2","4.1.3","4.1.4"],
+          name: "4.1 Infrastructure",
+          subItems: ["4.1.1", "4.1.2", "4.1.3", "4.1.4"],
         },
         {
           id: "4.2",
-          name: "4.2 Library as a learning Resource",
-          subItems: ["4.2.1", "4.2.2","4.2.3","4.2.4"],
+          name: "4.2 Infrastructure",
+          subItems: ["4.2.1", "4.2.2", "4.2.3", "4.2.4"],
         },
-        {
-          id: "4.3",
-          name: "4.3 IT Infrastructure",
-          subItems: ["4.3.1", "4.3.2","4.3.3"],
-        },
-        {
-          id: "4.4",
-          name: "4.4 Maintenance of Campus Infrastructure",
-          subItems: ["4.4.1", "4.4.2"],
-        },
-
       ],
     },
     {
@@ -149,8 +164,29 @@ const Sidebar = () => {
           name: "6.1 Institutional Vision and Leadership",
           subItems: ["6.1.1", "6.1.2"],
         },
+        {
+          id: "6.2",
+          name: "6.2 Strategy Development and Deployment",
+          subItems: ["6.2.1", "6.2.2","6.2.3"],
+        },
+        {
+          id: "6.3",
+          name: "6.3 Faculty Empowerment Strategies",
+          subItems: ["6.3.1", "6.3.2","6.3.3","6.3.4","6.3.5"],
+        },
+        {
+          id: "6.4",
+          name: "6.4 Faculty Empowerment Strategies",
+          subItems: ["6.4.1", "6.4.2","6.4.3"],
+        },
+        {
+          id: "6.5",
+          name: "6.5 Faculty Empowerment Strategies",
+          subItems: ["6.5.1", "6.5.2"],
+        },
       ],
     },
+
     {
       id: "7",
       title: "Criteria 7: Institutional Values and Best Practices",
@@ -158,7 +194,12 @@ const Sidebar = () => {
         {
           id: "7.1",
           name: "7.1 Environment Consciousness",
-          subItems: ["7.1.1", "7.1.2"],
+          subItems: ["7.1.1", "7.1.2", "7.1.3", "7.1.4", "7.1.5", "7.1.6", "7.1.7", "7.1.8", "7.1.9", "7.1.10", "7.1.11"],
+        },
+        {
+          id: "7.2",
+          name: "7.1 Environment Consciousness",
+          subItems: ["7.2.1"],
         },
       ],
     },
