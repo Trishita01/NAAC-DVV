@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { createResponse211, score211,createResponse212,score212, createResponse233, createResponse222_241_243, createResponse242, score222, score242, score243 } from '../controllers/criteria2.controller.js';
+import { createResponse211, score211,createResponse212,score212, createResponse263, score263, createResponse233, createResponse222_241_243, createResponse242, score222, score242, score243 } from '../controllers/criteria2.controller.js';
 
 router.route('/createResponse211')
     .post(createResponse211);
@@ -16,6 +16,12 @@ router.route('/score212')
 
 router.route('/createResponse233')
     .post(createResponse233);
+
+router.route('/createResponse263')
+    .post(createResponse263);
+
+router.route('/score263')
+    .get(score263);
 
 router.route('/createResponse222_241_243')
     .post(createResponse222_241_243);

@@ -19,6 +19,7 @@ const Score = db.scores;
 const IIQA = db.iiqa_form;
 const IIQA_Student_Details = db.iiqa_student_details;
 const IIQAStaffDetails = db.iiqa_staff_details;
+const extended_profile = db.extended_profile;
 const CriteriaMaster = db.criteria_master;
 
 // Helper function to convert criteria code to padded format
@@ -1050,6 +1051,197 @@ const score242 = asyncHandler(async (req, res) => {
   );
 });
 
+const createResponse263 = asyncHandler(async (req, res) => {
+  const {
+    session,
+    year,
+    programme_name,
+    programme_code,
+    number_of_students_appeared_in_the_final_year_examination,
+    number_of_students_passed_in_the_final_year_examination
+  } = req.body;
+
+  // Convert to numbers
+  const sessionYear = Number(session);
+  const entryYear = Number(year);
+  const numberofstudentsappeared = Number(number_of_students_appeared_in_the_final_year_examination);
+  const numberofstudentspassed = Number(number_of_students_passed_in_the_final_year_examination);
+
+  // Validate required fields
+  if (!sessionYear || !entryYear || !programme_name || !programme_code || 
+      isNaN(numberofstudentsappeared) || isNaN(numberofstudentspassed)) {
+    throw new apiError(400, "Missing or invalid required fields");
+  }
+
+  if (sessionYear < 1990 || sessionYear > new Date().getFullYear()) {
+    throw new apiError(400, "Session must be between 1990 and current year");
+  }
+
+  if (entryYear < 1990 || entryYear > new Date().getFullYear()) {
+    throw new apiError(400, "Year must be between 1990 and current year");
+  }
+
+  if (numberofstudentsappeared < 0 || numberofstudentspassed < 0) {
+    throw new apiError(400, "Number of students must be a positive integer");
+  }
+
+  if (numberofstudentspassed > numberofstudentsappeared) {
+    throw new apiError(400, "Number of students passed cannot be greater than number of students appeared");
+  }
+
+  // Fetch criteria
+  const criteria = await CriteriaMaster.findOne({
+    where: {
+      sub_sub_criterion_id: '020603',
+      sub_criterion_id: '0206',
+      criterion_id: '02'
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // Get IIQA session range
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 4;
+
+  if (sessionYear < startYear || sessionYear > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+  }
+
+  // Create or update entry
+  const [entry, created] = await Criteria263.upsert({
+    id: criteria.id,
+    criteria_code: criteria.criteria_code,
+    session: sessionYear,  // Using sessionYear instead of sessionDate
+    year: entryYear,
+    programme_name,
+    programme_code,
+    number_of_students_appeared_in_the_final_year_examination: numberofstudentsappeared,
+    number_of_students_passed_in_the_final_year_examination: numberofstudentspassed
+  }, {
+    conflictFields: ['criteria_code', 'session', 'year', 'programme_name', 'programme_code'],
+    returning: true
+  });
+
+  return res.status(created ? 201 : 200).json(
+    new apiResponse(created ? 201 : 200, entry, 
+      created ? "Response created successfully" : "Response updated successfully")
+  );
+});
+
+const score263 = asyncHandler(async (req, res) => {
+  const currentYear = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("2.6.3");
+
+  // Get criteria
+  const criteria = await CriteriaMaster.findOne({
+    where: { 
+      sub_sub_criterion_id: criteria_code
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria 2.6.3 not found in criteria_master");
+  }
+
+  // Get latest IIQA session
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 4;
+
+  // Fetch responses
+  const responses = await Criteria263.findAll({
+    attributes: [
+      'session',
+      'number_of_students_appeared_in_the_final_year_examination',
+      'number_of_students_passed_in_the_final_year_examination'
+    ],
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: {
+        [Sequelize.Op.gte]: startYear,
+        [Sequelize.Op.lte]: endYear
+      }
+    },
+    order: [['session', 'DESC']]
+  });
+
+  if (responses.length === 0) {
+    throw new apiError(404, "No responses found for the given period");
+  }
+
+  // Calculate total appeared and passed
+  const totals = responses.reduce((acc, response) => {
+    acc.totalAppeared += response.number_of_students_appeared_in_the_final_year_examination || 0;
+    acc.totalPassed += response.number_of_students_passed_in_the_final_year_examination || 0;
+    return acc;
+  }, { totalAppeared: 0, totalPassed: 0 });
+
+  // Calculate score (percentage)
+  const score = totals.totalAppeared > 0 
+    ? (totals.totalPassed / totals.totalAppeared) * 100 
+    : 0;
+
+  // Create score entry
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: currentYear
+    },
+    defaults: {
+    criteria_code: criteria.criteria_code,
+    criteria_id: criteria.criterion_id,
+    sub_criteria_id: criteria.sub_criterion_id,
+    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+    score_criteria: 0,
+    score_sub_criteria: 0,
+    score_sub_sub_criteria: score,
+    session: currentYear,
+    cycle_year: 1
+    }
+});
+
+    if(!created) {
+      await Score.update({
+        score_sub_sub_criteria: score
+      }, {
+        where: {
+          criteria_code: criteria.criteria_code,
+          session: currentYear
+        }
+      });
+    }
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: currentYear
+      }
+    });
+
+    return res.status(200).json(
+      new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
+  );
+});
 
 // // response 241242222233
 
@@ -1206,83 +1398,134 @@ const score242 = asyncHandler(async (req, res) => {
 // });
 
   //score 243
-const score243 = asyncHandler(async (req, res) => {
-    /*
-    1. get the user input from the req body
-    2. query the criteria_master table to get the id and criteria_code 
-    3. validate the user input
-    4. create a new response
-    5. return the response
-    */
-    const session = new Date().getFullYear();
+  const score243 = asyncHandler(async (req, res) => {
+    const currentYear = new Date().getFullYear();
     const criteria_code = convertToPaddedFormat("2.4.3");
-    console.log(criteria_code)
-    console.log(CriteriaMaster)
+  
+    // Get criteria from master table
     const criteria = await CriteriaMaster.findOne({
       where: { 
         sub_sub_criterion_id: criteria_code
       }
     });
+  
+    if (!criteria) {
+      throw new apiError(404, "Criteria 2.4.3 not found in criteria_master");
+    }
+  
+    // Get latest IIQA session
+// Get latest IIQA form
+const latestIIQA = await IIQA.findOne({
+  attributes: ['id', 'session_end_year'],
+  order: [['created_at', 'DESC']]
+});
+
+if (!latestIIQA) {
+  throw new apiError(404, "No IIQA form found");
+}
+
+// Calculate date range
+const endYear = latestIIQA.session_end_year;
+const startYear = endYear - 4;
+
+// Get extended profile for the latest IIQA form
+const latestExtendedProfile = await db.extended_profile.findOne({
+  where: {
+    iiqa_form_id: latestIIQA.id,
+    year: {
+      [Sequelize.Op.lte]: endYear,
+      [Sequelize.Op.gte]: startYear
+    }
+  },
+  order: [['year', 'DESC']]
+});
+
+if (!latestExtendedProfile) {
+  throw new apiError(404, `No extended profile found for IIQA form ${latestIIQA.id} between ${startYear} and ${endYear}`);
+}
+
+if (latestExtendedProfile.full_time_teachers === null || latestExtendedProfile.full_time_teachers === undefined) {
+  throw new apiError(400, "Full-time teachers data is missing in the extended profile");
+}
+
+const fullTimeTeacherCount = latestExtendedProfile.full_time_teachers;
+
+    // Get all experience records for the criteria
     const responses = await Criteria243.findAll({
-      attributes: ['name_of_the_full_time_teacher', 'total_number_of_years_of_experience_in_the_same_institution'],
+      attributes: [
+        'total_number_of_years_of_experience_in_the_same_institution',
+        'session'
+      ],
       where: {
-        criteria_code: criteria.criteria_code  
+        criteria_code: criteria.criteria_code,
+        session: {
+          [Sequelize.Op.gte]: startYear,
+          [Sequelize.Op.lte]: endYear
+        }
       }
     });
   
-    // Count number of full-time teachers using a helper function
-    function getFullTimeTeacherCount(responses) {
-      let count = 0;
-      responses.forEach(response => {
-        if (response.name_of_the_full_time_teacher) {
-          const names = response.name_of_the_full_time_teacher
-            .split(',')
-            .map(name => name.trim())
-            .filter(name => name.length > 0);
-          count += names.length;
+    if (responses.length === 0) {
+      throw new apiError(404, "No experience records found for the given period");
+    }
+  
+    // Calculate total experience
+    const totalExperience = responses.reduce((sum, response) => {
+      return sum + (Number(response.total_number_of_years_of_experience_in_the_same_institution) || 0);
+    }, 0);
+  
+    // Calculate average experience
+    const averageExperience = fullTimeTeacherCount > 0 
+      ? totalExperience / fullTimeTeacherCount 
+      : 0;
+  
+    // Create or update score entry
+    let [entry, created] = await Score.findOrCreate({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: currentYear
+      },
+      defaults: {
+        criteria_code: criteria.criteria_code,
+        criteria_id: criteria.criterion_id,
+        sub_criteria_id: criteria.sub_criterion_id,
+        sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: 0,
+        score_sub_sub_criteria: averageExperience,
+        session: currentYear,
+        cycle_year: 1
+      }
+    });
+  
+    if (!created) {
+      await Score.update({
+        score_sub_sub_criteria: averageExperience
+      }, {
+        where: {
+          criteria_code: criteria.criteria_code,
+          session: currentYear
         }
       });
-      return count;
     }
-
-    let fullTimeTeacherCount = getFullTimeTeacherCount(responses);
-    let experienceCount = 0;
-    responses.forEach(response => {
-      if (response.name_of_the_full_time_teacher) {
-        const names = response.name_of_the_full_time_teacher
-          .split(',')
-          .map(name => name.trim())
-          .filter(name => name.length > 0);
-        // Add experience for each teacher
-        if (response.total_number_of_years_of_experience_in_the_same_institution) {
-          experienceCount += Number(response.total_number_of_years_of_experience_in_the_same_institution) * names.length;
-        }
-        console.log(experienceCount)
+  
+    // Fetch the updated entry
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: currentYear
       }
     });
   
-    let score = 0;
-    if (fullTimeTeacherCount > 0) {
-      score = experienceCount / fullTimeTeacherCount;
-    }
-    console.log(score)  
-    const currentYear = new Date().getFullYear(); 
-    const entry = await Score.create({
-      criteria_code: criteria.criteria_code,
-      criteria_id: criteria.criterion_id,
-      sub_criteria_id: criteria.sub_criterion_id,
-      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
-      score_criteria: 0,
-      score_sub_criteria: 0,
-      score_sub_sub_criteria: score,
-      session: currentYear,
-      cycle_year: 1
-    });
-  
-    res.status(200).json(
-      new apiResponse(200, { entry, fullTimeTeacherCount, experienceCount, score }, "Response created successfully")
+    return res.status(200).json(
+      new apiResponse(200, {
+        average_experience: averageExperience,
+        total_experience: totalExperience,
+        full_time_teacher_count: fullTimeTeacherCount,
+        score_entry: entry
+      }, created ? "Score created successfully" : "Score updated successfully")
     );
-});
+  });
 
 const createResponse233 = asyncHandler(async (req, res) => {
   console.log(CriteriaMaster)
@@ -1640,11 +1883,13 @@ export {
   createResponse233,
   createResponse222_241_243,
   createResponse242,
+  createResponse263,
   // getResponsesByCriteriaCode212,
   score212,
   score222,
   score242,
   score243,
+  score263,
   // getAllCriteria241243222233 ,
   // createResponse241243222233,
   // getResponsesByCriteriaCode241243222233,
