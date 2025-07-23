@@ -1,13 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import * as echarts from 'echarts';
-import {
-FaArrowLeft,
-FaArrowRight,
-FaBell,
-FaUser
-} from "react-icons/fa";
+import { Search, Users, Building2, Shield, BarChart3, FileText, Upload, Settings, Edit, Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+
 import { useNavigate } from 'react-router-dom';
+import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaArrowLeft, FaArrowRight, FaBell, FaUser } from 'react-icons/fa';
 
 const IqacDashboard= () => {
   const [currentDate] = useState(new Date('2025-06-25'));
@@ -15,17 +12,17 @@ const IqacDashboard= () => {
 
   const navigate = useNavigate();
 
-  const navItems = [
-    { icon: 'tachometer-alt', text: 'Dashboard', path: '/iqac-dashboard' },
-    { icon: 'users', text: 'User Management', path: '/user-management' },
-    { icon: 'file-alt', text: 'Data Entry Forms', path: '/criteria1.1.1' },
-    { icon: 'chart-line', text: 'GPA Analysis', path:'/gpa-analysis' },
-    { icon: 'paper-plane', text: 'Final Submission', path: '/final-submission' },
-    { icon: 'download', text: 'Download Report', path: '/download-report' },
-    { icon: 'question-circle', text: 'Help and Support' , path: '/helpsupport'},
-    { icon: 'cog', text: 'Configuration', path: '/configuration' },
-    { icon: 'sign-out-alt', text: 'Logout', path: '/logout' },
-  ];
+ const navItems = [
+      { icon: FaTachometerAlt , text: 'Dashboard', path: '/iqac-dashboard' },
+      { icon: FaUsers , text: 'User Management', path: '/user-management' },
+      { icon: FaFileAlt , text: 'Data Entry Forms', path: '/iiqa' },
+      { icon: FaChartLine , text: 'GPA Analysis', path: '/gpa-analysis' },
+      { icon: FaPaperPlane , text: 'Final Submission', path: '/final-submission' },
+      { icon: FaDownload , text: 'Download Report', path: '/download-report' },
+      { icon:FaQuestionCircle , text: 'Help and Support', path: '/helpsupport' },
+      { icon: FaCog, text: 'Configuration', path: '/configuration' },
+      { icon: FaSignOutAlt , text: 'Logout', path: '/logout' }
+    ];
 
   useEffect(() => {
     // GPA Visuals Chart
@@ -123,29 +120,40 @@ const IqacDashboard= () => {
     };
   }, []);
 
+  const sidebarItems = [
+    { icon: BarChart3, label: 'Dashboard', active: false },
+    { icon: Users, label: 'User Management', active: true },
+    { icon: Building2, label: 'Departments', active: false },
+    { icon: FileText, label: 'DVV Criteria', active: false },
+    { icon: Upload, label: 'Submissions', active: false },
+    { icon: BarChart3, label: 'Reports', active: false },
+    { icon: Settings, label: 'Settings', active: false }
+  ];
+
   return (
     <div className="flex min-h-screen w-[1520px] bg-gray-50">
       {/* Sidebar */}
      <div className={`h-screen bg-gray-900 text-white flex flex-col fixed top-0 left-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
-     <div className="flex justify-between items-center p-4 border-b border-gray-800">
-        {!collapsed && <span className="font-bold text-xl">NAAC</span>}
-        <button onClick={() => setCollapsed(!collapsed)} className="focus:outline-none text-gray-300 !bg-gray-800 hover:text-white">
-          {collapsed ? <FaArrowRight className=""/> : <FaArrowLeft className=""/>}
-        </button>
-      </div> 
-
-      <div className="flex-1 overflow-auto">
-        <nav className="mt-4 space-y-1">
-          {navItems.map(({ icon, text,path }) => (
-            <div key={text} 
-            onClick={() => navigate(path)}
-            className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white">
-              <i className={`fas fa-${icon} w-6 text-center`}></i>
-              {!collapsed && <span className="ml-2">{text}</span>}
-            </div>
-          ))}
-        </nav>
-      </div></div>
+              <div className="flex justify-between items-center p-4 border-b border-gray-800">
+                 {!collapsed && <span className="font-bold text-xl">NAAC</span>}
+                 <button onClick={() => setCollapsed(!collapsed)} className="focus:outline-none text-gray-300 !bg-gray-800 hover:text-white">
+                   {collapsed ? <FaArrowRight className=""/> : <FaArrowLeft className=""/>}
+                 </button>
+               </div> 
+         
+               <div className="flex-1 overflow-auto">
+                 <nav className="mt-4 space-y-1">
+                   {navItems.map(({ icon:Icon, text,path }) => (
+                     <div key={text} 
+                     onClick={() => navigate(path)}
+                     className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white">
+                       <Icon/>
+                       {!collapsed && <span className="ml-2">{text}</span>}
+                     </div>
+                   ))}
+                 </nav>
+               </div></div>
+         
 
       {/* Main Content */}
        <div className={`transition-all duration-300 w-[1520px] ${collapsed ? 'ml-18' : 'ml-64'}`}>

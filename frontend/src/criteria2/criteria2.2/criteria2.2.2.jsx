@@ -1,40 +1,62 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import { useNavigate } from "react-router-dom";
 import Bottom from "../../components/bottom";
+import axios from "axios";
 
 const Criteria2_2_2 = () => {
   const navigate = useNavigate();
-  const [students, setStudents] = useState("");
-  const [teachers, setTeachers] = useState("");
-  const [ratio, setRatio] = useState(null);
+
   const [file, setFile] = useState(null);
-
-  const handleCalculate = () => {
-    const s = parseInt(students, 10);
-    const t = parseInt(teachers, 10);
-
-    if (!s || !t || isNaN(s) || isNaN(t)) {
-      alert("Please enter valid numbers.");
-      return;
-    }
-
-    setRatio(`${s} : ${t}`);
-  };
+  const [score, setScore] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
 
-   const goToNextPage = () => {
+  const goToNextPage = () => {
     navigate("/criteria2.3.1");
   };
 
   const goToPreviousPage = () => {
     navigate("/criteria2.2.1");
   };
+
+  useEffect(() => {
+    async function fetchScore() {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get("http://localhost:3000/api/v1/criteria2/score222");
+        console.log("Fetched score222:", response.data);
+        setScore(response.data.data);
+      } catch (error) {
+        console.error("Error fetching score222:", error);
+        setError("Failed to load ratio. Please ensure data in 2.4.1 is filled.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchScore();
+  }, []);
+
+  // Utility to get a valid score field from the response
+  const getValidScore = (scoreObj) => {
+    if (!scoreObj) return null;
+    return (
+      scoreObj.weighted_cr_score ||
+      scoreObj.score_sub_sub_criteria ||
+      scoreObj.score_sub_criteria ||
+      scoreObj.score_criteria ||
+      null
+    );
+  };
+
+  const validScore = getValidScore(score);
 
   return (
     <div className="w-screen min-h-screen bg-white overflow-x-hidden text-black">
@@ -64,44 +86,30 @@ const Criteria2_2_2 = () => {
             </ul>
           </div>
 
-          {/* Input Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block font-medium mb-1">Total Students Enrolled:</label>
-              <input
-                type="number"
-                value={students}
-                onChange={(e) => setStudents(e.target.value)}
-                className="w-full border border-blue-500 px-3 py-2 rounded"
-                placeholder="Enter number of students"
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1">Total Full-time Teachers:</label>
-              <input
-                type="number"
-                value={teachers}
-                onChange={(e) => setTeachers(e.target.value)}
-                className="w-full border border-blue-500 px-3 py-2 rounded"
-                placeholder="Enter number of teachers"
-              />
-            </div>
+          {/* Calculated Ratio */}
+          <div className="bg-white text-black p-4 border border-green-300 rounded shadow">
+            <h3 className="text-green-700 text-lg font-semibold mb-2">
+              Calculated Student-Full time Teacher Ratio:
+            </h3>
+            {loading ? (
+              <p>Loading ratio...</p>
+            ) : error ? (
+              <p className="text-red-600">{error}</p>
+            ) : validScore !== null ? (
+              <p className="text-2xl font-bold">
+                {parseFloat(validScore).toFixed(2)}
+              </p>
+            ) : (
+              <p>Ratio not available. Please ensure data is entered in section 2.4.1.</p>
+            )}
           </div>
 
-          {/* Ratio Result */}
-          <button
-            onClick={handleCalculate}
-            className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700"
-          >
-            Calculate Ratio
-          </button>
-
-          {ratio && (
-            <div className="bg-blue-100 text-blue-900 p-4 rounded shadow w-fit">
-              <p className="font-semibold">Calculated Ratio:</p>
-              <p className="text-lg font-bold">{ratio}</p>
-            </div>
-          )}
+          {/* Info Message */}
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 rounded">
+            <p className="font-semibold">
+              Fill in the inputs in 2.4.1 to get the corresponding results.
+            </p>
+          </div>
 
           {/* File Upload */}
           <div>
@@ -120,20 +128,18 @@ const Criteria2_2_2 = () => {
             {file && (
               <p className="text-sm text-gray-700 mt-1">
                 Selected file:{" "}
-                <span className="font-medium">
-                  {file.name}
-                </span>
+                <span className="font-medium">{file.name}</span>
               </p>
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer Note */}
           <p className="text-xs italic mt-6 text-gray-600">
             * Ratio is calculated based on latest completed academic year.
           </p>
 
           {/* Navigation */}
-           <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
+          <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
             <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />
           </div>
         </div>
@@ -143,8 +149,3 @@ const Criteria2_2_2 = () => {
 };
 
 export default Criteria2_2_2;
-
-
-
-
-

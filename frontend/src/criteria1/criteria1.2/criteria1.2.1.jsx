@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+
 
 const Criteria1_2_1= () => {
   const currentYear = new Date().getFullYear();
@@ -23,8 +25,39 @@ const Criteria1_2_1= () => {
     supportLinks: [""],
   });
   const [submittedData, setSubmittedData] = useState([]);
+  // States for provisional score
+  const [provisionalScore, setProvisionalScore] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
+
+  // Fetch provisional score from backend
+  const fetchScore = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get("http://localhost:3000/api/v1/criteria1/score121");
+      setProvisionalScore({
+        score: response.data.data,
+        message: response.data.message,
+      });
+    } catch (error) {
+      setError(error.message || "Failed to fetch provisional score");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch score on mount
+  useEffect(() => {
+    fetchScore();
+  }, []);
+
+  // Manual refresh handler
+  const handleCalculateScore = () => {
+    fetchScore();
+  };
 
   const handleChange = (field, value, index = null) => {
   if (field === "supportLinks") {
@@ -35,16 +68,27 @@ const Criteria1_2_1= () => {
     setFormData({ ...formData, [field]: value });
   }
 };
-  const handleSubmit = () => {
-    if (
-      formData.code &&
-      formData.name &&
-      formData.yearIntro &&
-      formData.implemented &&
-      formData.yearImplemented
-    ) {
+ const handleSubmit = async () => {
+  if (
+    formData.code &&
+    formData.name &&
+    formData.yearIntro &&
+    formData.implemented &&
+    formData.yearImplemented
+  ) {
+    try {
+      // Construct request payload
       const entryWithYear = { ...formData, year: selectedYear };
+
+      // Call your backend API (update URL accordingly)
+      const response = await axios.post('http://localhost:3000/api/v1/criteria1/createResponse121', entryWithYear);
+
+      console.log("Response created:", response.data);
+
+      // Update submitted data table with front-end friendly object (ensures correct keys for table rendering)
       setSubmittedData([...submittedData, entryWithYear]);
+
+      // Reset form after successful submission
       setFormData({
         code: "",
         name: "",
@@ -55,10 +99,25 @@ const Criteria1_2_1= () => {
         percentChanged: "",
         supportLinks: [""],
       });
-    } else {
-      alert("Please fill in all required fields.");
+
+      alert("Data submitted successfully!");
+      // Refresh provisional score after successful submission
+      fetchScore();
+
+    } catch (error) {
+      console.error("Error submitting:", error);
+      if (error.response && error.response.data) {
+        alert("Submission failed: " + error.response.data.message);
+      } else {
+        alert("Submission failed due to network/server error.");
+      }
     }
-  };
+
+  } else {
+    alert("Please fill in all required fields.");
+  }
+};
+
 
   const goToNextPage = () => {
     navigate("/criteria1.2.2");
@@ -89,7 +148,15 @@ const Criteria1_2_1= () => {
             <div className="flex justify-center mb-4">
               <div className="text-center">
                 <div className="text-lg font-medium text-green-500 bg-[#bee7c7] !w-[1000px] h-[50px] pt-[10px] rounded-lg">
-                  Provisional Score: 18.75
+                  {loading ? (
+                    <span className="text-gray-500">Loading...</span>
+                  ) : error ? (
+                    <span className="text-red-500">Error: {error}</span>
+                  ) : provisionalScore ? (
+                    <>Provisional Score: {provisionalScore.score}</>
+                  ) : (
+                    "Score not available"
+                  )}
                 </div>
               </div>
             </div>
@@ -286,7 +353,7 @@ const Criteria1_2_1= () => {
                 </tbody>
               </table>
               <div className="flex justify-end mt-4">
-                <button className="px-4 py-2 !bg-blue-600 text-white rounded hover:bg-blue-700">
+                <button className="px-4 py-2 !bg-blue-600 text-white rounded hover:bg-blue-700" onClick={handleCalculateScore}>
                   Calculate Score
                 </button>
               </div>
