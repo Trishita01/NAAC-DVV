@@ -1467,6 +1467,7 @@ const score241 = asyncHandler(async (req, res) => {
     }
   });
 
+  
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: averageRatio

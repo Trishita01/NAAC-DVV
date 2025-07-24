@@ -32,6 +32,7 @@ router.route('/createResponse242')
 router.route('/score222')
     .get(score222);
 
+    
 router.route('/score242')
     .get(score242);
 
