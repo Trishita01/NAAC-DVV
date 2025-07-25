@@ -1467,7 +1467,7 @@ const score241 = asyncHandler(async (req, res) => {
     }
   });
 
-  
+
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: averageRatio
@@ -1498,12 +1498,129 @@ const score241 = asyncHandler(async (req, res) => {
 });
 
 const createResponse233 = asyncHandler(async (req, res) => {
-  
+  const criteria_code = convertToPaddedFormat("2.3.3");
+
+  const criteria = await CriteriaMaster.findOne({
+    where: { 
+      sub_sub_criterion_id: criteria_code
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria 2.3.3 not found in criteria_master");
+  }
+  const { session, numberOfMentors, numberOfMentees } = req.body;
+  console.log(session, numberOfMentors, numberOfMentees);
+
+  if (!session || !numberOfMentors || !numberOfMentees) {
+    throw new apiError(400, "Missing required fields");
+  }
+
+  if (session < 1990 || session > new Date().getFullYear()) {
+    throw new apiError(400, "Session must be between 1990 and current year");
+  }
+
+  if (numberOfMentors < 0 || numberOfMentees < 0) {
+    throw new apiError(400, "Number of mentors and mentees must be non-negative");
+  }
+
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 4;
+
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, "Session must be between the last 5 years");
+  }
+
+  const responses = await Criteria233.findAll({
+    where: {
+      session: session
+    }
+  });
+
+  if (responses.length > 0) {
+    throw new apiError(400, "Response already exists for this session");
+  }
+
+  console.log("reached till here")
+
+  const newResponse = await Criteria233.create({
+    id: criteria.id,
+    session: session,
+    No_of_mentors: numberOfMentors,
+    No_of_mentee: numberOfMentees,
+    criteria_code: criteria.criteria_code
+  });
+
+  return res.status(201).json(
+    new apiResponse(201, newResponse, "Response created successfully")
+  );
+
 })
 const score233 = asyncHandler(async (req, res) => {
-  
-})
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("2.3.3");
 
+  // Get criteria from master table
+  const criteria = await CriteriaMaster.findOne({
+    where: { 
+      sub_sub_criterion_id: criteria_code
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria 2.3.3 not found in criteria_master");
+  }
+
+  if (session < 1990 || session > new Date().getFullYear()) {
+    throw new apiError(400, "Session must be between 1990 and current year");
+  }
+
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 4;
+
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, "Session must be between the last 5 years");
+  }
+
+  const responses = await Criteria233.findAll({
+    where: {
+      session: session
+    }
+  });
+
+  if (responses.length === 0) {
+    throw new apiError(404, "No responses found for this session");
+  }
+
+  const totalMentors = responses.reduce((sum, response) => sum + response.No_of_mentors, 0);
+  const totalMentees = responses.reduce((sum, response) => sum + response.No_of_mentee, 0);
+
+  const score = totalMentees / totalMentors;
+
+  console.log(score)
+
+  res.status(200).json(
+    new apiResponse(200, score, "Score calculated successfully")
+  );
+})
 
 // // response 241242222233
 
@@ -1978,6 +2095,7 @@ export {
   score243,
   score263,
   score241,
+  score233,
   // getAllCriteria241243222233 ,
   // createResponse241243222233,
   // getResponsesByCriteriaCode241243222233,
