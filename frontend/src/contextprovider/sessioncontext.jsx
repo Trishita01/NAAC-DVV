@@ -13,16 +13,18 @@ export const SessionProvider = ({ children }) => {
       setIsLoading(true);
       try {
         const response = await axios.get("http://localhost:3000/api/v1/iiqa/sessions");
-        const sessionData = response.data?.data?.[0];
-        if (sessionData?.session_start_year && sessionData?.session_end_year) {
-          const { session_start_year, session_end_year } = sessionData;
+        const data = response.data?.data || [];
+        if (data.length > 0) {
+          // Get the latest session (first one since we ordered by DESC)
+          const latestSession = data[0];
+          const { session_start_year, session_end_year } = latestSession;
           const sessionList = [];
           for (let year = session_start_year; year < session_end_year; year++) {
             sessionList.push(`${year}-${(year + 1).toString().slice(-2)}`);
           }
           setSessions(sessionList);
         } else {
-          setError("Invalid session data format");
+          setError("No sessions found");
         }
       } catch (err) {
         console.error("Failed to fetch sessions:", err);

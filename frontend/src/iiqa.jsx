@@ -167,7 +167,7 @@ export default function IIQA() {
 
       if (response.status === 200 || response.status === 201) {
         alert('Form submitted successfully!');
-        navigate('/criteria1.1.1');
+        navigate('/extendedprofile');
       } else {
         console.error('Unexpected response status:', response.status);
         alert('Form submission failed. Please try again.');

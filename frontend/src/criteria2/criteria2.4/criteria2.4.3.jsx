@@ -1,54 +1,64 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { SessionContext } from "../../contextprovider/sessioncontext";
 
 const Criteria2_4_3 = () => {
-  const [yearData, setYearData] = useState({});
-  const [currentYear, setCurrentYear] = useState(2023);
-
-  const [uploads, setUploads] = useState({
-    additionalInfo: null,
-    dataTemplate: null,
-  });
-
+  const { sessions, isLoading: sessionsLoading, error: sessionsError } = useContext(SessionContext);
+  const [currentYear, setCurrentYear] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [scoreData, setScoreData] = useState({
+    score: null,
+    message: "",
+    yearly_data: [],
+    score_entry: null
+  });
 
   const navigate = useNavigate();
   const goToNextPage = () => navigate("/criteria2.5.1");
   const goToPreviousPage = () => navigate("/criteria2.4.2");
 
-  const years = [2020, 2021, 2022, 2023, 2024];
-
-  // Fetch data saved in 2.4.1 for selected year
+  // Initialize currentYear when sessions load
   useEffect(() => {
-    async function fetchYearData() {
+    if (sessions && sessions.length > 0 && !currentYear) {
+      setCurrentYear(sessions[0]);
+    }
+  }, [sessions]);
+
+  // Fetch score data when currentYear changes
+  useEffect(() => {
+    async function fetchScoreData() {
+      if (!currentYear) return;
+      
       setLoading(true);
       setError(null);
+      
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/criteria2/createResponse241243222233`);
-        if (response.data && response.data.data) {
-          setYearData(prev => ({ ...prev, [currentYear]: response.data.data }));
-        } else {
-          setYearData(prev => ({ ...prev, [currentYear]: [] }));
-        }
+        const response = await axios.get(`http://localhost:3000/api/v1/criteria2/score243`);
+        const data = response.data.data;
+        
+        setScoreData({
+          score: data?.score_entry?.score_sub_sub_criteria || "N/A",
+          message: response.data.message,
+          yearly_data: data?.yearly_data || [],
+          average_ratio: data?.average_ratio,
+          score_entry: data?.score_entry
+        });
       } catch (err) {
-        setError("Failed to fetch data for the selected year.");
-        setYearData(prev => ({ ...prev, [currentYear]: [] }));
+        console.error("Error fetching score data:", err);
+        setError("Failed to fetch score data. Please try again later.");
       } finally {
         setLoading(false);
       }
     }
-    fetchYearData();
+    
+    fetchScoreData();
   }, [currentYear]);
-
-  const handleFileChange = (field, file) => {
-    setUploads({ ...uploads, [field]: file });
-  };
 
   return (
     <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden text-black">
@@ -78,108 +88,91 @@ const Criteria2_4_3 = () => {
             </ul>
           </div>
 
-          {/* Year Selector */}
+          {/* Session Selector */}
           <div className="mb-4">
-            <label className="font-medium text-gray-800 mr-2">Select Year:</label>
-            <select
-              className="border px-3 py-1 rounded text-gray-900"
-              value={currentYear}
-              onChange={(e) => setCurrentYear(Number(e.target.value))}
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
+            <label className="font-medium text-gray-800 mr-2">Select Session:</label>
+            {sessionsLoading ? (
+              <span>Loading sessions...</span>
+            ) : sessionsError ? (
+              <span className="text-red-500">{sessionsError}</span>
+            ) : (
+              <select
+                className="border px-3 py-1 rounded text-gray-900"
+                value={currentYear}
+                onChange={(e) => setCurrentYear(e.target.value)}
+              >
+                {sessions?.map((session) => (
+                  <option key={session} value={session}>
+                    {session}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Info Message */}
           <div className="bg-yellow-100 border border-yellow-400 text-yellow-900 p-3 rounded mb-6 text-sm">
-            Data is fetched from <strong>2.4.1</strong> and is readonly here.
+            This section displays the calculated score based on data from <strong>2.4.1</strong>.
+            The score is automatically calculated based on the average teaching experience of full-time teachers.
           </div>
 
-          {/* Data table loaded from 2.4.1 */}
-          {loading ? (
-            <p>Loading data...</p>
-          ) : error ? (
-            <p className="text-red-600">{error}</p>
-          ) : yearData[currentYear] && yearData[currentYear].length > 0 ? (
-            <div className="mb-8 border rounded overflow-x-auto">
-              <h3 className="bg-blue-100 px-4 py-2 font-semibold text-blue-800">
-                Year: {currentYear}
-              </h3>
-              <table className="w-full text-sm border">
-                <thead className="bg-blue-50">
-                  <tr>
-                    <th className="border px-2 py-1">#</th>
-                    <th className="border px-2 py-1">Name</th>
-                    <th className="border px-2 py-1">Designation</th>
-                    <th className="border px-2 py-1">Year of Appointment</th>
-                    <th className="border px-2 py-1">Appointment Nature</th>
-                    <th className="border px-2 py-1">Department</th>
-                    <th className="border px-2 py-1">Experience</th>
-                    <th className="border px-2 py-1">Still Serving</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {yearData[currentYear].map((entry, idx) => (
-                    <tr key={idx} className="even:bg-gray-50">
-                      <td className="border px-2 py-1">{idx + 1}</td>
-                      <td className="border px-2 py-1">{entry.name}</td>
-                      <td className="border px-2 py-1">{entry.designation}</td>
-                      <td className="border px-2 py-1">{entry.yearOfAppointment}</td>
-                      <td className="border px-2 py-1">{entry.appointmentNature}</td>
-                      <td className="border px-2 py-1">{entry.department}</td>
-                      <td className="border px-2 py-1">{entry.experience}</td>
-                      <td className="border px-2 py-1">{entry.isServing ? "Yes" : "No"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-gray-600 px-4 py-2">No data submitted for this year.</p>
-          )}
-
-          {/* File Upload Section */}
+          {/* Score Display Section */}
           <div className="mt-10 border-t pt-6">
             <h3 className="text-lg font-semibold text-blue-900 mb-4">
-              File Description (Upload)
+              Score Information
             </h3>
-            <div className="mb-4">
-              <label className="block font-medium mb-1">Any additional information:</label>
-              <input
-                type="file"
-                className="w-full border px-3 py-2 rounded"
-                onChange={(e) => handleFileChange("additionalInfo", e.target.files[0])}
-              />
-              {uploads.additionalInfo && (
-                <p className="text-sm text-black mt-1">
-                  Selected: {uploads.additionalInfo.name}
-                </p>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1">
-                List of Teachers including their PAN, designation, dept and experience
-                details (Data Template):
-              </label>
-              <input
-                type="file"
-                className="w-full border px-3 py-2 rounded"
-                onChange={(e) => handleFileChange("dataTemplate", e.target.files[0])}
-              />
-              {uploads.dataTemplate && (
-                <p className="text-sm text-black mt-1">
-                  Selected: {uploads.dataTemplate.name}
-                </p>
-              )}
-            </div>
+            
+            {loading ? (
+              <p>Loading score data...</p>
+            ) : error ? (
+              <p className="text-red-500">{error}</p>
+            ) : (
+              <div className="bg-white p-4 rounded shadow">
+                <div className="text-center">
+                  <p className="text-lg font-medium mb-2">Score:</p>
+                  <p className="text-4xl font-bold text-green-600">
+                    {scoreData.score || 'N/A'}
+                  </p>
+                </div>
+                
+                {scoreData.message && (
+                  <p className="mt-2 text-sm text-gray-600">{scoreData.message}</p>
+                )}
+                
+                {scoreData.yearly_data.length > 0 && (
+                  <div className="mt-4">
+                    <p className="font-medium mb-2">Yearly Data:</p>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full border">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="border px-3 py-2 text-left">Year</th>
+                            <th className="border px-3 py-2 text-left">Total Experience (years)</th>
+                            <th className="border px-3 py-2 text-left">Teacher Count</th>
+                            <th className="border px-3 py-2 text-left">Average Experience</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {scoreData.yearly_data.map((yearData, index) => (
+                            <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                              <td className="border px-3 py-2">{yearData.year}</td>
+                              <td className="border px-3 py-2">{yearData.total_experience}</td>
+                              <td className="border px-3 py-2">{yearData.teacher_count}</td>
+                              <td className="border px-3 py-2">
+                                {yearData.average_experience !== null && yearData.average_experience !== undefined 
+                                  ? yearData.average_experience.toFixed(2) 
+                                  : 'N/A'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-
-          <p className="text-xs italic text-gray-600 mt-6">
-            * Also to be used for verification of teacher data for metric 2.2.2 & 2.3.3
-          </p>
 
           <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
             <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />

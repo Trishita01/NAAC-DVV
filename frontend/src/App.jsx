@@ -18,7 +18,7 @@ import Dashboard_HOD from "./hod-dashboard.jsx";
 import GPAAnalysis from "./gpa.jsx";
 import IIQA from "./iiqa.jsx";
 import { SessionProvider } from "./contextprovider/sessioncontext.jsx";
-
+import ExtendedProfile from "./extendedprofile.jsx";
 import Criteria1_1_1 from "./criteria1/criteria1.1/criteria1.1.1.jsx";
 import Criteria1_1_2 from "./criteria1/criteria1.1/criteria1.1.2.jsx";
 import Criteria1_1_3 from "./criteria1/criteria1.1/criteria1.1.3.jsx";
@@ -149,7 +149,7 @@ function App() {
             <Route element={<ProtectedRoute allowedRoles={['HOD']} />}>
               <Route path='/hod-dashboard' element={<Dashboard_HOD/>} />
             </Route> */}
-
+             <Route path='/extendedprofile' element={<ExtendedProfile/>}/>
             <Route path='/criteria1.1.1' element={<Criteria1_1_1/>}/>
             <Route path='/criteria1.1.2' element={<Criteria1_1_2/>}/>
             <Route path='/criteria1.1.3' element={<Criteria1_1_3/>}/>
