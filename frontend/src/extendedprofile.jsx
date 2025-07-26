@@ -107,11 +107,11 @@ const ExtendedProfileForm = () => {
 
           <div className="p-6 space-y-8">
             {/* Global Year Selector */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-black">
               <div className="flex items-center space-x-4">
                 <label className="text-lg font-medium text-blue-800">Select Year for All Sections:</label>
                 <select
-                  className="px-4 py-2 border border-blue-300 rounded-md text-lg font-medium bg-white"
+                  className="px-4 py-2 border border-blue-300 rounded-md text-lg font-medium bg-white text-black"
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                 >

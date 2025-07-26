@@ -1,12 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { SessionContext } from "../../contextprovider/sessioncontext";
 
 const Criteria2_3_3 = () => {
+  const { sessions: sessionYears, isLoading: isLoadingSessions, error: sessionError } = useContext(SessionContext);
+  const [selectedYear, setSelectedYear] = useState("");
+
+  useEffect(() => {
+    if (!isLoadingSessions && sessionYears && sessionYears.length > 0) {
+      setSelectedYear(sessionYears[0]);
+    }
+  }, [sessionYears, isLoadingSessions]);
+
   const [formData, setFormData] = useState({
     mentors: "",
     mentees: "",
@@ -19,7 +29,14 @@ const Criteria2_3_3 = () => {
     ratioDoc: null,
   });
 
-  const [provisionalScore, setProvisionalScore] = useState(null);
+  const [provisionalScore, setProvisionalScore] = useState({
+    score: {
+      score_sub_sub_criteria: 0,
+      score_sub_criteria: 0,
+      score_criteria: 0
+    },
+    message: ''
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -36,27 +53,41 @@ const Criteria2_3_3 = () => {
     setUploads({ ...uploads, [field]: file });
   };
 
-  // ✅ Fetch provisional score on mount
-  useEffect(() => {
-    async function fetchScore() {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await axios.get("http://localhost:3000/api/v1/criteria2/score233");
-        console.log("Fetched score data:", response.data);
-        setProvisionalScore({
-          score: response.data.data,
-          message: response.data.message,
-        });
-      } catch (error) {
-        console.error("Error fetching provisional score:", error);
-        setError(error.message || "Failed to fetch provisional score");
-      } finally {
-        setLoading(false);
-      }
+  // Define fetchScore with useCallback to prevent recreation on every render
+  const fetchScore = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(
+        "http://localhost:3000/api/v1/criteria2/score233"
+      );
+      console.log("Fetched score data:", response.data);
+  
+      // The API returns scores as strings inside response.data.data
+      const scoreData = response.data.data;
+      const parsedScore = {
+        score_sub_sub_criteria:
+          parseFloat(scoreData?.score_sub_sub_criteria) || 0,
+        score_sub_criteria: parseFloat(scoreData?.score_sub_criteria) || 0,
+        score_criteria: parseFloat(scoreData?.score_criteria) || 0,
+      };
+  
+      setProvisionalScore({
+        score: parsedScore,
+        message: response.data.message || "Score loaded successfully",
+      });
+    } catch (error) {
+      console.error("Error fetching provisional score:", error);
+      setError(error.response?.data?.message || error.message || "Failed to fetch provisional score");
+    } finally {
+      setLoading(false);
     }
+  }, [selectedYear]);
+
+  // Fetch provisional score on mount and when selectedYear changes
+  useEffect(() => {
     fetchScore();
-  }, []);
+  }, [fetchScore]);
 
   const handleSubmit = async () => {
     const { mentors, mentees } = formData;
@@ -67,22 +98,29 @@ const Criteria2_3_3 = () => {
     const ratioString = `${mentors} : ${mentees}`;
     setRatio(ratioString);
 
-    // ✅ Prepare form data for API
+    const sessionStartYear = parseInt(selectedYear.split("-")[0], 10);
+
     const dataToSend = {
-      mentors: parseInt(mentors),
-      mentees: parseInt(mentees),
-      ratio: ratioString,
+      session: sessionStartYear,
+      numberOfMentors: parseInt(mentors),
+      numberOfMentees: parseInt(mentees),
     };
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/v1/criteria2/createResponse241",
+        "http://localhost:3000/api/v1/criteria2/createResponse233",
         dataToSend
       );
 
       console.log("Response created:", response.data);
-      alert("Data submitted successfully!");
+      if (response.data.message) {
+        alert(response.data.message);
+      } else {
+        alert("Data submitted successfully!");
+      }
       setFormData({ mentors: "", mentees: "" });
+      // Refresh the score after successful submission
+      await fetchScore();
     } catch (error) {
       console.error("Error submitting:", error);
       if (error.response && error.response.data) {
@@ -104,23 +142,70 @@ const Criteria2_3_3 = () => {
             2.3.3.1 Mentor to Student Ratio
           </h2>
 
+          {/* Session Year Dropdown */}
+          <div className="mb-6">
+            <label className="block font-medium mb-1">Select Session Year:</label>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="border rounded px-3 py-2 w-full"
+              disabled={isLoadingSessions}
+            >
+              {isLoadingSessions ? (
+                <option>Loading sessions...</option>
+              ) : sessionError ? (
+                <option>Error loading sessions</option>
+              ) : sessionYears && sessionYears.length > 0 ? (
+                sessionYears.map((year, idx) => (
+                  <option key={idx} value={year}>
+                    {year}
+                  </option>
+                ))
+              ) : (
+                <option>No sessions available</option>
+              )}
+            </select>
+          </div>
+
           {/* Provisional Score Display */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex justify-center mb-4">
               <div className="text-center">
                 <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
                 {loading ? (
-                  <span className="text-gray-500">Loading...</span>
+                  <div className="text-center">
+                    <span className="text-gray-500">Loading...</span>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mx-auto mt-2"></div>
+                  </div>
                 ) : error ? (
-                  <span className="text-red-500">Error: {error}</span>
+                  <div className="text-center">
+                    <span className="text-red-500">Error: {error}</span>
+                    {/* <button
+                      onClick={fetchScore}
+                      className="text-blue-500 hover:text-blue-700 mt-2"
+                    >
+                      Try again
+                    </button> */}
+                  </div>
                 ) : provisionalScore?.score ? (
                   <div className="text-center">
-                    <span className="text-blue-600 text-lg font-bold">
-                      {provisionalScore.score.score_sub_sub_criteria.toFixed(2)}
-                    </span>
+                    <div className="mb-2">
+                      <span className="text-blue-600 text-lg font-bold">
+                        {typeof provisionalScore.score.score_sub_sub_criteria === 'number' 
+                          ? provisionalScore.score.score_sub_sub_criteria.toFixed(2) 
+                          : '0.00'}
+                      </span>
+                    </div>
+                    {provisionalScore.message && (
+                      <span className="block text-gray-600 mt-1">
+                        {provisionalScore.message}
+                      </span>
+                    )}
                   </div>
                 ) : (
-                  <span className="text-gray-500">Score not available</span>
+                  <div className="text-center">
+                    <span className="text-gray-500">Score not available</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -196,53 +281,19 @@ const Criteria2_3_3 = () => {
               File Description (Upload)
             </h3>
 
-            <div className="mb-4">
-              <label className="block font-medium mb-1">
-                Upload year wise, number of students enrolled and full time teachers on roll:
-              </label>
-              <input
-                type="file"
-                onChange={(e) => handleFileChange("yearwiseData", e.target.files[0])}
-                className="w-full border rounded px-3 py-2"
-              />
-              {uploads.yearwiseData && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selected: {uploads.yearwiseData.name}
-                </p>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1">
-                Circulars pertaining to assigning mentors to mentees:
-              </label>
-              <input
-                type="file"
-                onChange={(e) => handleFileChange("circulars", e.target.files[0])}
-                className="w-full border rounded px-3 py-2"
-              />
-              {uploads.circulars && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selected: {uploads.circulars.name}
-                </p>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1">
-                Mentor/Mentee ratio supporting document:
-              </label>
-              <input
-                type="file"
-                onChange={(e) => handleFileChange("ratioDoc", e.target.files[0])}
-                className="w-full border rounded px-3 py-2"
-              />
-              {uploads.ratioDoc && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selected: {uploads.ratioDoc.name}
-                </p>
-              )}
-            </div>
+            {["yearwiseData", "circulars", "ratioDoc"].map((field, idx) => (
+              <div key={idx} className="mb-4">
+                <label className="block font-medium mb-1 capitalize">{field}:</label>
+                <input
+                  type="file"
+                  onChange={(e) => handleFileChange(field, e.target.files[0])}
+                  className="w-full border rounded px-3 py-2"
+                />
+                {uploads[field] && (
+                  <p className="text-sm text-gray-600 mt-1">Selected: {uploads[field].name}</p>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* Bottom Buttons */}

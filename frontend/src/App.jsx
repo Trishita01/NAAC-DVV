@@ -1,7 +1,7 @@
 
 
 import React from "react";
-import ProtectedRoute from "./protectedroute.jsx";
+// import ProtectedRoute from "./protectedroute.jsx";
 import { AuthContext, AuthProvider } from './contextprovider/authcontext.jsx';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
@@ -132,11 +132,11 @@ function App() {
             <Route path='/login' element={<Login/>}/>
             <Route path='/register' element={<Register/>}/>
 
-            <Route element={<ProtectedRoute allowedRoles={['IQAC supervisor']} />}>
+            {/* <Route element={<ProtectedRoute allowedRoles={['IQAC supervisor']} />}>  */}
               <Route path="/iqac-dashboard" element={<IqacDashboard />} />
               <Route path="/gpa-analysis" element={<GPAAnalysis />} />
-            </Route>
-{/* 
+            {/* </Route> */}
+            {/* 
             <Route element={<ProtectedRoute allowedRoles={['college admin']} />}>
               <Route path='/admin-dashboard' element={<Dashboard_admin/>} />
               <Route path='/user-management' element={<UserManagement/>} />

@@ -150,9 +150,10 @@ const Criteria2_4_2 = () => {
             {loadingScore ? (
               <p className="text-gray-600">Loading provisional score...</p>
             ) : score !== null ? (
-              <p className="text-lg font-semibold text-green-800">
-                Provisional Score (2.4.2): {score} %
-              </p>
+              <div className="flex items-center">
+                <p className="text-lg font-semibold text-green-800 mr-2">Provisional Score (2.4.2):</p>
+                <p className="text-lg font-semibold text-green-800">{score} %</p>
+              </div>
             ) : (
               <p className="text-gray-600">No score data available.</p>
             )}

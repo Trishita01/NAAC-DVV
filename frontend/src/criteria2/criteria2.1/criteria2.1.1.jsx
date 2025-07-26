@@ -177,7 +177,7 @@ const Criteria2_1_1 = () => {
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year:</label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"
               value={currentYear}
               onChange={handleYearChange}
               disabled={isLoadingSessions}
@@ -194,30 +194,19 @@ const Criteria2_1_1 = () => {
             </select>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-  <div className="flex justify-center mb-4">
-    <div className="text-center">
-      <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
-      {loading ? (
-        <span className="text-gray-500">Loading...</span>
-      ) : error ? (
-        <span className="text-red-500">Error: {error}</span>
-      ) : provisionalScore?.data?.score_sub_sub_criteria ? (
-        <div className="text-center">
-          <span className="text-blue-600 text-lg font-bold">
-            {typeof provisionalScore.data.score_sub_sub_criteria === 'number'
-              ? provisionalScore.data.score_sub_sub_criteria.toFixed(2)
-              : provisionalScore.data.score_sub_sub_criteria}
-          </span>
-          <br />
-          <span className="text-gray-700">{provisionalScore.message}</span>
-        </div>
-      ) : (
-        <span className="text-gray-500">Score not available</span>
-      )}
-    </div>
-  </div>
-</div>
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+            {loading ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : provisionalScore?.score_sub_sub_criteria !== undefined ? (
+              <p className="text-lg font-semibold text-green-800">
+                Provisional Score (2.1.1): {typeof provisionalScore.score_sub_sub_criteria === 'number'
+                  ? provisionalScore.score_sub_sub_criteria.toFixed(2)
+                  : provisionalScore.score_sub_sub_criteria} %
+              </p>
+            ) : (
+              <p className="text-gray-600">No score data available.</p>
+            )}
+          </div>
 
           {/* Input Form */}
           <div className="border rounded mb-8">

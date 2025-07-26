@@ -190,31 +190,18 @@ const Criteria2_4_1 = () => {
             </ul>
           </div>
 
-          {/* Provisional Score */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex justify-center mb-4">
-              <div className="text-center">
-                <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
-                {scoreLoading ? (
-                  <span className="text-gray-500">Loading...</span>
-                ) : scoreError ? (
-                  <span className="text-red-500">Error: {scoreError}</span>
-                ) : provisionalScore ? (
-                  <div>
-                    <span className="text-blue-600 text-lg font-bold">
-                      {provisionalScore.score}
-                    </span>
-                    {provisionalScore.message && (
-                      <span className="block text-gray-700 text-sm">{provisionalScore.message}</span>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-gray-500">Score not available</span>
-                )}
-              </div>
-            </div>
+          {/* Score Display */}
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+            {scoreLoading ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : provisionalScore !== null ? (
+              <p className="text-lg font-semibold text-green-800">
+                Provisional Score (2.4.1): {provisionalScore.score} %
+              </p>
+            ) : (
+              <p className="text-gray-600">No score data available.</p>
+            )}
           </div>
-
 
           {/* Session Selector */}
           <div className="mb-4">

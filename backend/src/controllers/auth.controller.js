@@ -54,10 +54,13 @@ const iqacRegister = asyncHandler(async (req, res) => {
         throw new apiError(400, "Missing required fields");
       }
 
-      if(institutionType !== "autonomous" && institutionType !== "affiliated_ug" && institutionType !== "affiliated_pg" && institutionType !== "university") {
+      if(institutionType !== "autonomous" && institutionType !== "affiliated UG" && institutionType !== "affiliated PG" && institutionType !== "university") {
         throw new apiError(400, "Invalid institution type");
       }
 
+      const formattedInstitutionType = institutionType.toLowerCase().replace(/\s+/g, "_");
+      console.log("Formatted Institution Type: ", formattedInstitutionType);
+      console.log("type: ", typeof formattedInstitutionType);
       const user = await IQAC.findOne({ where: { email } });
       console.log(user)
       if (user) {
@@ -86,7 +89,7 @@ const iqacRegister = asyncHandler(async (req, res) => {
           email: email,
           password_hash: hashedPassword,
           institution_name: institutionName,
-          institution_type: institutionType,
+          institution_type: formattedInstitutionType,
           aishe_id: aisheId,
           institutional_email: institutionalEmail,
           phone_number: phoneNumber,

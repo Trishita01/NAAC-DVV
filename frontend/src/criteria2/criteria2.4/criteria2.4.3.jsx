@@ -122,58 +122,51 @@ const Criteria2_4_3 = () => {
               Score Information
             </h3>
             
-            {loading ? (
-              <p>Loading score data...</p>
-            ) : error ? (
-              <p className="text-red-500">{error}</p>
-            ) : (
-              <div className="bg-white p-4 rounded shadow">
-                <div className="text-center">
-                  <p className="text-lg font-medium mb-2">Score:</p>
-                  <p className="text-4xl font-bold text-green-600">
-                    {scoreData.score || 'N/A'}
-                  </p>
+            {/* Score Display */}
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+              {loading ? (
+                <p className="text-gray-600">Loading provisional score...</p>
+              ) : scoreData?.score !== undefined ? (
+                <p className="text-lg font-semibold text-green-800">
+                  Provisional Score (2.4.3): {scoreData.score} %
+                </p>
+              ) : (
+                <p className="text-gray-600">No score data available.</p>
+              )}
+            </div>
+
+            {scoreData.yearly_data.length > 0 && (
+              <div className="mt-4">
+                <p className="font-medium mb-2">Yearly Data:</p>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="border px-3 py-2 text-left">Year</th>
+                        <th className="border px-3 py-2 text-left">Total Experience (years)</th>
+                        <th className="border px-3 py-2 text-left">Teacher Count</th>
+                        <th className="border px-3 py-2 text-left">Average Experience</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scoreData.yearly_data.map((yearData, index) => (
+                        <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="border px-3 py-2">{yearData.year}</td>
+                          <td className="border px-3 py-2">{yearData.total_experience}</td>
+                          <td className="border px-3 py-2">{yearData.teacher_count}</td>
+                          <td className="border px-3 py-2">
+                            {yearData.average_experience !== null && yearData.average_experience !== undefined 
+                              ? yearData.average_experience.toFixed(2) 
+                              : 'N/A'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                
-                {scoreData.message && (
-                  <p className="mt-2 text-sm text-gray-600">{scoreData.message}</p>
-                )}
-                
-                {scoreData.yearly_data.length > 0 && (
-                  <div className="mt-4">
-                    <p className="font-medium mb-2">Yearly Data:</p>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full border">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="border px-3 py-2 text-left">Year</th>
-                            <th className="border px-3 py-2 text-left">Total Experience (years)</th>
-                            <th className="border px-3 py-2 text-left">Teacher Count</th>
-                            <th className="border px-3 py-2 text-left">Average Experience</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {scoreData.yearly_data.map((yearData, index) => (
-                            <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              <td className="border px-3 py-2">{yearData.year}</td>
-                              <td className="border px-3 py-2">{yearData.total_experience}</td>
-                              <td className="border px-3 py-2">{yearData.teacher_count}</td>
-                              <td className="border px-3 py-2">
-                                {yearData.average_experience !== null && yearData.average_experience !== undefined 
-                                  ? yearData.average_experience.toFixed(2) 
-                                  : 'N/A'}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
-
           <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
             <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />
           </div>

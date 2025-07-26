@@ -59,7 +59,7 @@ const Criteria2_2_2 = () => {
   const validScore = getValidScore(score);
 
   return (
-    <div className="w-screen min-h-screen bg-white overflow-x-hidden text-black">
+    <div className="w-screen min-h-screen bg-white text-black overflow-x-auto">
       <Header />
       <Navbar />
       <div className="flex w-full">
@@ -68,7 +68,6 @@ const Criteria2_2_2 = () => {
           <h2 className="text-2xl font-bold text-blue-900">
             2.2.2 Student - Full-time Teacher Ratio
           </h2>
-
           {/* Metric Info */}
           <div className="bg-white text-black p-4 border border-blue-200 rounded shadow">
             <h3 className="text-blue-700 text-lg font-semibold mb-2">
@@ -91,17 +90,17 @@ const Criteria2_2_2 = () => {
             <h3 className="text-green-700 text-lg font-semibold mb-2">
               Calculated Student-Full time Teacher Ratio:
             </h3>
-            {loading ? (
-              <p>Loading ratio...</p>
-            ) : error ? (
-              <p className="text-red-600">{error}</p>
-            ) : validScore !== null ? (
-              <p className="text-2xl font-bold">
-                {parseFloat(validScore).toFixed(2)}
-              </p>
-            ) : (
-              <p>Ratio not available. Please ensure data is entered in section 2.4.1.</p>
-            )}
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+              {loading ? (
+                <p className="text-gray-600">Loading provisional score...</p>
+              ) : validScore !== null ? (
+                <p className="text-lg font-semibold text-green-800">
+                  Provisional Score (2.2.2): {parseFloat(validScore).toFixed(2)} %
+                </p>
+              ) : (
+                <p className="text-gray-600">No score data available.</p>
+              )}
+            </div>
           </div>
 
           {/* Info Message */}

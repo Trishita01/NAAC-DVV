@@ -165,7 +165,7 @@ const createResponse211 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
@@ -419,7 +419,7 @@ const createResponse212 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (sessionYear < startYear || sessionYear > endYear) {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
@@ -506,7 +506,7 @@ const score212 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
@@ -644,7 +644,7 @@ const createResponse222_241_243 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
@@ -766,7 +766,7 @@ const score222 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
@@ -895,7 +895,7 @@ const createResponse242 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (sessionYear < startYear || sessionYear > endYear) {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
@@ -974,7 +974,7 @@ const score242 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
@@ -1119,7 +1119,7 @@ const createResponse263 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (sessionYear < startYear || sessionYear > endYear) {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
@@ -1172,7 +1172,7 @@ const score263 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   // Fetch responses
   const responses = await Criteria263.findAll({
@@ -1277,7 +1277,7 @@ throw new apiError(404, "No IIQA form found");
 
 // Calculate date range
 const endYear = latestIIQA.session_end_year;
-const startYear = endYear - 4;
+const startYear = endYear - 5;
 
 // Get extended profile for the latest IIQA form
 const latestExtendedProfile = await db.extended_profile.findOne({
@@ -1406,7 +1406,7 @@ const score241 = asyncHandler(async (req, res) => {
 
   // Calculate date range (last 5 years)
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   // Get extended profiles for the last 5 years
   const extendedProfiles = await extended_profile.findAll({
@@ -1534,7 +1534,7 @@ const createResponse233 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
     throw new apiError(400, "Session must be between the last 5 years");
@@ -1594,7 +1594,7 @@ const score233 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+  const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
     throw new apiError(400, "Session must be between the last 5 years");
@@ -1606,20 +1606,82 @@ const score233 = asyncHandler(async (req, res) => {
     }
   });
 
+  if (!Array.isArray(responses)) {
+    console.error('Responses is not an array:', responses);
+    throw new apiError(500, "Internal server error: Responses is not an array");
+  }
+
   if (responses.length === 0) {
     throw new apiError(404, "No responses found for this session");
   }
 
-  const totalMentors = responses.reduce((sum, response) => sum + response.No_of_mentors, 0);
-  const totalMentees = responses.reduce((sum, response) => sum + response.No_of_mentee, 0);
+  // Get the latest response based on session year
+  const latestResponse = responses.sort((a, b) => b.session - a.session)[0];
 
-  const score = totalMentees / totalMentors;
+  if (!latestResponse) {
+    throw new apiError(404, "No valid response found for this session");
+  }
+  console.log(latestResponse)
+  console.log(latestResponse.No_of_mentee, latestResponse.No_of_mentors)
 
-  console.log(score)
+  // Calculate ratio using the latest response
+  const ratio = latestResponse.No_of_mentee / latestResponse.No_of_mentors;
+  console.log(ratio)
+  
+  // Format the ratio as decimal (e.g., 13.1)
+  const score = Number(ratio.toFixed(1));
+  console.log('Calculated ratio:', score);
+  
+  try {
+    // First try to find existing score
+    let entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
 
-  res.status(200).json(
-    new apiResponse(200, score, "Score calculated successfully")
-  );
+    if (entry) {
+      // Update existing entry
+      await Score.update(
+        { score_sub_sub_criteria: score },
+        {
+          where: {
+            criteria_code: criteria.criteria_code,
+            session: session
+          }
+        }
+      );
+    } else {
+      // Create new entry
+      entry = await Score.create({
+        criteria_code: criteria.criteria_code,
+        criteria_id: criteria.criterion_id,
+        sub_criteria_id: criteria.sub_criterion_id,
+        sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: 0,
+        score_sub_sub_criteria: score,
+        session: session,
+        cycle_year: 1
+      });
+    }
+
+    // Fetch the updated/created entry
+    const result = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
+
+    return res.status(200).json(
+      new apiResponse(200, result, "Score processed successfully")
+    );
+  } catch (error) {
+    console.error('Error in score233:', error);
+    throw new apiError(500, "Internal server error while processing score");
+  }
 })
 
 // // response 241242222233

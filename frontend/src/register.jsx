@@ -34,8 +34,8 @@ const Register = () => {
   const institutionTypes = [
     'university',
     'autonomous',
-    'affiliated ',
-    'affiliated pg',
+    'affiliated UG',
+    'affiliated PG',
   ];
 
   const handleChange = ({ target: { name, value } }) => {

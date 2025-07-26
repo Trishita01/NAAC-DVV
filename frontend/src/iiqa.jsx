@@ -205,46 +205,8 @@ export default function IIQA() {
 
   return (
     <div className="flex min-h-screen w-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className={`bg-slate-800 text-white transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'} flex-shrink-0 fixed h-full z-10`}>
-        {/* Sidebar Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <h1 className={`text-2xl font-bold transition-opacity duration-300 ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100'}`}>
-            NAAC
-          </h1>
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors"
-          >
-            <ChevronLeft className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-        {/* Sidebar Menu */}
-        <nav className="mt-4">
-          <ul className="space-y-2 px-3">
-            {navItems.map((item, index) => (
-              <li key={index} className="relative">
-                <button
-                  onClick={() => window.location.pathname !== item.path && (window.location.href = item.path)}
-                  className={`flex items-center px-3 py-3 rounded-lg transition-colors w-full text-left group ${
-                    window.location.pathname === item.path
-                      ? 'bg-blue-600 text-white'
-                      : 'text-slate-300 hover:bg-blue-500 hover:text-white'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5 flex-shrink-0" />
-                  <span className={`ml-3 transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'}`}>
-                    {item.text}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </div>
-
       {/* Main Content */}
-      <div className={`transition-all duration-300 w-[1520px] ${isCollapsed ? 'ml-18' : 'ml-64'}`}>
+      <div className={`transition-all duration-300 w-[1520px]`}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center h-[50px] w-[130px] shadow border border-black/10 rounded-2xl">

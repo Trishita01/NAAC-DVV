@@ -5,19 +5,23 @@ export const SessionContext = createContext();
 
 export const SessionProvider = ({ children }) => {
   const [sessions, setSessions] = useState([]);
+  const [desiredGrade, setDesiredGrade] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchSessions = async () => {
+    const fetchSessionsAndGrade = async () => {
       setIsLoading(true);
       try {
         const response = await axios.get("http://localhost:3000/api/v1/iiqa/sessions");
         const data = response.data?.data || [];
+
         if (data.length > 0) {
-          // Get the latest session (first one since we ordered by DESC)
           const latestSession = data[0];
-          const { session_start_year, session_end_year } = latestSession;
+          const { session_start_year, session_end_year, desired_grade } = latestSession;
+
+          setDesiredGrade(desired_grade || null);
+
           const sessionList = [];
           for (let year = session_start_year; year < session_end_year; year++) {
             sessionList.push(`${year}-${(year + 1).toString().slice(-2)}`);
@@ -34,11 +38,11 @@ export const SessionProvider = ({ children }) => {
       }
     };
 
-    fetchSessions();
+    fetchSessionsAndGrade();
   }, []);
 
   return (
-    <SessionContext.Provider value={{ sessions, isLoading, error }}>
+    <SessionContext.Provider value={{ sessions, desiredGrade, isLoading, error }}>
       {children}
     </SessionContext.Provider>
   );

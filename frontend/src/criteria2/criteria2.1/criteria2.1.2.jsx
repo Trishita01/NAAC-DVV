@@ -202,31 +202,19 @@ const Criteria2_1_2 = () => {
 
           {/* Provisional Score */}
   
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-  <div className="flex justify-center mb-4">
-    <div className="text-center">
-      <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
-      {loading ? (
-        <span className="text-gray-500">Loading...</span>
-      ) : error ? (
-        <span className="text-red-500">Error: {error}</span>
-      ) : provisionalScore?.data?.score_sub_sub_criteria !== undefined ? (
-        <div className="text-center">
-          <span className="text-blue-600 text-lg font-bold">
-            {typeof provisionalScore.data.score_sub_sub_criteria === 'number'
-              ? provisionalScore.data.score_sub_sub_criteria.toFixed(2)
-              : provisionalScore.data.score_sub_sub_criteria || 'N/A'}
-          </span>
-          {provisionalScore.message && (
-            <span className="block text-gray-700 text-sm">{provisionalScore.message}</span>
-          )}
-        </div>
-      ) : (
-        <span className="text-gray-500">Score not available</span>
-      )}
-    </div>
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+    {loading ? (
+      <p className="text-gray-600">Loading provisional score...</p>
+    ) : provisionalScore?.data?.score_sub_sub_criteria !== undefined ? (
+      <p className="text-lg font-semibold text-green-800">
+        Provisional Score (2.1.2): {typeof provisionalScore.data.score_sub_sub_criteria === 'number'
+          ? provisionalScore.data.score_sub_sub_criteria.toFixed(2)
+          : provisionalScore.data.score_sub_sub_criteria} %
+      </p>
+    ) : (
+      <p className="text-gray-600">No score data available.</p>
+    )}
   </div>
-</div>
 
 
 

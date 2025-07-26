@@ -53,7 +53,6 @@ onClick={() => navigate('/register')}
 <h2 className="text-4xl font-bold mb-4">Simplifying NAAC Accreditation</h2>
 <p className="text-lg mb-8">A powerful tool for institutions to streamline documentation, track metrics, and simulate NAAC scores based on quantitative data.</p>
 <div className="flex space-x-4">
-<button className="px-6 py-3 !bg-white text-[#5D6096] font-medium rounded-lg hover:bg-opacity-90 hover:scale-105 transform transition-all duration-300 cursor-pointer !rounded-button whitespace-nowrap shadow-lg">Request a Demo</button>
 <button className="px-6 py-3 border-2  text-white font-medium rounded-lg !bg-transparent !border-white hover:!bg-white hover:!text-[#5D6096] transition-all duration-300 cursor-pointer !rounded-button whitespace-nowrap">Start Free Trial</button>
 </div>
 <p className="mt-8 text-white/90 flex items-center">
