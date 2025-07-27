@@ -1,6 +1,6 @@
 // axios.js
 import axios from 'axios';
-import { getAccessToken, getRefreshToken, setTokens, logout } from './tokenUtils';
+import { getAccessToken, getRefreshToken, setTokens, logout } from './utils/tokenUtils.js';
 
 const api = axios.create({
   baseURL: 'http://localhost:3000/api/v1',

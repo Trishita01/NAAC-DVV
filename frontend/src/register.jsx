@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { AuthContext } from './contextprovider/authcontext';
+import axiosInstance from './contextprovider/axios';
 import {
   FaUser,
   FaCheckCircle,
@@ -10,7 +11,6 @@ import {
   FaUniversity,
   FaEnvelope,
   FaMobileAlt,
-  FaArrowRight,
   FaLock,
 } from 'react-icons/fa';
 
@@ -29,7 +29,9 @@ const Register = () => {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
 
   const institutionTypes = [
     'university',
@@ -105,18 +107,19 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
-    // mark all fields as touched for validation
+    // Mark all fields as touched and validate
+    const newTouched = {};
     Object.keys(formData).forEach(key => {
-      setTouched(prev => ({ ...prev, [key]: true }));
+      newTouched[key] = true;
       validateField(key, formData[key]);
     });
+    setTouched(newTouched);
 
-    // ensure no validation errors
     const hasErrors = Object.values(errors).some(Boolean);
     if (hasErrors) return;
 
-    // Prepare the data for submission
     const submissionData = {
       name: formData.name,
       email: formData.email,
@@ -128,29 +131,36 @@ const Register = () => {
       phoneNumber: formData.phoneNumber
     };
 
+    setIsSubmitting(true);
     try {
-      const { data } = await axios.post(
-        'http://localhost:3000/api/v1/auth/iqacRegister',
-        submissionData,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+      const { data } = await axiosInstance.post(
+        '/auth/iqacRegister',
+        submissionData
       );
-      console.log('Success:', data);
-      navigate('/iqac-dashboard');
+
+      // If registration is successful, log the user in
+      if (data.accessToken) {
+        await login({ 
+          accessToken: data.accessToken, 
+          refreshToken: data.refreshToken 
+        });
+        navigate('/iqac-dashboard');
+      }
     } catch (err) {
-      console.error('Registration error:', err.response?.data || err.message);
-      // Show error to user
-      alert(err.response?.data?.message || 'Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      setErrors(prev => ({
+        ...prev,
+        form: err.response?.data?.message || 'Registration failed. Please try again.'
+      }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="h-auto min-h-screen w-screen bg-gray-50 py-12">
       <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-xl font-bold text-gray-900 text-center mb-6">
+        <h1 className="text-md font-bold text-gray-900 text-center mb-6">
           IQAC Coordinator Registration
         </h1>
         <form className="space-y-6" onSubmit={handleSubmit} noValidate>
@@ -236,15 +246,25 @@ const Register = () => {
             </button>
             <button
               type="submit"
-              
-              className="relative flex justify-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              disabled={isSubmitting}
+              className={`relative flex justify-center px-6 py-3 ${
+                isSubmitting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+              } text-white rounded-md`}
             >
-              <span className="absolute left-4 inset-y-0 flex items-center">
-                <FaArrowRight className="text-blue-300 group-hover:text-blue-200" />
-              </span>
-              Proceed
+              {isSubmitting ? 'Processing...' : 'Proceed'}
+              {isSubmitting && (
+                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
             </button>
           </div>
+        {errors.form && (
+          <div className="mt-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+            {errors.form}
+          </div>
+        )}
         </form>
       </div>
     </div>

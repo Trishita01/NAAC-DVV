@@ -1,18 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
-import { SessionContext } from './contextprovider/sessioncontext.jsx';
-import { useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as echarts from 'echarts';
 import { Search, Users, Building2, Shield, BarChart3, FileText, Upload, Settings, Edit, Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-react';
-
-import { useNavigate } from 'react-router-dom';
 import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaArrowLeft, FaArrowRight, FaBell, FaUser } from 'react-icons/fa';
+import { SessionContext } from './contextprovider/sessioncontext';
 
-const IqacDashboard= () => {
+const IqacDashboard = () => {
+  const { sessions, desiredGrade, isLoading, error } = useContext(SessionContext);
   const [currentDate] = useState(new Date('2025-06-25'));
   const [collapsed, setCollapsed] = useState(false);
-  const { desiredGrade } = useContext(SessionContext);
-
   const navigate = useNavigate();
 
  const navItems = [
@@ -192,7 +189,7 @@ const IqacDashboard= () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {[
               { label: 'Projected Grade', value: 'A', color: 'text-blue-600', sub: 'Based on current progress' },
-              { label: 'Desired Grade', value: desiredGrade || 'A', color: 'text-amber-500', sub: 'Target accreditation level' },
+              { label: 'Desired Grade', value: desiredGrade || 'N/A', color: 'text-amber-500', sub: 'Target accreditation level' },
               { label: 'Criteria Lacking', value: '4', color: 'text-red-500', sub: 'Need immediate attention' },
               { label: 'Next Deadline', value: 'Jun 15', color: 'text-gray-800', sub: '10 days remaining' }
             ].map(({ label, value, color, sub }) => (

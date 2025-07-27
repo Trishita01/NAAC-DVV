@@ -6,8 +6,6 @@ import {
   FaTable,
   FaChartLine,
   FaFileAlt,
-//   FaFileLines,
-//   FaBuildingColumns,
 FaUniversity,
   FaBuilding,
   FaGraduationCap,
@@ -17,7 +15,7 @@ FaUniversity,
   FaUserCog,
   FaChalkboardTeacher
 } from "react-icons/fa";
-import { FaB } from 'react-icons/fa6';
+import LandingNavbar from "./components/landing-navbar";
 
 const LandingPage = () => {
 const [activeTab, setActiveTab] = useState(null);
@@ -28,32 +26,16 @@ setActiveTab(activeTab === index ? null : index);
 const navigate=useNavigate();
 return (
 <div className="min-h-screen w-screen bg-white">
-<header className="flex justify-between items-center px-8 py-3 bg-white shadow-sm">
-<div className="flex items-center">
-<h1 className="text-xl font-bold text-[#5D6096]">NAAC DVV System</h1>
-</div>
-<nav className="hidden md:flex space-x-4">
-<a href="#" className="text-[#1F2937] hover:text-[#5D6096] transition-colors">Features</a>
-<a href="#" className="text-[#1F2937] hover:text-[#5D6096] transition-colors">Solutions</a>
-<a href="#" className="text-[#1F2937] hover:text-[#5D6096] transition-colors">How It Works</a>
-<a href="#" className="text-[#1F2937] hover:text-[#5D6096] transition-colors">Contact</a>
-</nav>
-<div className="flex space-x-3 pl-8">
-<button className="pl-4 py-2 text-[#1F2937] border rounded-lg hover:!bg-[#5D6096] hover:!text-white transition-all duration-300 cursor-pointer !rounded-button whitespace-nowrap shadow-sm !bg-white"
-onClick={() => navigate('/login')}
->Log In</button>
-<button className="px-4 py-2 !bg-[#F4A261] text-white rounded-lg hover:bg-[#F4A261]/90 transition-all duration-300 cursor-pointer !rounded-button whitespace-nowrap shadow-md"
-onClick={() => navigate('/register')}
->Register</button>
-</div>
-</header>
+
+<LandingNavbar/>
 <section className="relative bg-gradient-to-r from-[#5D6096] to-[#7A7CB8] text-white overflow-hidden">
 <div className="container mx-auto px-8 py-16 flex flex-col md:flex-row items-center">
 <div className="md:w-1/2 z-10">
 <h2 className="text-4xl font-bold mb-4">Simplifying NAAC Accreditation</h2>
 <p className="text-lg mb-8">A powerful tool for institutions to streamline documentation, track metrics, and simulate NAAC scores based on quantitative data.</p>
 <div className="flex space-x-4">
-<button className="px-6 py-3 border-2  text-white font-medium rounded-lg !bg-transparent !border-white hover:!bg-white hover:!text-[#5D6096] transition-all duration-300 cursor-pointer !rounded-button whitespace-nowrap">Start Free Trial</button>
+<button className="px-6 py-3 border-2  text-white font-medium rounded-lg !bg-transparent !border-white hover:!bg-white hover:!text-[#5D6096] transition-all duration-300 cursor-pointer !rounded-button whitespace-nowrap"
+onClick={() => navigate('/register')}>Start Free Trial</button>
 </div>
 <p className="mt-8 text-white/90 flex items-center">
 <i className="fas fa-check-circle mr-2"></i>
@@ -310,10 +292,7 @@ onClick={() => toggleTab(5)}
 )}
 </div>
 </div>
-<div className="text-center mt-12">
-<h3 className="text-xl text-gray-950 font-semibold mb-4">Still Have Questions?</h3>
-<button className="px-6 py-3 !bg-[#F4A261] text-white font-medium rounded-lg hover:bg-[#F4A261]/90 transition duration-300 cursor-pointer !rounded-button whitespace-nowrap shadow-lg">Contact Us</button>
-</div>
+
 </div>
 </section>
 {/* CTA Section */}

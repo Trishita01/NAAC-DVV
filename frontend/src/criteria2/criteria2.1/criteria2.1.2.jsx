@@ -155,12 +155,29 @@ const Criteria2_1_2 = () => {
 
       await fetchScore();
 
-      setYearData((prev) => ({
+      // Update the year data with the submitted rows (only in the year-wise table)
+      setYearData(prev => {
+        const existingData = prev[currentYear] || [];
+        // Check if we already have data for this year to avoid duplicates
+        const newRows = rows.filter(newRow => 
+          !existingData.some(existingRow => 
+            JSON.stringify(existingRow) === JSON.stringify(newRow)
+          )
+        );
+        
+        return {
+          ...prev,
+          [currentYear]: [...existingData, ...newRows]
+        };
+      });
+
+      // Clear the data entry fields completely
+      setDataRows(prev => ({
         ...prev,
-        [currentYear]: rows,
+        [currentYear]: []
       }));
 
-      alert("All rows submitted successfully!");
+      alert("Data submitted successfully!");
     } catch (error) {
       console.error("Error submitting:", error);
       if (error.response && error.response.data) {
