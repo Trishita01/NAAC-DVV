@@ -7,7 +7,7 @@ const LandingNavbar = () => {
   return (
     <>
       {/* Header Section */}
-      <header className="flex justify-between items-center px-8 py-3 bg-white shadow-sm">
+      <header className="flex justify-between items-center px-5 py-3 bg-white shadow-sm">
         <div className="flex items-center">
           <h1 className="text-xl font-bold text-[#5D6096]">NAAC DVV System</h1>
         </div>

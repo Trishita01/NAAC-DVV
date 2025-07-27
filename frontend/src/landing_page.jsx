@@ -25,7 +25,7 @@ setActiveTab(activeTab === index ? null : index);
 
 const navigate=useNavigate();
 return (
-<div className="min-h-screen w-screen bg-white">
+<div className="h-auto min-h-screen w-screen bg-white">
 
 <LandingNavbar/>
 <section className="relative bg-gradient-to-r from-[#5D6096] to-[#7A7CB8] text-white overflow-hidden">

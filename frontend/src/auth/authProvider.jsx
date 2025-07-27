@@ -83,6 +83,26 @@ export const AuthProvider = ({ children }) => {
     }
   }, [updateUserFromToken]);
 
+  // Function to set user after registration
+  const setUserAfterRegistration = useCallback(async (userData) => {
+    try {
+      // Verify the user session is valid
+      const response = await api.get('/auth/me');
+      if (response.data.user) {
+        setUser(response.data.user);
+        return true;
+      }
+      // If verification fails, set the user data from registration response
+      setUser(userData);
+      return true;
+    } catch (error) {
+      console.error('Error verifying user session:', error);
+      // Fallback to setting user data from registration response
+      setUser(userData);
+      return true;
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout', {}, { withCredentials: true });
@@ -98,6 +118,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider
       value={{
+        setUserAfterRegistration,
         user,
         loading,
         isAuthenticated: !!user,

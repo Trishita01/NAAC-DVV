@@ -20,7 +20,7 @@ import LandingNavbar from './components/landing-navbar';
 const Register = () => {
   const [showIQACForm, setShowIQACForm] = useState(false);
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const { login, setUserAfterRegistration } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -136,21 +136,28 @@ const Register = () => {
     setIsSubmitting(true);
     try {
       const endpoint = showIQACForm ? 'auth/iqacRegister' : 'auth/register';
-      const response = await axiosInstance.post(endpoint, submissionData);
+      const response = await axiosInstance.post(endpoint, submissionData, { withCredentials: true });
 
       if (response.data.success) {
-        // The backend should set HTTP-only cookies
-        // The auth provider will handle the user state update
-        const loginSuccess = await login(
-          submissionData.email, 
-          submissionData.password,
-          submissionData.role
-        );
-        
-        if (loginSuccess) {
+        // For IQAC registration, the tokens are set as HTTP-only cookies
+        if (showIQACForm) {
+          // The backend has already set the HTTP-only cookies
+          // Update the user state and redirect
+          await setUserAfterRegistration(response.data.data.iqac);
           navigate('/dashboard');
         } else {
-          setErrors(prev => ({ ...prev, global: 'Registration successful but login failed. Please log in manually.' }));
+          // For regular registration, proceed with login
+          const loginSuccess = await login(
+            submissionData.email, 
+            submissionData.password,
+            submissionData.role
+          );
+          
+          if (loginSuccess) {
+            navigate('/dashboard');
+          } else {
+            setErrors(prev => ({ ...prev, global: 'Registration successful but login failed. Please log in manually.' }));
+          }
         }
       } else {
         setErrors(prev => ({ ...prev, global: response.data.message || 'Registration failed' }));
