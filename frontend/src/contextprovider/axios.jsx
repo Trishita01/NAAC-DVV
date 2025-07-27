@@ -1,63 +1,43 @@
-// src/contextprovider/axios.jsx
+// src/api/api.js
 import axios from 'axios';
-import { getAccessToken, getRefreshToken, setTokens } from '../utils/tokenUtils.js';
+import { getAccessToken, setAccessToken, clearAccessToken  } from '../auth/tokenMemory';
 
-const axiosInstance = axios.create({
+const api = axios.create({
   baseURL: 'http://localhost:3000/api/v1',
-  withCredentials: true,
+  withCredentials: true, // allows cookie to be sent
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
 });
 
-// Request interceptor to add auth token
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+api.interceptors.request.use((config) => {
+  // No need to manually set Authorization header as cookies will be sent automatically
+  return config;
+});
 
-// Response interceptor to handle token refresh
-axiosInstance.interceptors.response.use(
+api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
-    // If error is 401 and we haven't tried to refresh yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
-      
       try {
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) {
-          // No refresh token available, logout user
-          window.location.href = '/login';
-          return Promise.reject(error);
-        }
-
-        // Try to refresh the token
-        const response = await axios.post(
-          'http://localhost:3000/api/v1/auth/refresh-token',
-          { refreshToken }
-        );
-
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
-        setTokens(accessToken, newRefreshToken);
-
-        // Retry the original request with new token
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        return axiosInstance(originalRequest);
-      } catch (error) {
-        // Refresh token failed, logout user
+        // The refresh token is sent via cookie
+        const res = await api.post('/auth/refresh-token');
+        const { accessToken, expiresAt } = res.data;
+        setAccessToken(accessToken, expiresAt);
+        return api(originalRequest);
+      } catch (e) {
+        clearTokens();
         window.location.href = '/login';
-        return Promise.reject(error);
       }
     }
-    
     return Promise.reject(error);
   }
 );
 
-export default axiosInstance;
+export default api;
