@@ -3,7 +3,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import apiResponse from "../utils/apiResponse.js";
 import apiError from "../utils/apiError.js";
 import Sequelize from "sequelize";
-import CriteriaMaster from "../models/criteria_master.js";
+import CriteriaMaster from "../models/criteria_master.js";  
 
 // Helper function to convert criteria code to padded format
 const convertToPaddedFormat = (code) => {
@@ -17,45 +17,54 @@ const convertToPaddedFormat = (code) => {
 
 const Score = db.scores;
 
-//grade211
-const grade211 = asyncHandler(async (req, res) => {
-   
-  const session = new Date().getFullYear();
-  const criteria_code = convertToPaddedFormat("2.1.1");
-  
-  const criteria = await CriteriaMaster.findOne({
-    where: { sub_sub_criterion_id: criteria_code }
-  });
-  
-  if (!criteria) {
-    throw new apiError(404, "Criteria not found");
-  }
-  const score = await Score.findAll({
-    attributes: ['score_sub_sub_criteria'],
-    where: {
-      criteria_code: criteria.criteria_code,
-      session
-    }
-  });
-  console.log(score); 
-//grade calculation
-if (score >= 80) {
-    const grade = 4;
-}
-if (score >= 60) {
-    const grade = 3;
-}
-if (score >= 40) {
-    const grade = 2;
-}
-if (score >= 30) {
-    const grade = 1;
-}
-else {
-    const grade = 0;
-}
 
-    let [entry, created] = await score.findOrCreate({
+//score2.1
+const score21 = asyncHandler(async (req, res) => {
+    const session = new Date().getFullYear();
+    const criteria_code = convertToPaddedFormat("2.1");
+    console.log(criteria_code);
+    const criteria = await CriteriaMaster.findOne({
+      where: { sub_criterion_id: criteria_code }
+    });
+    console.log(criteria);
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
+    const score = await Score.findAll({
+      attributes: ['score_sub_sub_criteria', 'sub_sub_criteria_code'],
+      where: {
+        criteria_code: criteria.criteria_code,
+        session,
+        sub_sub_criteria_code: {
+          [Sequelize.Op.in]: [convertToPaddedFormat("2.1.1"), convertToPaddedFormat("2.1.2")]
+        }
+      }
+    });
+
+    // Create key-value pairs for the sub_sub_criteria_grade
+    const subSubCriteriaGrades = {};
+    score.forEach(item => {
+      subSubCriteriaGrades[item.sub_sub_criteria_code] = item.score_sub_sub_criteria;
+    });
+
+    // Now you can access grades like this:
+    // const grade211 = subSubCriteriaGrades[convertToPaddedFormat("2.1.1")];
+    // const grade212 = subSubCriteriaGrades[convertToPaddedFormat("2.1.2")];
+    
+    console.log('Sub Sub Criteria Grades:', subSubCriteriaGrades);
+    
+    const values = Object.values(subSubCriteriaGrades); // [80, 70, 90, 60]
+    console.log(values);
+    console.log(typeof values);
+
+    const sum = values.reduce((total, value) => total + value, 0);
+    const average = sum / values.length;
+
+    sub_score= average*40;
+
+    console.log("Average:", average);
+    console.log("sub_score:", sub_score);
+    let [entry, created] = await Score.findOrCreate({
       where: {
         criteria_code: criteria.criteria_code,
         session
@@ -66,16 +75,16 @@ else {
         sub_criteria_id: criteria.sub_criterion_id,
         sub_sub_criteria_id: criteria.sub_sub_criterion_id,
         score_criteria: 0,
-        score_sub_criteria: 0,
+        score_sub_criteria: sub_score,
         score_sub_sub_criteria: criteria.score_sub_sub_criteria,
-        grade_sub_sub_criteria: grade,
+        sub_sub_cr_grade: criteria.sub_sub_cr_grade,
         session
       }
     });
   
     if (!created) {
       await Score.update({
-        grade_sub_sub_criteria: grade,
+        score_sub_criteria: sub_score,
         session
       }, {
         where: {
@@ -97,223 +106,358 @@ else {
     );
 });
 
-//grade212
-const grade212 = asyncHandler(async (req, res) => {
-   
-    const session = new Date().getFullYear();
-    const criteria_code = convertToPaddedFormat("2.1.2");
-    
-    const criteria = await CriteriaMaster.findOne({
-      where: { sub_sub_criterion_id: criteria_code }
-    });
-    
-    if (!criteria) {
-      throw new apiError(404, "Criteria not found");
+//score2.2
+const score22 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("2.2");
+  console.log(criteria_code);
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_criterion_id: criteria_code }
+  });
+  console.log(criteria);
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+  const score = await Score.findAll({
+    attributes: ['score_sub_sub_criteria', 'sub_sub_criteria_code'],
+    where: {
+      criteria_code: criteria.criteria_code,
+      session,
+      sub_sub_criteria_code: {
+        [Sequelize.Op.in]: [convertToPaddedFormat("2.2.2")]
+      }
     }
-    const score = await Score.findAll({
-      attributes: ['score_sub_sub_criteria'],
+  });
+
+  // Create key-value pairs for the sub_sub_criteria_grade
+  const subSubCriteriaGrades = {};
+  score.forEach(item => {
+    subSubCriteriaGrades[item.sub_sub_criteria_code] = item.score_sub_sub_criteria;
+  });
+
+  // Now you can access grades like this:
+  // const grade211 = subSubCriteriaGrades[convertToPaddedFormat("2.1.1")];
+  // const grade222 = subSubCriteriaGrades[convertToPaddedFormat("2.2.2")];
+  
+  console.log('Sub Sub Criteria Grades:', subSubCriteriaGrades);
+  
+  const values = Object.values(subSubCriteriaGrades); // [80, 70, 90, 60]
+  console.log(values);
+  console.log(typeof values);
+
+  const sum = values.reduce((total, value) => total + value, 0);
+  const average = sum / values.length;
+
+  sub_score= average*20;
+
+  console.log("Average:", average);
+  console.log("sub_score:", sub_score);
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: sub_score,
+      score_sub_sub_criteria: criteria.score_sub_sub_criteria,
+      sub_sub_cr_grade: criteria.sub_sub_cr_grade,
+      session
+    }
+  });
+
+  if (!created) {
+    await Score.update({
+      score_sub_criteria: sub_score,
+      session
+    }, {
       where: {
         criteria_code: criteria.criteria_code,
         session
       }
     });
-    console.log(score); 
-  //(if > 80) = 4, (if 60-80)= 3, (if 40-60) =2 , (if 30-40)= 1, if(<30 )= 0
-   //grade calculation
-  
-      if (score >= 80) return 4;
-      if (score >= 60) return 3;
-      if (score >= 40) return 2;
-      if (score >= 30) return 1;
-      return 0;
-  });
 
-//grade222
-const grade222 = asyncHandler(async (req, res) => {
-   
-    const session = new Date().getFullYear();
-    const criteria_code = convertToPaddedFormat("2.2.2");
-    
-    const criteria = await CriteriaMaster.findOne({
-      where: { sub_sub_criterion_id: criteria_code }
-    });
-    
-    if (!criteria) {
-      throw new apiError(404, "Criteria not found");
-    }
-    const score = await Score.findAll({
-      attributes: ['score_sub_sub_criteria'],
+    entry = await Score.findOne({
       where: {
         criteria_code: criteria.criteria_code,
         session
       }
     });
-    console.log(score); 
-  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
-   //grade calculation
-  
-      if (score <= 20) return 4;
-      if (score <= 30) return 3;
-      if (score <= 40) return 2;
-      if (score <= 50) return 1;
-      else return 0;
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
+  );
+});
+
+//score2.3
+const score23 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("2.3");
+  console.log(criteria_code);
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_criterion_id: criteria_code }
+  });
+  console.log(criteria);
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+  const score = await Score.findAll({
+    attributes: ['score_sub_sub_criteria', 'sub_sub_criteria_code'],
+    where: {
+      criteria_code: criteria.criteria_code,
+      session,
+      sub_sub_criteria_code: {
+        [Sequelize.Op.in]: [convertToPaddedFormat("2.3.3")]
+      }
+    }
   });
 
-//grade233
-const grade233 = asyncHandler(async (req, res) => {
-   
-    const session = new Date().getFullYear();
-    const criteria_code = convertToPaddedFormat("2.3.3");
-    
-    const criteria = await CriteriaMaster.findOne({
-      where: { sub_sub_criterion_id: criteria_code }
-    });
-    
-    if (!criteria) {
-      throw new apiError(404, "Criteria not found");
+  // Create key-value pairs for the sub_sub_criteria_grade
+  const subSubCriteriaGrades = {};
+  score.forEach(item => {
+    subSubCriteriaGrades[item.sub_sub_criteria_code] = item.score_sub_sub_criteria;
+  });
+
+  // Now you can access grades like this:
+  // const grade211 = subSubCriteriaGrades[convertToPaddedFormat("2.1.1")];
+  // const grade222 = subSubCriteriaGrades[convertToPaddedFormat("2.2.2")];
+  
+  console.log('Sub Sub Criteria Grades:', subSubCriteriaGrades);
+  
+  const values = Object.values(subSubCriteriaGrades); // [80, 70, 90, 60]
+  console.log(values);
+  console.log(typeof values);
+
+  const sum = values.reduce((total, value) => total + value, 0);
+  const average = sum / values.length;
+
+  sub_score= average*15;
+
+  console.log("Average:", average);
+  console.log("sub_score:", sub_score);
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: sub_score,
+      score_sub_sub_criteria: criteria.score_sub_sub_criteria,
+      sub_sub_cr_grade: criteria.sub_sub_cr_grade,
+      session
     }
-    const score = await Score.findAll({
-      attributes: ['score_sub_sub_criteria'],
+  });
+
+  if (!created) {
+    await Score.update({
+      score_sub_criteria: sub_score,
+      session
+    }, {
       where: {
         criteria_code: criteria.criteria_code,
         session
       }
     });
-    console.log(score); 
-  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
-   //grade calculation
-  
-   if (score <= 20) return 4;
-   if (score <= 30) return 3;
-   if (score <= 40) return 2;
-   if (score <= 50) return 1;
-   else return 0;
-  });
 
-//grade241
-const grade241 = asyncHandler(async (req, res) => {
-   
-    const session = new Date().getFullYear();
-    const criteria_code = convertToPaddedFormat("2.4.1");
-    
-    const criteria = await CriteriaMaster.findOne({
-      where: { sub_sub_criterion_id: criteria_code }
-    });
-    
-    if (!criteria) {
-      throw new apiError(404, "Criteria not found");
-    }
-    const score = await Score.findAll({
-      attributes: ['score_sub_sub_criteria'],
+    entry = await Score.findOne({
       where: {
         criteria_code: criteria.criteria_code,
         session
       }
     });
-    console.log(score); 
-  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
-   //grade calculation
-  
-   if (score >= 75) return 4;
-   if (score >= 65) return 3;
-   if (score >= 50) return 2;
-   if (score >= 40) return 1;
-   else return 0;
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
+  );
+});
+
+//score2.4
+const score24 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("2.4");
+  console.log(criteria_code);
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_criterion_id: criteria_code }
+  });
+  console.log(criteria);
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+  const score = await Score.findAll({
+    attributes: ['score_sub_sub_criteria', 'sub_sub_criteria_code'],
+    where: {
+      criteria_code: criteria.criteria_code,
+      session,
+      sub_sub_criteria_code: {
+        [Sequelize.Op.in]: [convertToPaddedFormat("2.4.1"), convertToPaddedFormat("2.4.2"), convertToPaddedFormat("2.4.3")]
+      }
+    }
   });
 
-//grade242
-const grade242 = asyncHandler(async (req, res) => {
-   
-    const session = new Date().getFullYear();
-    const criteria_code = convertToPaddedFormat("2.4.2");
-    
-    const criteria = await CriteriaMaster.findOne({
-      where: { sub_sub_criterion_id: criteria_code }
-    });
-    
-    if (!criteria) {
-      throw new apiError(404, "Criteria not found");
+  // Create key-value pairs for the sub_sub_criteria_grade
+  const subSubCriteriaGrades = {};
+  score.forEach(item => {
+    subSubCriteriaGrades[item.sub_sub_criteria_code] = item.score_sub_sub_criteria;
+  });
+
+  // Now you can access grades like this:
+  // const grade211 = subSubCriteriaGrades[convertToPaddedFormat("2.1.1")];
+  // const grade212 = subSubCriteriaGrades[convertToPaddedFormat("2.1.2")];
+  
+  console.log('Sub Sub Criteria Grades:', subSubCriteriaGrades);
+  
+  const values = Object.values(subSubCriteriaGrades); // [80, 70, 90, 60]
+  console.log(values);
+  console.log(typeof values);
+
+  const sum = values.reduce((total, value) => total + value, 0);
+  const average = sum / values.length;
+
+  sub_score= average*60;
+
+  console.log("Average:", average);
+  console.log("sub_score:", sub_score);
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: sub_score,
+      score_sub_sub_criteria: criteria.score_sub_sub_criteria,
+      sub_sub_cr_grade: criteria.sub_sub_cr_grade,
+      session
     }
-    const score = await Score.findAll({
-      attributes: ['score_sub_sub_criteria'],
+  });
+
+  if (!created) {
+    await Score.update({
+      score_sub_criteria: sub_score,
+      session
+    }, {
       where: {
         criteria_code: criteria.criteria_code,
         session
       }
     });
-    console.log(score); 
-  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
-   //grade calculation
-  
-   if (score >= 75) return 4;
-   if (score >= 60) return 3;
-   if (score >= 50) return 2;
-   if (score >= 30) return 1;
-   else return 0;
-  });
 
-//grade243
-const grade243 = asyncHandler(async (req, res) => {
-   
-    const session = new Date().getFullYear();
-    const criteria_code = convertToPaddedFormat("2.4.3");
-    
-    const criteria = await CriteriaMaster.findOne({
-      where: { sub_sub_criterion_id: criteria_code }
-    });
-    
-    if (!criteria) {
-      throw new apiError(404, "Criteria not found");
-    }
-    const score = await Score.findAll({
-      attributes: ['score_sub_sub_criteria'],
+    entry = await Score.findOne({
       where: {
         criteria_code: criteria.criteria_code,
         session
       }
     });
-    console.log(score); 
-  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
-   //grade calculation
-  
-   if (score >= 15) return 4;
-   if (score >= 12) return 3;
-   if (score >= 9) return 2;
-   if (score >= 6) return 1;
-   else return 0;
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
+  );
+});
+
+//score2.6
+const score26 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("2.6");
+  console.log(criteria_code);
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_criterion_id: criteria_code }
+  });
+  console.log(criteria);
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+  const score = await Score.findAll({
+    attributes: ['score_sub_sub_criteria', 'sub_sub_criteria_code'],
+    where: {
+      criteria_code: criteria.criteria_code,
+      session,
+      sub_sub_criteria_code: {
+        [Sequelize.Op.in]: [convertToPaddedFormat("2.2.2")]
+      }
+    }
   });
 
-//grade263
-const grade263 = asyncHandler(async (req, res) => {
-   
-    const session = new Date().getFullYear();
-    const criteria_code = convertToPaddedFormat("2.6.3");
-    
-    const criteria = await CriteriaMaster.findOne({
-      where: { sub_sub_criterion_id: criteria_code }
-    });
-    
-    if (!criteria) {
-      throw new apiError(404, "Criteria not found");
+  // Create key-value pairs for the sub_sub_criteria_grade
+  const subSubCriteriaGrades = {};
+  score.forEach(item => {
+    subSubCriteriaGrades[item.sub_sub_criteria_code] = item.score_sub_sub_criteria;
+  });
+
+  // Now you can access grades like this:
+  // const grade211 = subSubCriteriaGrades[convertToPaddedFormat("2.1.1")];
+  // const grade222 = subSubCriteriaGrades[convertToPaddedFormat("2.2.2")];
+  
+  console.log('Sub Sub Criteria Grades:', subSubCriteriaGrades);
+  
+  const values = Object.values(subSubCriteriaGrades); // [80, 70, 90, 60]
+  console.log(values);
+  console.log(typeof values);
+
+  const sum = values.reduce((total, value) => total + value, 0);
+  const average = sum / values.length;
+
+  sub_score= average*20;
+
+  console.log("Average:", average);
+  console.log("sub_score:", sub_score);
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: sub_score,
+      score_sub_sub_criteria: criteria.score_sub_sub_criteria,
+      sub_sub_cr_grade: criteria.sub_sub_cr_grade,
+      session
     }
-    const score = await Score.findAll({
-      attributes: ['score_sub_sub_criteria'],
+  });
+
+  if (!created) {
+    await Score.update({
+      score_sub_criteria: sub_score,
+      session
+    }, {
       where: {
         criteria_code: criteria.criteria_code,
         session
       }
     });
-    console.log(score); 
-  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
-   //grade calculation
-  
-   if (score >= 90) return 4;
-   if (score >= 80) return 3;
-   if (score >= 70) return 2;
-   if (score >= 60) return 1;
-   else return 0;
-  });
 
-//score2.15
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+  }
 
-export { grade211, grade212,grade222,grade233,grade241,grade242,grade243,grade263 };
+  return res.status(200).json(
+    new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
+  );
+});
+
+//score2
+
+export { score21, score22, score23, score24, score26 };
