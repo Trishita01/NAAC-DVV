@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { AuthContext } from './auth/authProvider';
+import axiosInstance from './contextprovider/axios';
+
 import {
   FaUser,
   FaCheckCircle,
@@ -10,18 +12,23 @@ import {
   FaUniversity,
   FaEnvelope,
   FaMobileAlt,
-  FaArrowRight,
   FaLock,
 } from 'react-icons/fa';
 
+import LandingNavbar from './components/landing-navbar';
+
 const Register = () => {
+  const [showIQACForm, setShowIQACForm] = useState(false);
+  const navigate = useNavigate();
+  const { login, setUserAfterRegistration } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
+    role: 'faculty',
     institutionName: '',
-    institutionType: 'university',
+    institutionType: '',
     aisheId: '',
     institutionalEmail: '',
     phoneNumber: ''
@@ -29,14 +36,9 @@ const Register = () => {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const institutionTypes = [
-    'university',
-    'autonomous',
-    'affiliated UG',
-    'affiliated PG',
-  ];
+  const institutionTypes = ['university', 'autonomous', 'affiliated UG', 'affiliated PG'];
 
   const handleChange = ({ target: { name, value } }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -52,38 +54,38 @@ const Register = () => {
     let msg = '';
     switch (name) {
       case 'name':
-        if (!value.trim()) msg = 'Full name is required';
-        else if (value.length < 3) msg = 'Name must be at least 3 characters';
+        if (!value.trim()) msg = 'Name is required';
         break;
       case 'email':
+      case 'institutionalEmail':
         if (!value.trim()) msg = 'Email is required';
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) msg = 'Please enter a valid email address';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) msg = 'Enter a valid email';
         break;
       case 'password':
         if (!value.trim()) msg = 'Password is required';
         else if (value.length < 8) msg = 'Password must be at least 8 characters';
         break;
       case 'confirmPassword':
-        if (!value.trim()) msg = 'Please confirm password';
-        else if (value !== formData.password) msg = 'Passwords do not match';
+        if (value !== formData.password) msg = 'Passwords do not match';
+        break;
+      case 'role':
+        if (!showIQACForm) {
+          if (!value.trim()) msg = 'Role is required';
+        }
         break;
       case 'institutionName':
         if (!value.trim()) msg = 'Institution name is required';
         break;
       case 'institutionType':
-        if (!value) msg = 'Please select institution type';
+        if (!value.trim()) msg = 'Institution type is required';
         break;
       case 'aisheId':
         if (!value.trim()) msg = 'AISHE ID is required';
-        else if (!/^[A-Z0-9-]+$/i.test(value)) msg = 'Please enter a valid AISHE ID';
-        break;
-      case 'institutionalEmail':
-        if (!value.trim()) msg = 'Institutional email is required';
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) msg = 'Please enter a valid institutional email';
+        else if (!/^[A-Z0-9-]+$/i.test(value)) msg = 'Invalid AISHE ID';
         break;
       case 'phoneNumber':
         if (!value.trim()) msg = 'Phone number is required';
-        else if (!/^\+?[0-9]{10,15}$/.test(value)) msg = 'Please enter a valid phone number';
+        else if (!/^\+?[0-9]{10,15}$/.test(value)) msg = 'Enter a valid phone number';
         break;
       default:
         break;
@@ -91,9 +93,9 @@ const Register = () => {
     setErrors(prev => ({ ...prev, [name]: msg }));
   };
 
-  const getInputClasses = (f) => {
-    const error = touched[f] && errors[f];
-    const valid = touched[f] && !errors[f];
+  const getInputClasses = (field) => {
+    const error = touched[field] && errors[field];
+    const valid = touched[field] && !errors[field];
     return `w-full h-12 pl-10 pr-4 border ${
       error
         ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
@@ -105,146 +107,235 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
-    // mark all fields as touched for validation
+    const newTouched = {};
     Object.keys(formData).forEach(key => {
-      setTouched(prev => ({ ...prev, [key]: true }));
+      newTouched[key] = true;
       validateField(key, formData[key]);
     });
+    setTouched(newTouched);
 
-    // ensure no validation errors
     const hasErrors = Object.values(errors).some(Boolean);
     if (hasErrors) return;
 
-    // Prepare the data for submission
     const submissionData = {
       name: formData.name,
       email: formData.email,
       password: formData.password,
-      institutionName: formData.institutionName,
-      institutionType: formData.institutionType,
-      aisheId: formData.aisheId,
-      institutionalEmail: formData.institutionalEmail,
-      phoneNumber: formData.phoneNumber
+      role: formData.role,
+      ...(showIQACForm && {
+        institutionName: formData.institutionName,
+        institutionType: formData.institutionType,
+        aisheId: formData.aisheId,
+        institutionalEmail: formData.institutionalEmail,
+        phoneNumber: formData.phoneNumber,
+      }),
     };
 
+    setIsSubmitting(true);
     try {
-      const { data } = await axios.post(
-        'http://localhost:3000/api/v1/auth/iqacRegister',
-        submissionData,
-        {
-          headers: {
-            'Content-Type': 'application/json'
+      const endpoint = showIQACForm ? 'auth/iqacRegister' : 'auth/register';
+      const response = await axiosInstance.post(endpoint, submissionData, { withCredentials: true });
+
+      if (response.data.success) {
+        // For IQAC registration, the tokens are set as HTTP-only cookies
+        if (showIQACForm) {
+          // The backend has already set the HTTP-only cookies
+          // Update the user state and redirect
+          await setUserAfterRegistration(response.data.data.iqac);
+          navigate('/dashboard');
+        } else {
+          // For regular registration, proceed with login
+          const loginSuccess = await login(
+            submissionData.email, 
+            submissionData.password,
+            submissionData.role
+          );
+          
+          if (loginSuccess) {
+            navigate('/dashboard');
+          } else {
+            setErrors(prev => ({ ...prev, global: 'Registration successful but login failed. Please log in manually.' }));
           }
         }
-      );
-      console.log('Success:', data);
-      navigate('/iqac-dashboard');
+      } else {
+        setErrors(prev => ({ ...prev, global: response.data.message || 'Registration failed' }));
+      }
     } catch (err) {
-      console.error('Registration error:', err.response?.data || err.message);
-      // Show error to user
-      alert(err.response?.data?.message || 'Registration failed. Please try again.');
+      const message = err.response?.data?.message || 'An error occurred during registration.';
+      setErrors(prev => ({ ...prev, global: message }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const renderField = (id, label, Icon, type = 'text') => (
+    <div key={id}>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><Icon /></div>
+        <input
+          id={id}
+          name={id}
+          type={type}
+          className={`${getInputClasses(id)} text-gray-900`}
+          placeholder={`Enter ${label.toLowerCase()}`}
+          value={formData[id]}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {touched[id] && !errors[id] && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-green-500">
+            <FaCheckCircle />
+          </div>
+        )}
+      </div>
+      {touched[id] && errors[id] && (
+        <p className="mt-1 text-sm text-red-600">{errors[id]}</p>
+      )}
+    </div>
+  );
+
   return (
-    <div className="h-auto min-h-screen w-screen bg-gray-50 py-12">
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-xl font-bold text-gray-900 text-center mb-6">
-          IQAC Coordinator Registration
-        </h1>
+    <div className="min-h-screen w-full h-full bg-gray-50"> 
+      <LandingNavbar />
+      <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8 mt-12">
+        <div className="text-center mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            {showIQACForm ? 'IQAC Coordinator Registration' : 'User Registration'}
+          </h2>
+          <p className="text-gray-600 text-sm">Please fill in your details to create an account</p>
+        </div>
         <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-          {[
-            { id: 'name', label: 'Full Name', Icon: FaUser, type: 'text' },
-            { id: 'email', label: 'Email', Icon: FaEnvelope, type: 'email' },
-            { id: 'password', label: 'Password', Icon: FaLock, type: 'password' },
-            { id: 'confirmPassword', label: 'Confirm Password', Icon: FaLock, type: 'password' },
-            { id: 'institutionName', label: 'Institution Name', Icon: FaBuilding, type: 'text' },
-            { id: 'aisheId', label: 'AISHE ID', Icon: FaIdCard, type: 'text' },
-            { id: 'institutionalEmail', label: 'Institutional Email', Icon: FaEnvelope, type: 'email' },
-            { id: 'phoneNumber', label: 'Phone Number', Icon: FaMobileAlt, type: 'tel'}
-          ].map(({ id, label, Icon, type }) => (
-            <div key={id}>
-              <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
-                {label}
+          {renderField('name', 'Full Name', FaUser)}
+          {renderField('email', 'Email', FaEnvelope, 'email')}
+          {renderField('password', 'Password', FaLock, 'password')}
+          {renderField('confirmPassword', 'Confirm Password', FaLock, 'password')}
+          {!showIQACForm && (
+            <div>
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                Role
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <Icon />
+                  <FaUser />
                 </div>
-                <input
-                  id={id}
-                  name={id}
-                  type={type}
-                  className={`${getInputClasses(id)} text-gray-900`}
-                  placeholder={`Enter ${label.toLowerCase()}`}
-                  value={formData[id]}
+                <select
+                  id="role"
+                  name="role"
+                  className={`${getInputClasses('role')} appearance-none text-gray-900`}
+                  value={formData.role}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  maxLength={id === 'mobileNumber' ? 10 : undefined}
-                />
-                {touched[id] && !errors[id] && (
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-green-500">
-                    <FaCheckCircle />
-                  </div>
-                )}
+                >
+                  <option value="">Select role</option>
+                  <option value="faculty">Faculty</option>
+                  <option value="hod">HOD</option>
+                  <option value="college_authority">College Authority</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">
+                  <FaChevronDown />
+                </div>
               </div>
-              {touched[id] && errors[id] && (
-                <p className="mt-1 text-sm text-red-600">{errors[id]}</p>
+              {touched.role && errors.role && (
+                <p className="mt-1 text-sm text-red-600">{errors.role}</p>
               )}
             </div>
-          ))}
+          )}
 
-          {/* Institution Type dropdown */}
-          <div>
-            <label htmlFor="institutionType" className="block text-sm font-medium text-gray-700 mb-1">
-              Institution Type
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                <FaUniversity />
+          {showIQACForm && (
+            <>
+              {renderField('institutionName', 'Institution Name', FaBuilding)}
+              <div>
+                <label htmlFor="institutionType" className="block text-sm font-medium text-gray-700 mb-1">
+                  Institution Type
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                    <FaUniversity />
+                  </div>
+                  <select
+                    id="institutionType"
+                    name="institutionType"
+                    className={`${getInputClasses('institutionType')} appearance-none text-gray-900`}
+                    value={formData.institutionType}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  >
+                    <option value="" disabled>Select type</option>
+                    {institutionTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">
+                    <FaChevronDown />
+                  </div>
+                </div>
+                {touched.institutionType && errors.institutionType && (
+                  <p className="mt-1 text-sm text-red-600">{errors.institutionType}</p>
+                )}
               </div>
-              <select
-                id="institutionType"
-                name="institutionType"
-                className={`${getInputClasses('institutionType')} appearance-none text-gray-900`}
-                value={formData.institutionType}
-                onChange={handleChange}
-                onBlur={handleBlur}
-              >
-                <option value="" disabled>Select type</option>
-                {institutionTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">
-                <FaChevronDown />
-              </div>
-            </div>
-            {touched.institutionType && errors.institutionType && (
-              <p className="mt-1 text-sm text-red-600">{errors.institutionType}</p>
-            )}
-          </div>
+              {renderField('aisheId', 'AISHE ID', FaIdCard)}
+              {renderField('institutionalEmail', 'Institutional Email', FaEnvelope, 'email')}
+              {renderField('phoneNumber', 'Phone Number', FaMobileAlt, 'tel')}
+            </>
+          )}
 
-          <div className="flex justify-end space-x-4 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="px-6 py-3 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Cancel
-            </button>
+          <div className="flex justify-center pt-4">
             <button
               type="submit"
-              
-              className="relative flex justify-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              disabled={isSubmitting}
+              className={`relative flex justify-center px-6 py-3 ${
+                isSubmitting ? '!bg-blue-400' : '!bg-blue-600 hover:!bg-blue-700'
+              } text-white rounded-lg font-semibold transition`}
             >
-              <span className="absolute left-4 inset-y-0 flex items-center">
-                <FaArrowRight className="text-blue-300 group-hover:text-blue-200" />
-              </span>
-              Proceed
+              {isSubmitting ? 'Processing...' : 'Proceed'}
+              {isSubmitting && (
+                <svg
+                  className="animate-spin ml-2 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+              )}
             </button>
           </div>
+
+          {!showIQACForm && (
+            <div className="pt-4 text-center">
+              <p className="text-sm text-gray-600">
+                Are you an IQAC Supervisor?{' '}
+                <button
+                  type="button"
+                  className="!text-blue-600 !underline !bg-white !hover:bg-blue-600 !hover:text-white"
+                  onClick={() => setShowIQACForm(true)}
+                >
+                  Register as IQAC Supervisor
+                </button>
+              </p>
+            </div>
+          )}
+
+          {errors.global && (
+            <div className="mt-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+              {errors.global}
+            </div>
+          )}
         </form>
       </div>
     </div>

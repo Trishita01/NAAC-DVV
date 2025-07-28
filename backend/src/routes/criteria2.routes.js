@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
-import { createResponse211, score211,createResponse212,score212, createResponse263, score263, createResponse233, createResponse222_241_243, createResponse242, score222, score242, score243, score241, score233 } from '../controllers/criteria2.controller.js';
+import { createResponse211, score211,createResponse212,score212, createResponse263, score263, createResponse233, createResponse222_241_243, createResponse242, score222, score242, score243, score241, score233, getResponsesByCriteriaCode } from '../controllers/criteria2.controller.js';
+import verifyToken from '../middlewares/auth.middlewares.js';
 
 router.route('/createResponse211')
     .post(createResponse211);
@@ -44,7 +45,8 @@ router.route('/score243')
 
 router.route('/score241')
     .get(score241);
-
+router.route('/getResponse/:criteriaCode')
+    .get(getResponsesByCriteriaCode);
 // router.route('/score233')
 //     .get(score233);
 

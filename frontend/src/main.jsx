@@ -1,8 +1,8 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { AuthProvider } from './contextprovider/authcontext.jsx';
-
+import { AuthProvider } from './auth/authProvider.jsx';
+import { AppContextProvider } from './contextprovider/appContext.jsx';
 
 import './index.css'
 import App from './App'
@@ -15,7 +15,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
  
   <BrowserRouter>
     <AuthProvider>
+      <AppContextProvider>
       <App />
+      </AppContextProvider>
     </AuthProvider>
   </BrowserRouter>
 
