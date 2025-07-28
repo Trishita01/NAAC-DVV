@@ -78,6 +78,50 @@ const getTotalStudents = async () => {
   return totalStudents;
 };
 
+const getResponsesByCriteriaCode = asyncHandler(async (req, res) => {
+  const { criteriaCode } = req.params;
+  const { session } = req.query;
+
+  if (!criteriaCode) {
+    throw new apiError(400, "Missing criteria code");
+  }
+
+  const paddedCriteriaCode = convertToPaddedFormat(criteriaCode);
+  const dbName = `response_${criteriaCode.replace(/\./g, '_')}`;
+
+  // Step 1: Get criteria master
+  const criteriaMaster = await db.criteria_master.findOne({
+    where: { sub_sub_criterion_id: paddedCriteriaCode }
+  });
+
+  if (!criteriaMaster) {
+    throw new apiError(404, `Criteria not found for code: ${criteriaCode}`);
+  }
+
+  // Step 2: Prepare where clause
+  const whereClause = {
+    criteria_code: criteriaMaster.criteria_code,
+    ...(session && { session })  // Only include session if it's passed
+  };
+ console.log("DB Name",db[dbName])
+  console.log("Database name:", dbName);
+  console.log("Where clause:", whereClause);
+
+  // Step 3: Fetch responses
+try {
+    const responses = await db[dbName].findAll({
+      where: whereClause,
+    });
+    console.log("Query results:", responses);
+    return res.status(200).json(
+      new apiResponse(200, responses, 'Responses retrieved successfully')
+    );
+} catch (error) {
+  console.log(error)
+  throw new apiError(500, "Failed to fetch responses");
+}
+});
+
 const createResponse211 = asyncHandler(async (req, res) => {
   /*
     1. Extract input from req.body
@@ -2248,6 +2292,7 @@ export {
   score263,
   score241,
   score233,
+  getResponsesByCriteriaCode,
   // getAllCriteria241243222233 ,
   // createResponse241243222233,
   // getResponsesByCriteriaCode241243222233,
