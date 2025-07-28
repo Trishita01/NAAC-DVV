@@ -2,12 +2,8 @@ import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import apiResponse from "../utils/apiResponse.js";
 import apiError from "../utils/apiError.js";
-<<<<<<< HEAD
-console.log(db) 
-=======
 import Sequelize from "sequelize";
 
->>>>>>> parent of d6c3b99 (Revert "Update criteria1.controller.js")
 const Criteria113 = db.response_1_1_3;
 const Criteria121 = db.response_1_2_1;
 const Criteria122 = db.response_1_2_2;

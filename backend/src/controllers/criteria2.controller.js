@@ -123,15 +123,6 @@ try {
 });
 
 const createResponse211 = asyncHandler(async (req, res) => {
-  /*
-    1. Extract input from req.body
-    2. Validate required fields and logical constraints
-    3. Check if programme_name or programme_code already exists for the same year and session
-    4. Get criteria_code from criteria_master
-    5. Get latest IIQA session and validate session window
-    6. Create or update response in response_2_1_1 table
-  */
-
   const {
     session,
     year,
@@ -165,25 +156,10 @@ const createResponse211 = asyncHandler(async (req, res) => {
     throw new apiError(400, "Number of seats cannot be less than number of students");
   }
 
-  // Step 2: Check for existing programme_name or programme_code in same session/year
-  const existingRecord = await Criteria211.findOne({
-    where: {
-      session,
-      year,
-      [Sequelize.Op.or]: [
-        { programme_name },
-        { programme_code }
-      ]
-    }
+  // Step 2: Check for existing entry by session + year
+  let existingEntry = await Criteria211.findOne({
+    where: { session, year }
   });
-
-  if (existingRecord) {
-    if (existingRecord.programme_name === programme_name) {
-      throw new apiError(400, "Programme name already exists for this session and year");
-    } else {
-      throw new apiError(400, "Programme code already exists for this session and year");
-    }
-  }
 
   // Step 3: Fetch criteria details
   const criteria = await CriteriaMaster.findOne({
@@ -198,7 +174,7 @@ const createResponse211 = asyncHandler(async (req, res) => {
     throw new apiError(404, "Criteria not found");
   }
 
-  // Step 4: Validate session window against IIQA
+  // Step 4: Validate session window against latest IIQA
   const latestIIQA = await IIQA.findOne({
     attributes: ['session_end_year'],
     order: [['created_at', 'DESC']]
@@ -215,15 +191,24 @@ const createResponse211 = asyncHandler(async (req, res) => {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
-  // Step 5: Create or update response
-  let [entry, created] = await Criteria211.findOrCreate({
-    where: {
-      session,
-      year,
+  // Step 5: Create or Update based on session + year
+  if (existingEntry) {
+    await Criteria211.update({
       programme_name,
-      programme_code
-    },
-    defaults: {
+      programme_code,
+      no_of_seats,
+      no_of_students
+    }, {
+      where: { session, year }
+    });
+
+    existingEntry = await Criteria211.findOne({ where: { session, year } });
+
+    return res.status(200).json(
+      new apiResponse(200, existingEntry, "Response updated successfully")
+    );
+  } else {
+    const newEntry = await Criteria211.create({
       id: criteria.id,
       criteria_code: criteria.criteria_code,
       session,
@@ -232,36 +217,14 @@ const createResponse211 = asyncHandler(async (req, res) => {
       programme_code,
       no_of_seats,
       no_of_students
-    }
-  });
-
-  if (!created) {
-    await Criteria211.update({
-      no_of_seats,
-      no_of_students
-    }, {
-      where: {
-        session,
-        year,
-        programme_name,
-        programme_code
-      }
     });
 
-    entry = await Criteria211.findOne({
-      where: {
-        session,
-        year,
-        programme_name,
-        programme_code
-      }
-    });
+    return res.status(201).json(
+      new apiResponse(201, newEntry, "Response created successfully")
+    );
   }
-
-  return res.status(201).json(
-    new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
-  );
 });
+
 
 const score211 = asyncHandler(async (req, res) => {
   /*
