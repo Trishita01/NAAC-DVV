@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "root",
-    "password": "MySQL@321",
+    "password": "Sourick9904",
     "database": "naac_dvv",
     "host": "127.0.0.1",
     "dialect": "mysql"

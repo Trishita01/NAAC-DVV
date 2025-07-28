@@ -17,7 +17,7 @@ const convertToPaddedFormat = (code) => {
 
 const Score = db.scores;
 
-
+//grade211
 const grade211 = asyncHandler(async (req, res) => {
    
   const session = new Date().getFullYear();
@@ -37,21 +37,234 @@ const grade211 = asyncHandler(async (req, res) => {
       session
     }
   });
+  console.log(score); 
+//(if > 80) = 4, (if 60-80)= 3, (if 40-60) =2 , (if 30-40)= 1, if(<30 )= 0
+ //grade calculation
 
-  console.log(score);
-  
-
-  
-// (if > 80) = 4, (if 60-80)= 3, (if 40-60) =2 , (if 30-40)= 1, if(<30 )= 0
- // grade calculation
-
- 
-   // if (score >= 80) return 4;
-    //if (score >= 60) return 3;
-    //if (score >= 40) return 2;
-    //if (score >= 30) return 1;
-    //return 0;
-
+    if (score >= 80) return 4;
+    if (score >= 60) return 3;
+    if (score >= 40) return 2;
+    if (score >= 30) return 1;
+    return 0;
 });
 
-export { grade211 };
+//grade212
+const grade212 = asyncHandler(async (req, res) => {
+   
+    const session = new Date().getFullYear();
+    const criteria_code = convertToPaddedFormat("2.1.2");
+    
+    const criteria = await CriteriaMaster.findOne({
+      where: { sub_sub_criterion_id: criteria_code }
+    });
+    
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
+    const score = await Score.findAll({
+      attributes: ['score_sub_sub_criteria'],
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+    console.log(score); 
+  //(if > 80) = 4, (if 60-80)= 3, (if 40-60) =2 , (if 30-40)= 1, if(<30 )= 0
+   //grade calculation
+  
+      if (score >= 80) return 4;
+      if (score >= 60) return 3;
+      if (score >= 40) return 2;
+      if (score >= 30) return 1;
+      return 0;
+  });
+
+//grade222
+const grade222 = asyncHandler(async (req, res) => {
+   
+    const session = new Date().getFullYear();
+    const criteria_code = convertToPaddedFormat("2.2.2");
+    
+    const criteria = await CriteriaMaster.findOne({
+      where: { sub_sub_criterion_id: criteria_code }
+    });
+    
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
+    const score = await Score.findAll({
+      attributes: ['score_sub_sub_criteria'],
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+    console.log(score); 
+  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
+   //grade calculation
+  
+      if (score <= 20) return 4;
+      if (score <= 30) return 3;
+      if (score <= 40) return 2;
+      if (score <= 50) return 1;
+      else return 0;
+  });
+
+//grade233
+const grade233 = asyncHandler(async (req, res) => {
+   
+    const session = new Date().getFullYear();
+    const criteria_code = convertToPaddedFormat("2.3.3");
+    
+    const criteria = await CriteriaMaster.findOne({
+      where: { sub_sub_criterion_id: criteria_code }
+    });
+    
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
+    const score = await Score.findAll({
+      attributes: ['score_sub_sub_criteria'],
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+    console.log(score); 
+  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
+   //grade calculation
+  
+   if (score <= 20) return 4;
+   if (score <= 30) return 3;
+   if (score <= 40) return 2;
+   if (score <= 50) return 1;
+   else return 0;
+  });
+
+//grade241
+const grade241 = asyncHandler(async (req, res) => {
+   
+    const session = new Date().getFullYear();
+    const criteria_code = convertToPaddedFormat("2.4.1");
+    
+    const criteria = await CriteriaMaster.findOne({
+      where: { sub_sub_criterion_id: criteria_code }
+    });
+    
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
+    const score = await Score.findAll({
+      attributes: ['score_sub_sub_criteria'],
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+    console.log(score); 
+  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
+   //grade calculation
+  
+   if (score >= 75) return 4;
+   if (score >= 65) return 3;
+   if (score >= 50) return 2;
+   if (score >= 40) return 1;
+   else return 0;
+  });
+
+//grade242
+const grade242 = asyncHandler(async (req, res) => {
+   
+    const session = new Date().getFullYear();
+    const criteria_code = convertToPaddedFormat("2.4.2");
+    
+    const criteria = await CriteriaMaster.findOne({
+      where: { sub_sub_criterion_id: criteria_code }
+    });
+    
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
+    const score = await Score.findAll({
+      attributes: ['score_sub_sub_criteria'],
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+    console.log(score); 
+  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
+   //grade calculation
+  
+   if (score >= 75) return 4;
+   if (score >= 60) return 3;
+   if (score >= 50) return 2;
+   if (score >= 30) return 1;
+   else return 0;
+  });
+
+//grade243
+const grade243 = asyncHandler(async (req, res) => {
+   
+    const session = new Date().getFullYear();
+    const criteria_code = convertToPaddedFormat("2.4.3");
+    
+    const criteria = await CriteriaMaster.findOne({
+      where: { sub_sub_criterion_id: criteria_code }
+    });
+    
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
+    const score = await Score.findAll({
+      attributes: ['score_sub_sub_criteria'],
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+    console.log(score); 
+  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
+   //grade calculation
+  
+   if (score >= 15) return 4;
+   if (score >= 12) return 3;
+   if (score >= 9) return 2;
+   if (score >= 6) return 1;
+   else return 0;
+  });
+
+//grade263
+const grade263 = asyncHandler(async (req, res) => {
+   
+    const session = new Date().getFullYear();
+    const criteria_code = convertToPaddedFormat("2.6.3");
+    
+    const criteria = await CriteriaMaster.findOne({
+      where: { sub_sub_criterion_id: criteria_code }
+    });
+    
+    if (!criteria) {
+      throw new apiError(404, "Criteria not found");
+    }
+    const score = await Score.findAll({
+      attributes: ['score_sub_sub_criteria'],
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+    console.log(score); 
+  //(if <= 20) = 4, (if <= 30)= 3, (if <= 40) =2 , (if <= 50)= 1, if(<60 )= 0
+   //grade calculation
+  
+   if (score >= 90) return 4;
+   if (score >= 80) return 3;
+   if (score >= 70) return 2;
+   if (score >= 60) return 1;
+   else return 0;
+  });
+
+//score2.15
+
+export { grade211, grade212,grade222,grade233,grade241,grade242,grade243,grade263 };
