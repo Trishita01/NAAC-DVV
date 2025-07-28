@@ -46,6 +46,47 @@ const grade211 = asyncHandler(async (req, res) => {
     if (score >= 40) return 2;
     if (score >= 30) return 1;
     return 0;
+
+    let [entry, created] = await score.findOrCreate({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      },
+      defaults: {
+        criteria_code: criteria.criteria_code,
+        criteria_id: criteria.criterion_id,
+        sub_criteria_id: criteria.sub_criterion_id,
+        sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: 0,
+        score_sub_sub_criteria: criteria.score_sub_sub_criteria,
+        grade_sub_sub_criteria: grade,
+        session
+      }
+    });
+  
+    if (!created) {
+      await Score.update({
+        grade_sub_sub_criteria: grade,
+        session
+      }, {
+        where: {
+          criteria_code: criteria.criteria_code,
+          session
+        }
+      });
+  
+      entry = await Score.findOne({
+        where: {
+          criteria_code: criteria.criteria_code,
+          session
+        }
+      });
+    }
+  
+    return res.status(200).json(
+      new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
+    );
 });
 
 //grade212
