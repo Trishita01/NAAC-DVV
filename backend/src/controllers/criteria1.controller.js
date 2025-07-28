@@ -2,7 +2,7 @@ import db from "../models/index.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import apiResponse from "../utils/apiResponse.js";
 import apiError from "../utils/apiError.js";
-
+console.log(db) 
 const Criteria113 = db.response_1_1_3;
 const Criteria121 = db.response_1_2_1;
 const Criteria132 = db.response_1_3_2;
