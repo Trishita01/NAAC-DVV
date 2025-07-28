@@ -7,19 +7,19 @@ const LandingNavbar = () => {
   return (
     <>
       {/* Header Section */}
-      <header className="flex justify-between items-center px-5 py-3 bg-white shadow-sm">
+      <header className="flex justify-between items-center px-5 py-2.5 bg-white shadow-sm h-16">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold text-[#5D6096]">NAAC DVV System</h1>
+          <h1 className="text-sm font-bold text-[#5D6096] text-[15px]">NAAC DVV System</h1>
         </div>
 
-        <nav className="hidden md:flex space-x-4">
+        <nav className="hidden md:flex space-x-3">
           <a href="#" className="text-[#1F2937] hover:text-[#5D6096] transition-colors">Features</a>
           <a href="#" className="text-[#1F2937] hover:text-[#5D6096] transition-colors">Solutions</a>
           <a href="#" className="text-[#1F2937] hover:text-[#5D6096] transition-colors">How It Works</a>
           <a href="#" className="text-[#1F2937] hover:text-[#5D6096] transition-colors">Contact</a>
         </nav>
 
-        <div className="flex space-x-3 pl-8">
+        <div className="flex space-x-2 pl-4">
           <button
             className="pl-4 py-2 !text-[#1F2937] border rounded-lg !bg-white hover:!bg-[#5d6096] hover:text-black transition-all duration-300 cursor-pointer  shadow-sm"
             onClick={() => navigate('/login')}

@@ -30,7 +30,7 @@ return (
 <LandingNavbar/>
 <section className="relative bg-gradient-to-r from-[#5D6096] to-[#7A7CB8] text-white overflow-hidden">
 <div className="container mx-auto px-8 py-16 flex flex-col md:flex-row items-center">
-<div className="md:w-1/2 z-10">
+<div className="md:w-1/2 z-10 mb-10 md:mb-0 md:pr-10">
 <h2 className="text-4xl font-bold mb-4">Simplifying NAAC Accreditation</h2>
 <p className="text-lg mb-8">A powerful tool for institutions to streamline documentation, track metrics, and simulate NAAC scores based on quantitative data.</p>
 <div className="flex space-x-4">
@@ -42,7 +42,7 @@ onClick={() => navigate('/register')}>Start Free Trial</button>
 Trusted by academic institutions across India
 </p>
 </div>
-<div className="md:w-1/2 mt-10 md:mt-0 z-10">
+<div className="md:w-1/2 mt-16 md:mt-0 z-10 md:pl-10">
 <img src="https://static.readdy.ai/image/522f6c6a8e562be9cb7fa12032709455/aa46f798de64e6039935832327ab1612.png" alt="NAAC Dashboard Transformation" className="w-full h-auto rounded-lg shadow-2xl object-cover transform hover:scale-105 transition-transform duration-300"/>
 </div>
 </div>
@@ -199,12 +199,12 @@ Trusted by academic institutions across India
 </div>
 </section>
 {/* FAQ Section */}
-<section className="py-16 px-8 bg-[#F6F8FA]">
+{/* <section className="py-16 px-8 bg-[#F6F8FA]">
 <div className="container mx-auto">
 <h2 className="text-3xl font-bold text-center mb-12 text-[#1F2937]">Frequently Asked Questions</h2>
-<div className="max-w-3xl mx-auto space-y-4">
+<div className="max-w-3xl mx-auto space-y-4"> */}
 {/* FAQ Item 1 */}
-<div className="border border-gray-200 rounded-lg overflow-hidden">
+{/* <div className="border border-gray-200 rounded-lg overflow-hidden">
 <button
 className="w-full px-6 py-4 text-left font-semibold flex justify-between items-center !bg-white text-gray-950 hover:bg-gray-50 cursor-pointer !rounded-button whitespace-nowrap"
 onClick={() => toggleTab(1)}
@@ -230,9 +230,9 @@ transition: max-height 0.5s ease-in;
 <p className="text-gray-600">Our platform streamlines the entire NAAC accreditation process by digitizing data collection, automating metric calculations, providing real-time score simulations, and generating ready-to-submit reports. This significantly reduces manual effort and improves accuracy.</p>
 </div>
 )}
-</div>
+</div> */}
 {/* FAQ Item 2 */}
-<div className="border border-gray-200 rounded-lg overflow-hidden">
+{/* <div className="border border-gray-200 rounded-lg overflow-hidden">
 <button
 className="w-full px-6 py-4 text-left font-semibold flex justify-between items-center !bg-white text-gray-950 hover:bg-gray-50 cursor-pointer !rounded-button whitespace-nowrap"
 onClick={() => toggleTab(2)}
@@ -245,9 +245,9 @@ onClick={() => toggleTab(2)}
 <p className="text-gray-600">Our system is completely Excel-free. All forms and templates are built directly into the platform with an intuitive interface, eliminating the need for spreadsheet uploads or downloads. This reduces errors and simplifies the data entry process.</p>
 </div>
 )}
-</div>
+</div> */}
 {/* FAQ Item 3 */}
-<div className="border border-gray-200 rounded-lg overflow-hidden">
+{/* <div className="border border-gray-200 rounded-lg overflow-hidden">
 <button
 className="w-full px-6 py-4 text-left font-semibold flex justify-between items-center !bg-white hover:bg-gray-50 cursor-pointer !rounded-button whitespace-nowrap text-gray-950"
 onClick={() => toggleTab(3)}
@@ -260,9 +260,9 @@ onClick={() => toggleTab(3)}
 <p className="text-gray-600">Yes, our platform tracks all NAAC metrics including seat fill percentage, research output, MoUs, and many more. The system provides real-time dashboards and visualizations for these metrics, helping you identify areas for improvement.</p>
 </div>
 )}
-</div>
+</div> */}
 {/* FAQ Item 4 */}
-<div className="border border-gray-200 rounded-lg overflow-hidden">
+{/* <div className="border border-gray-200 rounded-lg overflow-hidden">
 <button
 className="w-full px-6 py-4 text-left font-semibold flex justify-between items-center !bg-white hover:bg-gray-50 cursor-pointer !rounded-button whitespace-nowrap text-gray-950"
 onClick={() => toggleTab(4)}
@@ -275,9 +275,9 @@ onClick={() => toggleTab(4)}
 <p className="text-gray-600">Absolutely. Our platform is designed for multi-department collaboration with role-based access controls. Each department can input their specific data while administrators can oversee the entire process, ensuring seamless coordination across the institution.</p>
 </div>
 )}
-</div>
+</div> */}
 {/* FAQ Item 5 */}
-<div className="border border-gray-200 rounded-lg overflow-hidden">
+{/* <div className="border border-gray-200 rounded-lg overflow-hidden">
 <button
 className="w-full px-6 py-4 text-left font-semibold flex justify-between items-center !bg-white hover:bg-gray-50 cursor-pointer !rounded-button whitespace-nowrap text-gray-950"
 onClick={() => toggleTab(5)}
@@ -294,7 +294,7 @@ onClick={() => toggleTab(5)}
 </div>
 
 </div>
-</section>
+</section> */}
 {/* CTA Section */}
 <section className="py-16 px-8 bg-[#5D6096] text-white">
 <div className="container mx-auto text-center">

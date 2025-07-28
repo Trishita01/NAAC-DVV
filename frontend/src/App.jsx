@@ -15,6 +15,7 @@ import Dashboard_faculty from "./fac-dashboard.jsx";
 import Dashboard_HOD from "./hod-dashboard.jsx";
 import GPAAnalysis from "./gpa.jsx";
 import IIQA from "./iiqa.jsx";
+import gpaAnalysis from "./gpa.jsx";
 import { SessionProvider } from "./contextprovider/sessioncontext.jsx";
 import ExtendedProfile from "./extendedprofile.jsx";
 import Criteria1_1_1 from "./criteria1/criteria1.1/criteria1.1.1.jsx";
@@ -134,7 +135,7 @@ function App() {
             {/* <Route element={<PrivateRoute allowedRoles={['IQAC supervisor']} />}>   */}
               <Route path="/iqac-dashboard" element={<IqacDashboard />} />
               <Route path='/user-management' element={<UserManagement/>} />
-              <Route path="/gpa-analysis" element={<GPAAnalysis />} />
+              <Route path='/gpa-analysis' element={<GPAAnalysis />} />
               <Route path="/iiqa" element={<IIQA/>} />
             {/* </Route> */}
 
@@ -155,11 +156,11 @@ function App() {
             </Route>
 
             {/* Common Protected Routes */}
-            <Route element={<PrivateRoute allowedRoles={['IQAC supervisor']} />}>  
+            {/* <Route element={<PrivateRoute allowedRoles={['IQAC supervisor']} />}>   */}
               <Route path='/extendedprofile' element={<ExtendedProfile/>} />
               <Route path='/notification' element={<Notification/>} />
               <Route path='/helpsupport' element={<HelpSupport />} />
-            </Route>
+            {/* </Route> */}
 
             {/* Criteria Routes */}
             <Route path='/criteria1.1.1' element={<Criteria1_1_1/>}/>
