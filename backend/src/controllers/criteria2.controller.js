@@ -575,6 +575,23 @@ const score212 = asyncHandler(async (req, res) => {
   console.log(groupedByYear)
   console.log(scores)
   console.log(average)
+let grade=0;
+  //grade calculation
+  if (average >= 80) {
+    grade = 4;
+}
+if (average >= 60) {
+    grade = 3;
+}
+if (average >= 40) {
+    grade = 2;
+}
+if (average >= 30) {
+    grade = 1;
+}
+else {
+    grade = 0;
+}
   // Step 5: Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -589,6 +606,7 @@ const score212 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: average,
+      sub_sub_cr_grade: grade,
       session
     }
   });
@@ -596,6 +614,7 @@ const score212 = asyncHandler(async (req, res) => {
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: average,
+      sub_sub_cr_grade: grade,
       session
     }, {
       where: {
@@ -802,6 +821,18 @@ const score222 = asyncHandler(async (req, res) => {
   console.log("Ratio", ratio)
   console.log("Score", score)
   
+  let grade;
+  if (score <= 20)
+     grade = 4;
+  else if (score <= 30)
+     grade = 3;
+  else if (score <= 40)
+     grade = 2;
+  else if (score <= 50)
+     grade = 1;
+  else
+     grade = 0;
+  
   let [entry, created] = await Score.findOrCreate({
     where: {
       criteria_code: criteria.criteria_code,
@@ -815,6 +846,7 @@ const score222 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
       session
     }
   });
@@ -822,6 +854,7 @@ const score222 = asyncHandler(async (req, res) => {
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
       session
     }, {
       where: {
@@ -1033,6 +1066,12 @@ const score242 = asyncHandler(async (req, res) => {
     average = parseFloat((total / count).toFixed(2));
   }
 
+  let grade;
+  if (average >= 75) grade = 4;
+   else if (average >= 60) grade = 3;
+   else if (average >= 50) grade = 2;
+   else if (average >= 30) grade = 1;
+   else grade = 0;
   // 6. Upsert into Score table
   let entry = await Score.findOne({
     where: {
@@ -1050,12 +1089,14 @@ const score242 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: average,
+      sub_sub_cr_grade: grade,
       session: session,
       cycle_year: 1
     });
   } else {
     await Score.update({
-      score_sub_sub_criteria: average
+      score_sub_sub_criteria: average,
+      sub_sub_cr_grade: grade
     }, {
       where: {
         criteria_code: criteria.criteria_code,
@@ -1225,7 +1266,12 @@ const score263 = asyncHandler(async (req, res) => {
   const score = totals.totalAppeared > 0 
     ? (totals.totalPassed / totals.totalAppeared) * 100 
     : 0;
-
+    let grade;
+    if (score >= 90) grade = 4;
+    else if (score >= 80) grade = 3;
+    else if (score >= 70) grade = 2;
+    else if (score >= 60) grade = 1;
+    else grade = 0;
   // Create score entry
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -1240,6 +1286,7 @@ const score263 = asyncHandler(async (req, res) => {
     score_criteria: 0,
     score_sub_criteria: 0,
     score_sub_sub_criteria: score,
+    sub_sub_cr_grade: grade,
     session: currentYear,
     cycle_year: 1
     }
@@ -1247,7 +1294,8 @@ const score263 = asyncHandler(async (req, res) => {
 
     if(!created) {
       await Score.update({
-        score_sub_sub_criteria: score
+        score_sub_sub_criteria: score,
+        sub_sub_cr_grade: grade
       }, {
         where: {
           criteria_code: criteria.criteria_code,
@@ -1349,6 +1397,12 @@ const fullTimeTeacherCount = latestExtendedProfile.full_time_teachers;
     ? totalExperience / fullTimeTeacherCount 
     : 0;
 
+    let grade;
+    if (averageExperience >= 15) grade = 4;
+    else if (averageExperience >= 12) grade = 3;
+    else if (averageExperience >= 9) grade = 2;
+    else if (averageExperience >= 6) grade = 1;
+    else grade = 0;
   // Create or update score entry
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -1363,6 +1417,7 @@ const fullTimeTeacherCount = latestExtendedProfile.full_time_teachers;
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: averageExperience,
+      sub_sub_cr_grade: grade,
       session: currentYear,
       cycle_year: 1
     }
@@ -1370,7 +1425,8 @@ const fullTimeTeacherCount = latestExtendedProfile.full_time_teachers;
 
   if (!created) {
     await Score.update({
-      score_sub_sub_criteria: averageExperience
+      score_sub_sub_criteria: averageExperience,
+      sub_sub_cr_grade: grade
     }, {
       where: {
         criteria_code: criteria.criteria_code,
@@ -1467,6 +1523,12 @@ const score241 = asyncHandler(async (req, res) => {
     ? ratioArray.reduce((sum, ratio) => sum + ratio, 0) / ratioArray.length
     : 0;
 
+    let grade;
+    if (averageRatio >= 75) grade = 4;
+    else if (averageRatio >= 65) grade = 3;
+    else if (averageRatio >= 50) grade = 2;
+    else if (averageRatio >= 40) grade = 1;
+    else grade = 0;
   // Create or update score entry
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -1481,6 +1543,7 @@ const score241 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: averageRatio,
+      sub_sub_cr_grade: grade,
       session: currentYear,
       cycle_year: 1
     }
@@ -1489,7 +1552,8 @@ const score241 = asyncHandler(async (req, res) => {
 
   if (!created) {
     await Score.update({
-      score_sub_sub_criteria: averageRatio
+      score_sub_sub_criteria: averageRatio,
+      sub_sub_cr_grade: grade
     }, {
       where: {
         criteria_code: criteria.criteria_code,
@@ -1651,6 +1715,12 @@ const score233 = asyncHandler(async (req, res) => {
   const score = Number(ratio.toFixed(1));
   console.log('Calculated ratio:', score);
   
+  let grade;
+  if (score <= 20) grade = 4;
+  else if (score <= 30) grade = 3;
+  else if (score <= 40) grade = 2;
+  else if (score <= 50) grade = 1;
+  else grade = 0;
   try {
     // First try to find existing score
     let entry = await Score.findOne({
@@ -1681,7 +1751,8 @@ const score233 = asyncHandler(async (req, res) => {
         score_criteria: 0,
         score_sub_criteria: 0,
         score_sub_sub_criteria: score,
-        session: session,
+        sub_sub_cr_grade: grade,
+          session: session,
         cycle_year: 1
       });
     }
