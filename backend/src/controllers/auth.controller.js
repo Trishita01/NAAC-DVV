@@ -119,12 +119,179 @@ const iqacRegister = asyncHandler(async (req, res) => {
   }
 })
 
-const iqacLogin = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-})
+const userLogin = asyncHandler(async (req, res) => {
+  const { email, password, role } = req.body;
+
+
+  const formattedRole = role.toLowerCase();
+
+  if (!email || !password || !role) {
+      throw new apiError(400, "Missing required fields");
+  }
+
+  // Role-based model selection
+  let userModel;
+  switch (formattedRole) {
+      case "iqac":
+          userModel = IQAC;
+          break;
+      case "faculty":
+      case "hod":
+      case "admin":
+      case "mentor":
+          userModel = User;
+          break;
+      default:
+          throw new apiError(400, "Invalid role");
+  }
+
+  const user = await userModel.findOne({ where: { email } });
+  if (!user) {
+      throw new apiError(404, "User not found");
+  }
+
+  const isPasswordValid = bcrypt.compareSync(password, user.password_hash);
+  if (!isPasswordValid) {
+      throw new apiError(401, "Invalid password");
+  }
+
+  console.log('Generating tokens for user:', { uuid: user.uuid, role });
+  
+  if (!process.env.JWT_ACCESS_TOKEN || !process.env.JWT_REFRESH_TOKEN) {
+      console.error('JWT secrets are not configured');
+      throw new apiError(500, 'Server configuration error');
+  }
+
+  const accessToken = jwt.sign(
+      { 
+          id: user.uuid, 
+          role,
+          type: 'access'
+      }, 
+      process.env.JWT_ACCESS_TOKEN, 
+      { 
+          expiresIn: '1h',
+          algorithm: 'HS256'
+      }
+  );
+
+  const refreshToken = jwt.sign(
+      { 
+          id: user.uuid, 
+          role,
+          type: 'refresh'
+      }, 
+      process.env.JWT_REFRESH_TOKEN, 
+      { 
+          expiresIn: '7d',
+          algorithm: 'HS256'
+      }
+  );
+  
+  console.log('Tokens generated successfully');
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: 'lax', 
+    maxAge: 60 * 60 * 1000, 
+    path: '/', 
+  };
+
+  const refreshCookieOptions = {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000, 
+  };
+
+  console.log('Setting cookies with options:', { 
+      accessToken: { ...cookieOptions, value: '***' },
+      refreshToken: { ...refreshCookieOptions, value: '***' } 
+  });
+
+  res
+      .cookie('accessToken', accessToken, cookieOptions)
+      .cookie('refreshToken', refreshToken, refreshCookieOptions)
+      .status(200)
+      .json(new apiResponse(200, { 
+          user: { 
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role || role,
+              institution_name: user.institution_name
+          },
+          accessToken,
+          refreshToken 
+      }, "User logged in successfully"));
+});
+
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+      throw new apiError(401, "Refresh token missing");
+  }
+
+  try {
+      // Verify refresh token
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+
+      const userId = decoded.id;
+      const role = decoded.role;
+
+      // Get user by role
+      let userModel;
+      switch (role) {
+          case "iqac":
+              userModel = IQAC;
+              break;
+          case "faculty":
+          case "hod":
+          case "admin":
+          case "mentor":
+              userModel = User;
+              break;
+          default:
+              throw new apiError(400, "Invalid user role");
+      }
+
+      const user = await userModel.findOne({ where: { uuid: userId } });
+
+      if (!user) {
+          throw new apiError(404, "User not found");
+      }
+
+      // Generate new access token
+      const newAccessToken = jwt.sign(
+          { id: userId, role, type: "access" },
+          process.env.JWT_ACCESS_TOKEN,
+          { expiresIn: "1h", algorithm: "HS256" }
+      );
+
+      // Set the new access token in cookie
+      res.cookie("accessToken", newAccessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 1000, // 1 hour
+          path: "/"
+      });
+
+      return res.status(200).json(
+          new apiResponse(200, { accessToken: newAccessToken }, "Access token refreshed")
+      );
+
+  } catch (err) {
+      console.error("Error refreshing token:", err.message);
+      throw new apiError(401, "Invalid or expired refresh token");
+  }
+});
+
 
 
 export {
     iqacRegister,
-    iqacLogin
+    userLogin,
+    refreshAccessToken
 }

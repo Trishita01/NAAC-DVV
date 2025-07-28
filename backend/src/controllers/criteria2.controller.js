@@ -304,6 +304,23 @@ if (scores.length === 0) {
 const average = (scores.reduce((sum, val) => sum + val, 0) / scores.length).toFixed(3);
 console.log("Average:", average);
 console.log("Scores:", scores);
+let grade;
+//grade calculation
+if (average >= 80) {
+    grade = 4;
+}
+else if (average >= 60) {
+    grade = 3;
+}
+else if (average >= 40) {
+    grade = 2;
+}
+else if (average >= 30) {
+    grade = 1;
+}
+else {
+    grade = 0;
+}
   // Step 5: Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -318,6 +335,7 @@ console.log("Scores:", scores);
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: average,
+      sub_sub_cr_grade: grade,
       session
     }
   });
@@ -325,6 +343,7 @@ console.log("Scores:", scores);
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: average,
+      sub_sub_cr_grade: grade,
       session
     }, {
       where: {

@@ -38,14 +38,22 @@ const grade211 = asyncHandler(async (req, res) => {
     }
   });
   console.log(score); 
-//(if > 80) = 4, (if 60-80)= 3, (if 40-60) =2 , (if 30-40)= 1, if(<30 )= 0
- //grade calculation
-
-    if (score >= 80) return 4;
-    if (score >= 60) return 3;
-    if (score >= 40) return 2;
-    if (score >= 30) return 1;
-    return 0;
+//grade calculation
+if (score >= 80) {
+    const grade = 4;
+}
+if (score >= 60) {
+    const grade = 3;
+}
+if (score >= 40) {
+    const grade = 2;
+}
+if (score >= 30) {
+    const grade = 1;
+}
+else {
+    const grade = 0;
+}
 
     let [entry, created] = await score.findOrCreate({
       where: {
