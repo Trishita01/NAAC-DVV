@@ -672,11 +672,11 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
   if (
     !program_name ||
     !course_code ||
-    !year_of_offering ||
-    !no_of_times_offered ||
-    !duration ||
-    !no_of_students_enrolled ||
-    !no_of_students_completed
+    year_of_offering == null ||
+    no_of_times_offered == null ||
+    duration == null ||
+    no_of_students_enrolled == null ||
+    no_of_students_completed == null
   ) {
     throw new apiError(400, "Missing required fields");
   }
@@ -711,14 +711,13 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
   const transaction = await db.sequelize.transaction();
 
   try {
-    // Use numeric IDs here (remove leading zeros)
+    // ⚠️ Fetching criteria WITHOUT using the transaction (read op doesn't need transaction)
     const criteriaList = await CriteriaMaster.findAll({
       where: {
         criterion_id: 1,
         sub_criterion_id: 102,
         sub_sub_criterion_id: { [Sequelize.Op.in]: [10202, 10203] }
-      },
-      transaction
+      }
     });
 
     console.log("Fetched criteriaList length:", criteriaList.length);
@@ -794,6 +793,7 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
     throw error;
   }
 });
+
 
 
 
@@ -1148,7 +1148,7 @@ const score132 = asyncHandler(async (req, res) => {
   3. Get latest IIQA session range
   4. For each year in the last 5 years:
      a. Get count of unique courses with experiential learning (criteria 1.3.2)
-     b. Get total number of courses across all programs (from IIQA)
+     b. Get total number of courses across all programs (from IIQA or manually set)
      c. Calculate percentage for the year
   5. Calculate average percentage over 5 years
   6. Create or update score in the score table
@@ -1157,7 +1157,7 @@ const score132 = asyncHandler(async (req, res) => {
 
   const currentYear = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("1.3.2");
-  
+
   // Step 1: Get corresponding criteria from master
   const criteria = await CriteriaMaster.findOne({
     where: { sub_sub_criterion_id: criteria_code }
@@ -1182,10 +1182,10 @@ const score132 = asyncHandler(async (req, res) => {
 
   // Step 3: Calculate percentages for each year
   const yearlyPercentages = [];
-  
+
   for (let year = startYear; year <= endYear; year++) {
-    // Get count of unique courses with experiential learning for the year
-    const expLearningCourses = await Response132.count({
+    // Get count of unique courses with experiential learning (criteria 1.3.2)
+    const expLearningCourses = await Criteria132.count({
       distinct: true,
       col: 'course_code',
       where: {
@@ -1194,23 +1194,19 @@ const score132 = asyncHandler(async (req, res) => {
       }
     });
 
-    // Get total number of courses across all programs from IIQA
-    // Note: This assumes we have a way to get total courses from IIQA
-    // Since we don't have a direct field in IIQAProgrammeCount, we'll need to calculate it
-    // For now, we'll use a placeholder value of 100, but this should be replaced with actual data
-    const totalCourses = 100; // TODO: Replace with actual total courses count from IIQA
-    
-    // Calculate percentage for the year
+    // Placeholder: Replace with actual total courses logic
+    const totalCourses = 100; // TODO: replace with real value from IIQA or config
+
     const percentage = totalCourses > 0 ? (expLearningCourses / totalCourses) * 100 : 0;
     yearlyPercentages.push(percentage);
   }
 
-  // Calculate average percentage over 5 years
-  const avgPercentage = yearlyPercentages.length > 0 
-    ? yearlyPercentages.reduce((sum, p) => sum + p, 0) / yearlyPercentages.length 
+  // Step 4: Average percentage over 5 years
+  const avgPercentage = yearlyPercentages.length > 0
+    ? yearlyPercentages.reduce((sum, p) => sum + p, 0) / yearlyPercentages.length
     : 0;
 
-  // Step 4: Insert or update score
+  // Step 5: Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
       criteria_code: criteria.criteria_code,
@@ -1255,21 +1251,21 @@ const score132 = asyncHandler(async (req, res) => {
       session: currentYear
     }, created ? "Score created successfully" : "Score updated successfully")
   );
-})
+});
+
 
 const createResponse133 = asyncHandler(async (req, res) => {
   /*
     1. Extract input from req.body
     2. Validate required fields and logical constraints
-    3. Check if programme_name or programme_code already exists for the same year and session
+    3. Check if student already submitted for same program and session
     4. Get criteria_code from criteria_master
     5. Get latest IIQA session and validate session window
-    6. Create or update response in response_2_1_1 table
+    6. Create a new response in Criteria133 table
   */
 
   const {
     session,
-    year,
     program_name,
     program_code,
     student_name
@@ -1277,43 +1273,28 @@ const createResponse133 = asyncHandler(async (req, res) => {
 
   // Step 1: Field validation
   if (
-    !session || !year || !program_name || !program_code ||
+    !session || !program_name || !program_code ||
     student_name === undefined
   ) {
     throw new apiError(400, "Missing required fields");
   }
 
   const currentYear = new Date().getFullYear();
-  if (
-    session < 1990 || session > currentYear ||
-    year < 1990 || year > currentYear
-  ) {
-    throw new apiError(400, "Year and session must be between 1990 and current year");
+  if (session < 1990 || session > currentYear) {
+    throw new apiError(400, "Session must be between 1990 and current year");
   }
 
-  if (student_name === undefined) {
-    throw new apiError(400, "Student name cannot be undefined");
-  }
-
-  
-  // Step 2: Check for existing programme_name or programme_code in same session/year
+  // Step 2: Check for existing submission by same student for same program and session
   const existingRecord = await Criteria133.findOne({
     where: {
       session,
-      year,
-      [Sequelize.Op.or]: [
-        { program_name },
-        { program_code }
-      ]
+      program_name,
+      student_name
     }
   });
 
   if (existingRecord) {
-    if (existingRecord.program_name === program_name) {
-      throw new apiError(400, "Program name already exists for this session and year");
-    } else {
-      throw new apiError(400, "Program code already exists for this session and year");
-    }
+    throw new apiError(400, "This student has already submitted for this program in the given session");
   }
 
   // Step 3: Fetch criteria details
@@ -1343,52 +1324,21 @@ const createResponse133 = asyncHandler(async (req, res) => {
   const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
-    throw new apiError(400, "Session must be between ${startYear} and ${endYear}");
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
-  // Step 5: Create or update response
-  let [entry, created] = await Criteria133.findOrCreate({
-    where: {
-      session,
-      year,
-      program_name,
-      program_code
-    },
-    defaults: {
-      id: criteria.id,
-      criteria_code: criteria.criteria_code,
-      session,
-      year,
-      program_name,
-      program_code,
-      student_name
-    }
+  // Step 5: Create new response
+  const entry = await Criteria133.create({
+    id: criteria.id,
+    criteria_code: criteria.criteria_code,
+    session,
+    program_name,
+    program_code,
+    student_name
   });
 
-  if (!created) {
-    await Criteria133.update({
-      student_name
-    }, {
-      where: {
-        session,
-        year,
-        program_name,
-        program_code
-      }
-    });
-
-    entry = await Criteria133.findOne({
-      where: {
-        session,
-        year,
-        program_name,
-        program_code
-      }
-    });
-  }
-
   return res.status(201).json(
-    new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
+    new apiResponse(201, entry, "Response created successfully")
   );
 });
 
@@ -1419,7 +1369,7 @@ const score133 = asyncHandler(async (req, res) => {
   const startYear = endYear - 5; // Last 5 years data
 
   // Get count of unique students who went for higher studies for each year
-  const higherStudiesCounts = await Response133.findAll({
+  const higherStudiesCounts = await Criteria133.findAll({
     attributes: [
       'session',
       [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('student_name'))), 'unique_students']
@@ -1513,58 +1463,33 @@ const score133 = asyncHandler(async (req, res) => {
 });
 
 const createResponse141 = asyncHandler(async (req, res) => {
-  /*
-    1. Extract input from req.body
-    2. Validate required fields and logical constraints
-    3. Check if programme_name or programme_code already exists for the same year and session
-    4. Get criteria_code from criteria_master
-    5. Get latest IIQA session and validate session window
-    6. Create or update response in response_1_4_1 table
-  */
-
   const {
     session,
-    year,
     option_selected,
   } = req.body;
 
-  // Step 1: Field validation
+  console.log("Received option_selected:", option_selected); // Debug
+
+  // Validation
   if (
-    !session || !year || !option_selected
+    session === undefined ||
+    option_selected === undefined
   ) {
     throw new apiError(400, "Missing required fields");
   }
 
   const currentYear = new Date().getFullYear();
   if (
-    session < 1990 || session > currentYear ||
-    year < 1990 || year > currentYear
+    session < 1990 || session > currentYear
   ) {
-    throw new apiError(400, "Year and session must be between 1990 and current year");
+    throw new apiError(400, "Session must be between 1990 and current year");
   }
 
   if (option_selected < 0 || option_selected > 4) {
     throw new apiError(400, "Option selected must be between 0 and 4");
   }
 
-  
-
-  // Step 2: Check for existing programme_name or programme_code in same session/year
-  const existingRecord = await Criteria141.findOne({
-    where: {
-      session,
-      year,
-      option_selected: option_selected
-    }
-  });
-
-  if (existingRecord) {
-    if (existingRecord.option_selected === option_selected) {
-      throw new apiError(400, "Option selected already exists for this session and year");
-    } 
-  }
-
-  // Step 3: Fetch criteria details
+  // Get criteria details
   const criteria = await CriteriaMaster.findOne({
     where: {
       criterion_id: '01',
@@ -1577,10 +1502,10 @@ const createResponse141 = asyncHandler(async (req, res) => {
     throw new apiError(404, "Criteria not found");
   }
 
-  // Step 4: Validate session window against IIQA
+  // Validate session window against IIQA
   const latestIIQA = await IIQA.findOne({
     attributes: ['session_end_year'],
-    order: [['created_at', 'DESC']]
+    order: [['id', 'DESC']]
   });
 
   if (!latestIIQA) {
@@ -1591,59 +1516,52 @@ const createResponse141 = asyncHandler(async (req, res) => {
   const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
-    throw new apiError(400, "Session must be between ${startYear} and ${endYear}");
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
-  // Step 5: Create or update response
-  let [entry, created] = await Criteria141.findOrCreate({
+  // Find existing record by session only
+  const existingRecord = await Criteria141.findOne({
     where: {
-      session,
-      year,
-      option_selected
-    },
-    defaults: {
-      id: criteria.id,
-      criteria_code: criteria.criteria_code,
-      session,
-      year,
-      option_selected
+      session
     }
   });
 
-  if (!created) {
-    await Criteria141.update({
-      option_selected
-    },
-    {
-      where: {
-        session,
-        year,
-        option_selected
-      }
-    });
+  let entry;
 
-    entry = await Criteria141.findOne({
-      where: {
-        session,
-        year,
-        option_selected
-      }
+  if (existingRecord) {
+    await Criteria141.update(
+      { option_selected },
+      { where: { session } }
+    );
+
+    entry = await Criteria141.findOne({ where: { session } });
+  } else {
+    entry = await Criteria141.create({
+      id: criteria.id,
+      criteria_code: criteria.criteria_code,
+      session,
+      option_selected
     });
   }
 
+  console.log("Saved option_selected:", entry.option_selected);
+
   return res.status(201).json(
-    new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
+    new apiResponse(201, entry, existingRecord ? "Response updated successfully" : "Response created successfully")
   );
 });
+
+
 
 const score141 = asyncHandler(async (req, res) => {
   const criteria_code = convertToPaddedFormat("1.4.1");
   const currentYear = new Date().getFullYear();
-  const sessionDate = new Date(currentYear, 0, 1); // Jan 1st of current year
+  const session = currentYear;
 
-  // Get criteria details
+
+  // Step 1: Get criteria details
   const criteria = await CriteriaMaster.findOne({
-    where: { 
+    where: {
       sub_sub_criterion_id: criteria_code
     }
   });
@@ -1652,12 +1570,12 @@ const score141 = asyncHandler(async (req, res) => {
     throw new apiError(404, "Criteria 1.4.1 not found in criteria_master");
   }
 
-  // Get the latest response for this criteria
+  // Step 2: Get latest response
   const response = await Criteria141.findOne({
     where: {
       criteria_code: criteria.criteria_code
     },
-    order: [['created_at', 'DESC']],
+    order: [['id', 'DESC']],
     raw: true
   });
 
@@ -1665,34 +1583,35 @@ const score141 = asyncHandler(async (req, res) => {
     throw new apiError(404, "No response found for criteria 1.4.1");
   }
 
-  const optionSelected = response.option_selected;
+  const optionSelected = Number(response.option_selected); // Convert to number
+
   let score, grade;
 
-  // Map option to score and grade
-  switch(optionSelected) {
-    case '4':
+  // Fix: use numeric cases
+  switch (optionSelected) {
+    case 4:
       score = 4;
       grade = "A";
       break;
-    case '3':
+    case 3:
       score = 3;
       grade = "B";
       break;
-    case '2':
+    case 2:
       score = 2;
       grade = "C";
       break;
-    case '1':
+    case 1:
       score = 1;
       grade = "D";
       break;
-    case '0':
+    case 0:
     default:
       score = 0;
       grade = "E";
   }
 
-  // Create or update score
+  // Step 3: Create or update score entry
   const [entry, created] = await Score.upsert({
     criteria_code: criteria.criteria_code,
     criteria_id: criteria.criterion_id,
@@ -1701,7 +1620,7 @@ const score141 = asyncHandler(async (req, res) => {
     score_criteria: 0,
     score_sub_criteria: 0,
     score_sub_sub_criteria: score,
-    session: sessionDate,
+    session: currentYear,
     year: currentYear,
     cycle_year: 1
   }, {
@@ -1718,59 +1637,33 @@ const score141 = asyncHandler(async (req, res) => {
   );
 });
 
-const createResponse142 = asyncHandler(async (req, res) => {
-  /*
-    1. Extract input from req.body
-    2. Validate required fields and logical constraints
-    3. Check if programme_name or programme_code already exists for the same year and session
-    4. Get criteria_code from criteria_master
-    5. Get latest IIQA session and validate session window
-    6. Create or update response in response_1_4_1 table
-  */
 
+const createResponse142 = asyncHandler(async (req, res) => {
   const {
     session,
-    year,
     option_selected,
   } = req.body;
 
-  // Step 1: Field validation
-  if (
-    !session || !year || !option_selected
-  ) {
+  // Validate required fields
+  if (session === undefined || option_selected === undefined) {
     throw new apiError(400, "Missing required fields");
   }
 
+  // Validate session is integer
+  if (!Number.isInteger(session)) {
+    throw new apiError(400, "Session must be an integer");
+  }
+
   const currentYear = new Date().getFullYear();
-  if (
-    session < 1990 || session > currentYear ||
-    year < 1990 || year > currentYear
-  ) {
-    throw new apiError(400, "Year and session must be between 1990 and current year");
+  if (session < 1990 || session > currentYear) {
+    throw new apiError(400, `Session must be between 1990 and ${currentYear}`);
   }
 
   if (option_selected < 0 || option_selected > 4) {
     throw new apiError(400, "Option selected must be between 0 and 4");
   }
 
-  
-
-  // Step 2: Check for existing programme_name or programme_code in same session/year
-  const existingRecord = await Criteria142.findOne({
-    where: {
-      session,
-      year,
-      option_selected: option_selected
-    }
-  });
-
-  if (existingRecord) {
-    if (existingRecord.option_selected === option_selected) {
-      throw new apiError(400, "Option selected already exists for this session and year");
-    } 
-  }
-
-  // Step 3: Fetch criteria details
+  // Fetch criteria details
   const criteria = await CriteriaMaster.findOne({
     where: {
       criterion_id: '01',
@@ -1783,7 +1676,7 @@ const createResponse142 = asyncHandler(async (req, res) => {
     throw new apiError(404, "Criteria not found");
   }
 
-  // Step 4: Validate session window against IIQA
+  // Validate session window against IIQA
   const latestIIQA = await IIQA.findOne({
     attributes: ['session_end_year'],
     order: [['created_at', 'DESC']]
@@ -1797,55 +1690,46 @@ const createResponse142 = asyncHandler(async (req, res) => {
   const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
-    throw new apiError(400, "Session must be between ${startYear} and ${endYear}");
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
-  // Step 5: Create or update response
-  let [entry, created] = await Criteria142.findOrCreate({
-    where: {
-      session,
-      year,
-      option_selected
-    },
-    defaults: {
+  // Check if a record exists for this session
+  const existingRecord = await Criteria142.findOne({
+    where: { session }
+  });
+
+  if (existingRecord) {
+    // Update the existing record's option_selected to the new one
+    await Criteria142.update(
+      { option_selected },
+      { where: { session } }
+    );
+
+    const updatedRecord = await Criteria142.findOne({ where: { session } });
+
+    return res.status(200).json(
+      new apiResponse(200, updatedRecord, "Response updated successfully")
+    );
+  } else {
+    // Create new record
+    const newRecord = await Criteria142.create({
       id: criteria.id,
       criteria_code: criteria.criteria_code,
       session,
-      year,
       option_selected
-    }
-  });
-
-  if (!created) {
-    await Criteria142.update({
-      option_selected
-    },
-    {
-      where: {
-        session,
-        year,
-        option_selected
-      }
     });
 
-    entry = await Criteria142.findOne({
-      where: {
-        session,
-        year,
-        option_selected
-      }
-    });
+    return res.status(201).json(
+      new apiResponse(201, newRecord, "Response created successfully")
+    );
   }
-
-  return res.status(201).json(
-    new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
-  );
 });
+
 
 const score142 = asyncHandler(async (req, res) => {
   const criteria_code = convertToPaddedFormat("1.4.2");
   const currentYear = new Date().getFullYear();
-  const sessionDate = new Date(currentYear, 0, 1); // Jan 1st of current year
+  const sessionDate = currentYear;
 
   // Get criteria details
   const criteria = await CriteriaMaster.findOne({
@@ -1863,7 +1747,7 @@ const score142 = asyncHandler(async (req, res) => {
     where: {
       criteria_code: criteria.criteria_code
     },
-    order: [['created_at', 'DESC']],
+    order: [['session', 'DESC']], // Use session instead of created_at
     raw: true
   });
 
@@ -1876,29 +1760,29 @@ const score142 = asyncHandler(async (req, res) => {
 
   // Map option to score and grade
   switch(optionSelected) {
-    case '4':
+    case 4:
       score = 4;
       grade = "A";
       break;
-    case '3':
+    case 3:
       score = 3;
       grade = "B";
       break;
-    case '2':
+    case 2:
       score = 2;
       grade = "C";
       break;
-    case '1':
+    case 1:
       score = 1;
       grade = "D";
       break;
-    case '0':
+    case 0:
     default:
       score = 0;
       grade = "E";
   }
 
-  // Create or update score
+  // Create or update score entry
   const [entry, created] = await Score.upsert({
     criteria_code: criteria.criteria_code,
     criteria_id: criteria.criterion_id,
@@ -1923,6 +1807,7 @@ const score142 = asyncHandler(async (req, res) => {
     }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
+
 
  
 

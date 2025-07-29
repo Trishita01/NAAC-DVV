@@ -6,6 +6,8 @@ import {
   createResponse122_123,
   createResponse132, 
   createResponse133, 
+  createResponse141,
+  createResponse142,
   getResponsesByCriteriaCode,
   score113,
   score121,
@@ -35,6 +37,12 @@ router.route('/createResponse132')
 
 router.route('/createResponse133')
     .post(createResponse133);
+
+router.route('/createResponse141')
+    .post(createResponse141);
+
+router.route('/createResponse142')
+    .post(createResponse142);
 
 router.route('/getResponsesByCriteriaCode/:criteriaCode')
     .get(getResponsesByCriteriaCode);
