@@ -3,7 +3,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import criteriaMasterRoutes from "./routes/criteriaMaster.routes.js";
-// import criteria1Routes from "./routes/criteria1.routes.js";
+import criteria1Routes from "./routes/criteria1.routes.js";
 import criteria2Routes from "./routes/criteria2.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import iiqaRoutes from "./routes/iiqa.routes.js";
@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // API Routes
 app.use('/api/v1/criteria', criteriaMasterRoutes);
-// app.use('/api/v1/criteria1', criteria1Routes);
+app.use('/api/v1/criteria1', criteria1Routes);
 app.use('/api/v1/criteria2', criteria2Routes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/iiqa', iiqaRoutes);
