@@ -19,6 +19,7 @@ const IIQA_Student_Details = db.iiqa_student_details;
 const IIQAStaffDetails = db.iiqa_staff_details;
 const extended_profile = db.extended_profile;
 
+
 // Convert criteria code to padded format (e.g., '1.1.3' -> '010103')
 const convertToPaddedFormat = (code) => {
     // First remove any dots, then split into individual characters
@@ -52,6 +53,8 @@ const getTeacherCount = async () => {
     return totalTeachers;
 };
 
+
+
 // Helper function to calculate total number of students
 const getTotalStudents = async () => {
     const responses = await IIQA_Student_Details.findAll({
@@ -74,6 +77,90 @@ const getTotalStudents = async () => {
     return totalStudents;
 };
 
+/**
+ * @description Get responses by criteria code
+ * @route GET /api/v1/criteria1/responses/:criteriaCode
+ * @access Private
+ */
+const getResponsesByCriteriaCode = asyncHandler(async (req, res) => {
+    try {
+        const { criteriaCode } = req.params;
+        
+        if (!criteriaCode) {
+            throw new apiError(400, 'Criteria code is required');
+        }
+
+        // Convert criteria code to padded format if needed
+        const paddedCriteriaCode = convertToPaddedFormat(criteriaCode);
+
+        // Find the criteria model based on the criteria code
+        let criteriaModel;
+        switch(criteriaCode) {
+            case '1.1.3':
+                criteriaModel = Criteria113;
+                break;
+            case '1.2.1':
+                criteriaModel = Criteria121;
+                break;
+            case '1.2.2':
+                criteriaModel = Criteria122;
+                break;
+            case '1.2.3':
+                criteriaModel = Criteria123;
+                break;
+            case '1.3.2':
+                criteriaModel = Criteria132;
+                break;
+            case '1.3.3':
+                criteriaModel = Criteria133;
+                break;
+            case '1.4.1':
+                criteriaModel = Criteria141;
+                break;
+            case '1.4.2':
+                criteriaModel = Criteria142;
+                break;
+            default:
+                throw new apiError(400, 'Invalid criteria code');
+        }
+
+        // Get latest IIQA session range
+        const latestIIQA = await IIQA.findOne({
+            attributes: ['session_end_year'],
+            order: [['created_at', 'DESC']]
+        });
+
+        if (!latestIIQA) {
+            throw new apiError(404, 'No IIQA form found');
+        }
+
+        const endYear = latestIIQA.session_end_year;
+        const startYear = endYear - 5; // Last 5 years data
+
+        // Find all responses for the given criteria code within the session range
+        const responses = await criteriaModel.findAll({
+            where: {
+                criteria_code: paddedCriteriaCode,
+                session: { [Sequelize.Op.between]: [startYear, endYear] }
+            },
+            order: [['session', 'DESC'], ['year', 'DESC']]
+        });
+
+        if (!responses || responses.length === 0) {
+            return res.status(200).json(
+                new apiResponse(200, [], 'No responses found for the given criteria code')
+            );
+        }
+
+        return res.status(200).json(
+            new apiResponse(200, responses, 'Responses fetched successfully')
+        );
+
+    } catch (error) {
+        console.error('Error in getResponsesByCriteriaCode:', error);
+        throw new apiError(error.statusCode || 500, error.message || 'Error fetching responses by criteria code');
+    }
+});
 
 const createResponse113 = asyncHandler(async (req, res) => {
   /*
@@ -114,7 +201,7 @@ const createResponse113 = asyncHandler(async (req, res) => {
 
   // Create proper Date objects for session
   const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
-  console.log(criteria.criteria_code)
+
 
 
   // Step 2: Check for existing programme_name or programme_code in same session/year
@@ -145,9 +232,13 @@ const createResponse113 = asyncHandler(async (req, res) => {
     }
   });
 
+  
+
   if (!criteria) {
     throw new apiError(404, "Criteria not found");
   }
+
+  console.log(criteria.criteria_code);
 
   // Step 4: Validate session window against IIQA
   const latestIIQA = await IIQA.findOne({
@@ -215,20 +306,20 @@ const createResponse113 = asyncHandler(async (req, res) => {
 const score113 = asyncHandler(async (req, res) => {
   const criteria_code = convertToPaddedFormat("1.1.3");
   const currentYear = new Date().getFullYear();
-  const sessionDate = new Date(currentYear, 0, 1); // Jan 1st of current year
+  const sessionYear = currentYear; // just the year as an integer
 
-  // Get criteria details
+  // Step 1: Get criteria details
   const criteria = await CriteriaMaster.findOne({
-    where: { 
+    where: {
       sub_sub_criterion_id: criteria_code
     }
   });
 
   if (!criteria) {
-    throw new apiError(404, "Criteria 1.3.3 not found in criteria_master");
+    throw new apiError(404, "Criteria 1.1.3 not found in criteria_master");
   }
 
-  // Get latest IIQA session range
+  // Step 2: Get latest IIQA session range
   const latestIIQA = await IIQA.findOne({
     attributes: ['session_end_year'],
     order: [['created_at', 'DESC']]
@@ -239,12 +330,12 @@ const score113 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5; // Last 5 years data
+  const startYear = endYear - 5; // Last 5 years
 
-  // Get count of unique students who went for higher studies
-  const higherStudiesCounts = await Criteria113.findAll({
+  // Step 3: Count unique teachers from Criteria113
+  const teacherCounts = await Criteria113.findAll({
     attributes: [
-      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('student_name'))), 'unique_students']
+      [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('teacher_name'))), 'unique_teachers']
     ],
     where: {
       criteria_code: criteria.criteria_code,
@@ -253,31 +344,21 @@ const score113 = asyncHandler(async (req, res) => {
     raw: true
   });
 
-  // Get total students from extended_profile
-  const extendedProfiles = await extended_profile.findAll({
-    where: { year: { [Sequelize.Op.between]: [startYear, endYear] } },
-    attributes: [[Sequelize.fn('SUM', Sequelize.col('total_students')), 'total_students']],
-    raw: true
-  });
+  const totalUniqueTeachers = teacherCounts[0]?.unique_teachers || 0;
 
-  const totalHigherStudies = higherStudiesCounts[0]?.unique_students || 0;
-  const totalStudents = extendedProfiles[0]?.total_students || 1; // Avoid division by zero
-
-  // Calculate percentage
-  const percentage = (totalHigherStudies / totalStudents) * 100;
+  // Step 4: Score logic based on total teachers only (you can customize this logic)
   let score, grade;
 
-  // Determine score and grade based on percentage
-  if (percentage >= 20) {
+  if (totalUniqueTeachers >= 30) {
     score = 4;
     grade = "A";
-  } else if (percentage >= 15) {
+  } else if (totalUniqueTeachers >= 20) {
     score = 3;
     grade = "B";
-  } else if (percentage >= 10) {
+  } else if (totalUniqueTeachers >= 10) {
     score = 2;
     grade = "C";
-  } else if (percentage >= 5) {
+  } else if (totalUniqueTeachers >= 5) {
     score = 1;
     grade = "D";
   } else {
@@ -285,7 +366,7 @@ const score113 = asyncHandler(async (req, res) => {
     grade = "E";
   }
 
-  // Create or update score
+  // Step 5: Create or update the score
   const [entry, created] = await Score.upsert({
     criteria_code: criteria.criteria_code,
     criteria_id: criteria.criterion_id,
@@ -294,24 +375,24 @@ const score113 = asyncHandler(async (req, res) => {
     score_criteria: 0,
     score_sub_criteria: 0,
     score_sub_sub_criteria: score,
-    session: sessionDate,
+    session: sessionYear,
     year: currentYear,
     cycle_year: 1
   }, {
     conflictFields: ['criteria_code', 'session', 'year']
   });
 
+  // Step 6: Response
   return res.status(200).json(
     new apiResponse(200, {
       score,
-      percentage,
-      totalHigherStudies,
-      totalStudents,
+      totalUniqueTeachers,
       grade,
       message: `Grade is ${grade}`
     }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
+
 
 const createResponse121 = asyncHandler(async (req, res) => {
   /*
@@ -325,7 +406,6 @@ const createResponse121 = asyncHandler(async (req, res) => {
 
   const {
     session,
-    year,
     programme_code,
     programme_name,
     year_of_introduction,
@@ -337,7 +417,7 @@ const createResponse121 = asyncHandler(async (req, res) => {
 
   // Step 1: Field validation
   if (
-    !session || !year || !programme_name || !programme_code ||
+    !session || !programme_name || !programme_code ||
     !year_of_introduction || status_of_implementation_of_CBCS === undefined || !year_of_implementation_of_CBCS  || !year_of_revision || prc_content_added === undefined
   ) {
     throw new apiError(400, "Missing required fields");
@@ -345,10 +425,9 @@ const createResponse121 = asyncHandler(async (req, res) => {
 
   const currentYear = new Date().getFullYear();
   if (
-    session < 1990 || session > currentYear ||
-    year < 1990 || year > currentYear
+    session < 1990 || session > currentYear
   ) {
-    throw new apiError(400, "Year and session must be between 1990 and current year");
+    throw new apiError(400, "Session must be between 1990 and current year");
   }
 
   if (year_of_introduction < 1990 || year_of_implementation_of_CBCS < 1990 || year_of_revision < 1990) {
@@ -363,7 +442,6 @@ const createResponse121 = asyncHandler(async (req, res) => {
   const existingRecord = await Criteria121.findOne({
     where: {
       session,
-      year,
       [Sequelize.Op.or]: [
         { programme_code },
         { programme_name }
@@ -413,7 +491,6 @@ const createResponse121 = asyncHandler(async (req, res) => {
   let [entry, created] = await Criteria121.findOrCreate({
     where: {
       session,
-      year,
       programme_code,
       programme_name
     },
@@ -421,7 +498,6 @@ const createResponse121 = asyncHandler(async (req, res) => {
       id: criteria.id,
       criteria_code: criteria.criteria_code,
       session,
-      year,
       programme_code,
       programme_name,
       year_of_introduction,
@@ -442,7 +518,6 @@ const createResponse121 = asyncHandler(async (req, res) => {
     }, {
       where: {
         session,
-        year,
         programme_code,
         programme_name
       }
@@ -451,7 +526,6 @@ const createResponse121 = asyncHandler(async (req, res) => {
     entry = await Criteria121.findOne({
       where: {
         session,
-        year,
         programme_code,
         programme_name
       }
@@ -477,7 +551,7 @@ const score121 = asyncHandler(async (req, res) => {
   */
 
   const session = new Date().getFullYear();
-  const criteria_code = convertToPaddedFormat("1.1.2");
+  const criteria_code = convertToPaddedFormat("1.2.1");
   
   // Step 1: Get corresponding criteria from master
   const criteria = await CriteriaMaster.findOne({
@@ -485,7 +559,7 @@ const score121 = asyncHandler(async (req, res) => {
   });
 
   if (!criteria) {
-    throw new apiError(404, "Criteria 1.1.2 not found in criteria_master");
+    throw new apiError(404, "Criteria 1.2.1 not found in criteria_master");
   }
 
   // Step 2: Get latest IIQA session range
@@ -506,7 +580,7 @@ const score121 = asyncHandler(async (req, res) => {
   }
 
   // Step 3: Fetch CBCS implementation data
-  const responses = await Response121.findAll({
+  const responses = await Criteria121.findAll({
     attributes: [
       'session',
       'programme_code',
@@ -1888,14 +1962,19 @@ const score142 = asyncHandler(async (req, res) => {
   );
 });
 
+ 
+
 
 export { createResponse133,
   createResponse132,
   createResponse122_123,
   createResponse121,
   createResponse113,
+  createResponse141,
+  createResponse142,
   getResponsesByCriteriaCode,
    score113,
+   score122,
    score133,
    score121,
    score123,
