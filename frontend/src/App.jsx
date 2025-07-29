@@ -8,7 +8,7 @@ import HelpSupport from "./helpsupport.jsx";
 import Notification from "./Notification.jsx";
 import LandingPage from "./landing_page.jsx";
 import Register from "./register.jsx";
-import Login from "./login.jsx";
+import Login from "./Login.jsx";
 import IqacDashboard from "./iqac-dashboard.jsx";
 import UserManagement from "./usermanagement.jsx";
 import Dashboard_faculty from "./fac-dashboard.jsx";
@@ -132,17 +132,17 @@ function App() {
 
             {/* Protected Routes */}
             {/* IQAC Supervisor Routes */}
-            {/* <Route element={<PrivateRoute allowedRoles={['IQAC supervisor']} />}>   */}
+            <Route element={<PrivateRoute allowedRoles={['iqac']} />}>
               <Route path="/iqac-dashboard" element={<IqacDashboard />} />
               <Route path='/user-management' element={<UserManagement/>} />
               <Route path='/gpa-analysis' element={<GPAAnalysis />} />
               <Route path="/iiqa" element={<IIQA/>} />
-            {/* </Route> */}
+            </Route>
 
             {/* Admin Routes */}
             {/* <Route element={<PrivateRoute allowedRoles={['college admin']} />}>   */}
               <Route path='/admin-dashboard' element={<Dashboard_admin/>} />
-              {/* <Route path='/user-management' element={<UserManagement/>} /> */}
+              <Route path='/user-management' element={<UserManagement/>} />
             {/* </Route> */}
 
             {/* Faculty Routes */}

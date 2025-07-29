@@ -26,7 +26,7 @@ const Login = () => {
       });
       if (response.data.authenticated) {
         setIsLoggedIn(true);
-        navigate('/dashboard');
+        navigate('/iqac-dashboard');
       } else {
         setIsLoggedIn(false);
       }
@@ -52,9 +52,9 @@ const Login = () => {
         }
       );
 
-      if (response.data.success) {
+      if (response.data.success || response.data.sucess) {
         setIsLoggedIn(true);
-        navigate('/dashboard');
+        navigate('/iqac-dashboard');
       } else {
         setError(response.data.message || 'Invalid credentials');
       }
@@ -154,6 +154,7 @@ const Login = () => {
                   <option value="faculty">Faculty</option>
                   <option value="hod">HOD</option>
                   <option value="college_authority">College Authority</option>
+                  <option value="iqac">IQAC</option>
                 </select>
               </div>
             </div>

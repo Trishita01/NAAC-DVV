@@ -156,10 +156,14 @@ const createResponse211 = asyncHandler(async (req, res) => {
     throw new apiError(400, "Number of seats cannot be less than number of students");
   }
 
-  // Step 2: Check for existing entry by session + year
-  let existingEntry = await Criteria211.findOne({
-    where: { session, year }
+  // Step 2: Prevent duplicates — same session + year + programme_code
+  const duplicate = await Criteria211.findOne({
+    where: { session, year, programme_code }
   });
+
+  if (duplicate) {
+    throw new apiError(409, "Entry already exists for this session, year, and programme");
+  }
 
   // Step 3: Fetch criteria details
   const criteria = await CriteriaMaster.findOne({
@@ -191,39 +195,87 @@ const createResponse211 = asyncHandler(async (req, res) => {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
-  // Step 5: Create or Update based on session + year
-  if (existingEntry) {
-    await Criteria211.update({
-      programme_name,
-      programme_code,
-      no_of_seats,
-      no_of_students
-    }, {
-      where: { session, year }
-    });
+  // Step 5: Create new entry
+  const newEntry = await Criteria211.create({
+    id: criteria.id,
+    criteria_code: criteria.criteria_code,
+    session,
+    year,
+    programme_name,
+    programme_code,
+    no_of_seats,
+    no_of_students
+  });
 
-    existingEntry = await Criteria211.findOne({ where: { session, year } });
-
-    return res.status(200).json(
-      new apiResponse(200, existingEntry, "Response updated successfully")
-    );
-  } else {
-    const newEntry = await Criteria211.create({
-      id: criteria.id,
-      criteria_code: criteria.criteria_code,
-      session,
-      year,
-      programme_name,
-      programme_code,
-      no_of_seats,
-      no_of_students
-    });
-
-    return res.status(201).json(
-      new apiResponse(201, newEntry, "Response created successfully")
-    );
-  }
+  return res.status(201).json(
+    new apiResponse(201, newEntry, "Response created successfully")
+  );
 });
+
+
+const updateResponse211 = asyncHandler(async (req, res) => {
+  const { sl_no } = req.params;
+  const {
+    session,
+    year,
+    programme_name,
+    programme_code,
+    no_of_seats,
+    no_of_students
+  } = req.body;
+
+  if (
+    !session || !year || !programme_name || !programme_code ||
+    no_of_seats === undefined || no_of_students === undefined
+  ) {
+    throw new apiError(400, "Missing required fields");
+  }
+
+  const row = await Criteria211.findOne({ where: { sl_no } });
+
+  if (!row) {
+    throw new apiError(404, "Row not found");
+  }
+
+  // Check that session and year match (for extra safety)
+  if (row.session !== session || row.year !== year) {
+    throw new apiError(400, "Session/year mismatch — cannot update this row");
+  }
+
+  // Optional: session bounds check using IIQA form
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5;
+
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+  }
+
+  // Proceed with update
+  await Criteria211.update({
+    programme_name,
+    programme_code,
+    no_of_seats,
+    no_of_students
+  }, {
+    where: { sl_no }
+  });
+
+  const updated = await Criteria211.findOne({ where: { sl_no } });
+
+  return res.status(200).json(
+    new apiResponse(200, updated, "Row updated successfully")
+  );
+});
+
 
 
 const score211 = asyncHandler(async (req, res) => {
@@ -2239,7 +2291,7 @@ const score233 = asyncHandler(async (req, res) => {
 export { 
   // getAllCriteria211,
   createResponse211,
-  // getResponsesByCriteriaCode211,
+  updateResponse211,
   score211,
   // getAllCriteria212,
   createResponse212,
