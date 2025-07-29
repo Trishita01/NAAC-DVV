@@ -21,12 +21,12 @@ const Login = () => {
 
   const getAuthState = async () => {
     try {
-      const response = await axios.get(`${backendUrl}/auth/me`, { 
-        withCredentials: true 
+      const response = await axios.get(`${backendUrl}/auth/me`, {
+        withCredentials: true,
       });
       if (response.data.authenticated) {
         setIsLoggedIn(true);
-        navigate('/dashboard');
+        navigate('/iqac-dashboard');
       } else {
         setIsLoggedIn(false);
       }
@@ -42,19 +42,19 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        `${backendUrl}/auth/login`, 
+        `${backendUrl}/auth/login`,
         { email, password, role },
-        { 
-          withCredentials: true, // This is required for cookies to be sent
+        {
+          withCredentials: true,
           headers: {
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
         }
       );
 
-      if (response.data.success) {
+      if (response.data.success || response.data.sucess) {
         setIsLoggedIn(true);
-        navigate('/dashboard');
+        navigate('/iqac-dashboard');
       } else {
         setError(response.data.message || 'Invalid credentials');
       }
@@ -66,18 +66,16 @@ const Login = () => {
     }
   };
 
-  // useEffect(() => {
-  //   getAuthState();
-  // }, []);
-
   return (
     <div className="min-h-screen bg-gray-50 w-screen">
       <LandingNavbar />
       <div className="flex items-center justify-center min-h-[85vh] px-4">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+        <div className="w-full max-w-md bg-white mt-15 rounded-xl shadow-lg p-8 mb-15">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-[#5D6096]">User Login</h2>
-            <p className="text-gray-600 text-sm mt-1">Welcome back! Please enter your credentials.</p>
+            <p className="text-gray-600 text-sm mt-1">
+              Welcome back! Please enter your credentials.
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
@@ -86,40 +84,49 @@ const Login = () => {
             )}
 
             {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
+            <div >
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium mb-1 text-gray-700"
+              >
+                Email
+              </label>
+              <div className="flex items-center gap-3  border  rounded-md  bg-white">
+                <Mail className="text-gray-400" size={18} />
                 <input
-                  type="email"
                   id="email"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5D6096] focus:outline-none"
+                  className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm"
                   placeholder="name@example.com"
-                  required
                 />
               </div>
             </div>
 
             {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
+            <div >
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 "
+              >
+                Password
+              </label>
+              <div className="flex items-center gap-3 border  rounded-md  bg-white">
+                <Lock className="text-gray-400" size={18} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5D6096] focus:outline-none"
+                  className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm"
                   placeholder="••••••••"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  className="text-gray-400 hover:text-gray-600 focus:outline-none"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -128,43 +135,42 @@ const Login = () => {
 
             {/* Role */}
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <div className="relative">
-                <FaUser className="absolute left-3 top-3 text-gray-400" />
+              <label
+                htmlFor="role"
+                className="block text-sm font-medium "
+              >
+                Role
+              </label>
+              <div className="flex items-center gap-3 border  rounded-md  bg-white">
+                <FaUser className="text-gray-400" />
                 <select
                   id="role"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5D6096] focus:outline-none text-black"
-                  style={{ color: 'black' }}
+                  className="w-full bg-white text-black outline-none text-sm"
                   required
                 >
                   <option value="">Select role</option>
                   <option value="faculty">Faculty</option>
                   <option value="hod">HOD</option>
                   <option value="college_authority">College Authority</option>
+                  <option value="iqac">IQAC</option>
                 </select>
               </div>
-            </div>
-
-            {/* Remember / Forgot */}
-            <div className="flex justify-between items-center text-sm">
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" />
-                Remember me
-              </label>
-              <a href="/forgot-password" className="text-blue-600 hover:underline">Forgot password?</a>
             </div>
 
             {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center items-center gap-2 bg-[#5D6096] hover:bg-[#4a4d7a] text-white font-semibold py-2.5 rounded-lg transition-all disabled:opacity-70"
+              className="w-full flex justify-center items-center gap-2 !bg-[#5D6096] hover:bg-[#4a4d7a] text-white font-semibold py-2.5 rounded-lg transition-all disabled:opacity-70"
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <svg
+                    className="animate-spin h-5 w-5"
+                    viewBox="0 0 24 24"
+                  >
                     <circle
                       className="opacity-25"
                       cx="12"
@@ -189,7 +195,9 @@ const Login = () => {
             {/* Register link */}
             <p className="text-center text-sm text-gray-600 pt-3">
               Don't have an account?{' '}
-              <a href="/register" className="text-blue-600 hover:underline">Register here</a>
+              <a href="/register" className="text-blue-600 hover:underline">
+                Register here
+              </a>
             </p>
 
             {/* Footer */}

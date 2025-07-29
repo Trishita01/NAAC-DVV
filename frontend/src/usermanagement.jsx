@@ -1,23 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, Building2, Shield, BarChart3, FileText, Upload, Settings, Edit, Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-react';
-import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaArrowLeft, FaArrowRight, FaBell, FaUser } from 'react-icons/fa';
-
+import { Search, Edit, Trash2, Plus, ChevronDown, ChevronRight, BarChart3, Users as UsersIcon, Building2, FileText, Upload, Settings, Shield } from 'lucide-react';
+import { FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaBell, FaUser, FaTachometerAlt } from 'react-icons/fa';
+import Sidebar from './components/iqac-sidebar';
+import { navItems } from './config/navigation';
 
 function UserManagement() {
-    const navigate = useNavigate();
-    const [collapsed, setCollapsed] = useState(false);
-    const navItems = [
-      { icon: FaTachometerAlt , text: 'Dashboard', path: '/iqac-dashboard' },
-      { icon: FaUsers , text: 'User Management', path: '/user-management' },
-      { icon: FaFileAlt , text: 'Data Entry Forms', path: '/iiqa' },
-      { icon: FaChartLine , text: 'GPA Analysis', path: '/gpa-analysis' },
-      { icon: FaPaperPlane , text: 'Final Submission', path: '/final-submission' },
-      { icon: FaDownload , text: 'Download Report', path: '/download-report' },
-      { icon:FaQuestionCircle , text: 'Help and Support', path: '/helpsupport' },
-      { icon: FaCog, text: 'Configuration', path: '/configuration' },
-      { icon: FaSignOutAlt , text: 'Logout', path: '/logout' }
-    ];
+  const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
+  // const navItems = [
+  //   { icon: FaTachometerAlt, text: 'Dashboard', path: '/iqac-dashboard' },
+  //   { icon: FaUsers, text: 'User Management', path: '/user-management' },
+  //   { icon: FaFileAlt, text: 'Data Entry Forms', path: '/criteria1.1.1' },
+  //   { icon: FaChartLine, text: 'GPA Analysis', path: '/gpa-analysis' },
+  //   { icon: FaPaperPlane, text: 'IIQA Form', path: '/iiqa' },
+  //   { icon: FaDownload, text: 'Extended Profile', path: '/extendedprofile' },
+  //   { icon: FaQuestionCircle, text: 'Help and Support', path: '/helpsupport' },
+  //   { icon: FaCog, text: 'Configuration', path: '/configuration' },
+  //   { icon: FaSignOutAlt, text: 'Logout', path: '/logout' }
+  // ];
     
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('All Departments');
@@ -251,9 +252,9 @@ function UserManagement() {
               <div>
                 <div className="flex items-center gap-3">
                   <h3 className="font-medium text-gray-900">{user.name}</h3>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.roleColor}`}>
-  {user.role}
-</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.roleColor}`}>
+                    {user.role}
+                  </span>
 
                   {user.children.length > 0 && (
                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
@@ -290,7 +291,7 @@ function UserManagement() {
 
   const sidebarItems = [
     { icon: BarChart3, label: 'Dashboard', active: false },
-    { icon: Users, label: 'User Management', active: true },
+    { icon: UsersIcon, label: 'User Management', active: true },
     { icon: Building2, label: 'Departments', active: false },
     { icon: FileText, label: 'DVV Criteria', active: false },
     { icon: Upload, label: 'Submissions', active: false },
@@ -299,31 +300,15 @@ function UserManagement() {
   ];
 
   return (
-    <div className="flex h-full w-screen bg-white">
-      {/* Sidebar */}
-       <div className={`h-screen bg-gray-900 text-white flex flex-col fixed top-0 left-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
-         <div className="flex justify-between items-center p-4 border-b border-gray-800">
-            {!collapsed && <span className="font-bold text-xl">NAAC</span>}
-            <button onClick={() => setCollapsed(!collapsed)} className="focus:outline-none text-gray-300 !bg-gray-800 hover:text-white">
-              {collapsed ? <FaArrowRight className=""/> : <FaArrowLeft className=""/>}
-            </button>
-          </div> 
-    
-          <div className="flex-1 overflow-auto">
-            <nav className="mt-4 space-y-1">
-              {navItems.map(({ icon:Icon, text,path }) => (
-                <div key={text} 
-                onClick={() => navigate(path)}
-                className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white">
-                  <Icon/>
-                  {!collapsed && <span className="ml-2">{text}</span>}
-                </div>
-              ))}
-            </nav>
-          </div></div>
-    
-      
-      <div className={`transition-all duration-300 w-[1520px] ${collapsed ? 'ml-18' : 'ml-64'}`}>
+    <div className="flex min-h-screen w-screen bg-gray-100">
+      <Sidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        navItems={navItems}
+        navigate={navigate}
+      />
+      {/* Main Content */}
+      <div className={`flex-1 transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
@@ -343,7 +328,7 @@ function UserManagement() {
             <div className="grid grid-cols-3 gap-6">
               <div className="bg-blue-50 rounded-lg p-6 flex items-center">
                 <div className="bg-blue-600 rounded-lg p-3 mr-4">
-                  <Users className="w-6 h-6 text-white" />
+                  <FaUsers className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-blue-600">Total Users</p>

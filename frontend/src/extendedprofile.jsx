@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from './components/iqac-sidebar';
+import { navItems } from './config/navigation';
+import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaQuestionCircle, FaCog, FaSignOutAlt, FaUser } from 'react-icons/fa';
 
 const ExtendedProfileForm = () => {
+  const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 4 + i);
@@ -87,165 +91,176 @@ const ExtendedProfileForm = () => {
   );
 
   return (
-    <div className="min-h-screen w-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="px-6 py-4">
-            <h1 className="text-xl font-semibold text-gray-800">
-              Extended Profile of the Institution
-            </h1>
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar 
+        collapsed={collapsed} 
+        setCollapsed={setCollapsed} 
+        navItems={navItems} 
+        navigate={navigate} 
+      />
+      
+      {/* Main Content */}
+      <div className={`flex-1 overflow-auto transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'} w-[calc(100%-4rem)]`}>
+        <div className="min-h-full">
+          {/* Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mx-6 my-6">
+            <div className="px-6 py-4">
+              <h1 className="text-xl font-semibold text-gray-800">
+                Extended Profile of the Institution
+              </h1>
+            </div>
           </div>
-        </div>
 
-        {/* Main Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          {/* Academic Information Header */}
-          <div className="bg-blue-600 text-white px-6 py-4">
-            <h2 className="text-lg font-medium">Academic Information</h2>
-          </div>
-
-          <div className="p-6 space-y-8">
-            {/* Global Year Selector */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-black">
-              <div className="flex items-center space-x-4">
-                <label className="text-lg font-medium text-blue-800">Select Year for All Sections:</label>
-                <select
-                  className="px-4 py-2 border border-blue-300 rounded-md text-lg font-medium bg-white text-black"
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                >
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-blue-700 text-sm">This will update all year-wise fields below</span>
-              </div>
+          {/* Main Content */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mx-6 mb-6">
+            {/* Academic Information Header */}
+            <div className="bg-blue-600 text-white px-6 py-4">
+              <h2 className="text-lg font-medium">Academic Information</h2>
             </div>
 
-            {/* Section 1: Programme */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
-                1. Programme:
-              </h2>
-              <YearWiseInput
-                title="1.1 Number of courses offered by the Institution across all programs during the last five years"
-                category="courses"
-              />
-            </div>
-
-            {/* Section 2: Student */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
-                2. Student:
-              </h2>
-              <YearWiseInput
-                title="2.1 Number of students year wise during the last five years"
-                category="students"
-              />
-
-              <YearWiseInput
-                title="2.2 Number of seats earmarked for reserved category as per GOI/State Govt rule year wise during the last five years"
-                category="reservedSeats"
-              />
-
-              <YearWiseInput
-                title="2.3 Number of outgoing/final year students year wise during the last five years"
-                category="outgoingStudents"
-              />
-            </div>
-
-            {/* Section 3: Academic */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
-                3. Academic:
-              </h2>
-              <YearWiseInput
-                title="3.2 Number of full time teachers year wise during the last five years"
-                category="fullTimeTeachers"
-              />
-
-              <YearWiseInput
-                title="3.3 Number of Sanctioned posts year wise during the last five years"
-                category="sanctionedPosts"
-              />
-            </div>
-
-            {/* Section 4: Institution */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
-                4. Institution:
-              </h2>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  4.1 Total number of Classrooms and Seminar halls
-                </label>
-                <input
-                  type="number"
-                  className="w-64 text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={formData.totalClassrooms}
-                  onChange={(e) =>
-                    handleSingleInputChange('totalClassrooms', e.target.value)
-                  }
-                  placeholder="Enter number"
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  4.1.1 Total number of Seminar Halls
-                </label>
-                <input
-                  type="number"
-                  className="w-64 text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={formData.totalSeminarHalls}
-                  onChange={(e) =>
-                    handleSingleInputChange('totalSeminarHalls', e.target.value)
-                  }
-                  placeholder="Enter number"
-                />
-              </div>
-
-              <YearWiseInput
-                title="4.2 Total expenditure excluding salary year wise during the last five years"
-                category="expenditure"
-                unit="INR in lakhs"
-              />
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  4.3 Number of Computers
-                </label>
-                <input
-                  type="number"
-                  className="w-64 text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={formData.totalComputers}
-                  onChange={(e) =>
-                    handleSingleInputChange('totalComputers', e.target.value)
-                  }
-                  placeholder="Enter number"
-                />
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="pt-8 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  <p className="font-medium">
-                    NAAC for Quality and Excellence in Higher Education
-                  </p>
-                  <p>Copyright Reg. No. L-94712/2020</p>
+            <div className="p-6 space-y-8">
+              {/* Global Year Selector */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center space-x-4">
+                  <label className="text-lg font-medium text-blue-800">Select Year for All Sections:</label>
+                  <select
+                    className="px-4 py-2 border border-blue-300 rounded-md text-lg font-medium bg-white"
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  >
+                    {years.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-blue-700 text-sm">This will update all year-wise fields below</span>
                 </div>
-                <button
-                  onClick={handleSubmit}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  Submit
-                </button>
+              </div>
+
+              {/* Section 1: Programme */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
+                  1. Programme:
+                </h2>
+                <YearWiseInput
+                  title="1.1 Number of courses offered by the Institution across all programs during the last five years"
+                  category="courses"
+                />
+              </div>
+
+              {/* Section 2: Student */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
+                  2. Student:
+                </h2>
+                <YearWiseInput
+                  title="2.1 Number of students year wise during the last five years"
+                  category="students"
+                />
+
+                <YearWiseInput
+                  title="2.2 Number of seats earmarked for reserved category as per GOI/State Govt rule year wise during the last five years"
+                  category="reservedSeats"
+                />
+
+                <YearWiseInput
+                  title="2.3 Number of outgoing/final year students year wise during the last five years"
+                  category="outgoingStudents"
+                />
+              </div>
+
+              {/* Section 3: Academic */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
+                  3. Academic:
+                </h2>
+                <YearWiseInput
+                  title="3.2 Number of full time teachers year wise during the last five years"
+                  category="fullTimeTeachers"
+                />
+
+                <YearWiseInput
+                  title="3.3 Number of Sanctioned posts year wise during the last five years"
+                  category="sanctionedPosts"
+                />
+              </div>
+
+              {/* Section 4: Institution */}
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 mb-6 border-b border-gray-200 pb-2">
+                  4. Institution:
+                </h2>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    4.1 Total number of Classrooms and Seminar halls
+                  </label>
+                  <input
+                    type="number"
+                    className="w-64 text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.totalClassrooms}
+                    onChange={(e) =>
+                      handleSingleInputChange('totalClassrooms', e.target.value)
+                    }
+                    placeholder="Enter number"
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    4.1.1 Total number of Seminar Halls
+                  </label>
+                  <input
+                    type="number"
+                    className="w-64 text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.totalSeminarHalls}
+                    onChange={(e) =>
+                      handleSingleInputChange('totalSeminarHalls', e.target.value)
+                    }
+                    placeholder="Enter number"
+                  />
+                </div>
+
+                <YearWiseInput
+                  title="4.2 Total expenditure excluding salary year wise during the last five years"
+                  category="expenditure"
+                  unit="INR in lakhs"
+                />
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    4.3 Number of Computers
+                  </label>
+                  <input
+                    type="number"
+                    className="w-64 text-black px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.totalComputers}
+                    onChange={(e) =>
+                      handleSingleInputChange('totalComputers', e.target.value)
+                    }
+                    placeholder="Enter number"
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="pt-8 border-t border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-gray-600">
+                    <p className="font-medium">
+                      NAAC for Quality and Excellence in Higher Education
+                    </p>
+                    <p>Copyright Reg. No. L-94712/2020</p>
+                  </div>
+                  <button
+                    onClick={handleSubmit}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                  >
+                    Submit
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { navItems } from './config/navigation';
 import {
   FaTachometerAlt,
   FaUsers,
@@ -13,10 +14,23 @@ import {
   FaSignOutAlt
 } from 'react-icons/fa';
 import axios from 'axios';
+import Sidebar from './components/iqac-sidebar';
 
 export default function IIQA() {
   const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  
+  // const navItems = [
+  //   { icon: FaTachometerAlt, text: 'Dashboard', path: '/iqac-dashboard' },
+  //   { icon: FaUsers, text: 'User Management', path: '/user-management' },
+  //   { icon: FaFileAlt, text: 'Data Entry Forms', path: '/iiqa' },
+  //   { icon: FaChartLine, text: 'GPA Analysis', path: '/gpa-analysis' },
+  //   { icon: FaPaperPlane, text: 'IIQA form', path: '/iiqa' },
+  //   { icon: FaDownload, text: 'Extended Profile', path: '/extendedprofile' },
+  //   { icon: FaQuestionCircle, text: 'Help and Support', path: '/helpsupport' },
+  //   { icon: FaCog, text: 'Configuration', path: '/configuration' },
+  //   { icon: FaSignOutAlt, text: 'Logout', path: '/logout' }
+  // ];
 
   // Programs
   const [programs, setPrograms] = useState([
@@ -70,17 +84,6 @@ export default function IIQA() {
     }));
   };
 
-  const navItems = [
-    { icon: FaTachometerAlt, text: 'Dashboard', path: '/iqac-dashboard' },
-    { icon: FaUsers, text: 'User Management', path: '/user-management' },
-    { icon: FaFileAlt, text: 'Data Entry Forms', path: '/iiqa' },
-    { icon: FaChartLine, text: 'GPA Analysis', path: '/gpa-analysis' },
-    { icon: FaPaperPlane, text: 'Final Submission', path: '/final-submission' },
-    { icon: FaDownload, text: 'Download Report', path: '/download-report' },
-    { icon: FaQuestionCircle, text: 'Help and Support', path: '/helpsupport' },
-    { icon: FaCog, text: 'Configuration', path: '/configuration' },
-    { icon: FaSignOutAlt, text: 'Logout', path: '/logout' }
-  ];
 
   const addProgram = () => {
     setPrograms([...programs, {
@@ -205,8 +208,14 @@ export default function IIQA() {
 
   return (
     <div className="flex min-h-screen w-screen bg-gray-100">
+      <Sidebar
+        collapsed={collapsed} 
+        setCollapsed={setCollapsed}
+        navItems={navItems}
+        navigate={navigate}
+      />
       {/* Main Content */}
-      <div className={`transition-all duration-300 w-[1520px]`}>
+      <div className={`flex-1 transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center h-[50px] w-[130px] shadow border border-black/10 rounded-2xl">

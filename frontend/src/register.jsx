@@ -93,22 +93,11 @@ const Register = () => {
     setErrors(prev => ({ ...prev, [name]: msg }));
   };
 
-  const getInputClasses = (field) => {
-    const error = touched[field] && errors[field];
-    const valid = touched[field] && !errors[field];
-    return `w-full h-12 pl-10 pr-4 border ${
-      error
-        ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-        : valid
-        ? 'border-green-500 focus:border-green-500 focus:ring-green-200'
-        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
-    } rounded-lg focus:outline-none focus:ring-2 transition-all duration-200`;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
 
+    // Mark all touched and validate all fields on submit
     const newTouched = {};
     Object.keys(formData).forEach(key => {
       newTouched[key] = true;
@@ -139,14 +128,10 @@ const Register = () => {
       const response = await axiosInstance.post(endpoint, submissionData, { withCredentials: true });
 
       if (response.data.success) {
-        // For IQAC registration, the tokens are set as HTTP-only cookies
         if (showIQACForm) {
-          // The backend has already set the HTTP-only cookies
-          // Update the user state and redirect
           await setUserAfterRegistration(response.data.data.iqac);
           navigate('/dashboard');
         } else {
-          // For regular registration, proceed with login
           const loginSuccess = await login(
             submissionData.email, 
             submissionData.password,
@@ -170,173 +155,321 @@ const Register = () => {
     }
   };
 
-  const renderField = (id, label, Icon, type = 'text') => (
-    <div key={id}>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><Icon /></div>
-        <input
-          id={id}
-          name={id}
-          type={type}
-          className={`${getInputClasses(id)} text-gray-900`}
-          placeholder={`Enter ${label.toLowerCase()}`}
-          value={formData[id]}
-          onChange={handleChange}
-          onBlur={handleBlur}
-        />
-        {touched[id] && !errors[id] && (
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-green-500">
-            <FaCheckCircle />
-          </div>
-        )}
-      </div>
-      {touched[id] && errors[id] && (
-        <p className="mt-1 text-sm text-red-600">{errors[id]}</p>
-      )}
-    </div>
-  );
-
   return (
-    <div className="min-h-screen w-full h-full bg-gray-50"> 
+    <div className="min-h-screen w-screen bg-gray-50 flex flex-col overflow-x-hidden">
       <LandingNavbar />
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8 mt-12">
-        <div className="text-center mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            {showIQACForm ? 'IQAC Coordinator Registration' : 'User Registration'}
-          </h2>
-          <p className="text-gray-600 text-sm">Please fill in your details to create an account</p>
-        </div>
-        <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-          {renderField('name', 'Full Name', FaUser)}
-          {renderField('email', 'Email', FaEnvelope, 'email')}
-          {renderField('password', 'Password', FaLock, 'password')}
-          {renderField('confirmPassword', 'Confirm Password', FaLock, 'password')}
-          {!showIQACForm && (
+      <div className="flex-1 mt-15 flex items-center justify-center p-4">
+        <div className="w-full max-w-md !bg-white rounded-xl shadow-lg p-8 mb-15">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-[#5D6096]">
+              {showIQACForm ? 'IQAC Supervisor Registration' : 'Create an Account'}
+            </h2>
+            <p className="!text-gray-600 !bg-white text-sm mt-1">
+              {showIQACForm ? 'Register as an IQAC Supervisor' : 'Join us today to get started'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Name */}
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                Role
+              <label htmlFor="name" className="block text-sm font-medium mb-1 text-gray-700">
+                Full Name
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <FaUser />
-                </div>
-                <select
-                  id="role"
-                  name="role"
-                  className={`${getInputClasses('role')} appearance-none text-gray-900`}
-                  value={formData.role}
+              <div className="flex items-center gap-3 border rounded-md bg-white">
+                <FaUser className="text-gray-400 ml-3" size={18} />
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm py-2.5"
+                  placeholder="Enter your full name"
+                  value={formData.name}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                >
-                  <option value="">Select role</option>
-                  <option value="faculty">Faculty</option>
-                  <option value="hod">HOD</option>
-                  <option value="college_authority">College Authority</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">
-                  <FaChevronDown />
-                </div>
+                  required
+                />
               </div>
-              {touched.role && errors.role && (
-                <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+              {touched.name && errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
               )}
             </div>
-          )}
 
-          {showIQACForm && (
-            <>
-              {renderField('institutionName', 'Institution Name', FaBuilding)}
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-1 text-gray-700">
+                Email
+              </label>
+              <div className="flex items-center gap-3 border rounded-md bg-white">
+                <FaEnvelope className="text-gray-400 ml-3" size={18} />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm py-2.5"
+                  placeholder="name@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                />
+              </div>
+              {touched.email && errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <div className="flex items-center gap-3 border rounded-md bg-white">
+                <FaLock className="text-gray-400 ml-3" size={18} />
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm py-2.5"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                />
+              </div>
+              {touched.password && errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password
+              </label>
+              <div className="flex items-center gap-3 border rounded-md bg-white">
+                <FaLock className="text-gray-400 ml-3" size={18} />
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm py-2.5"
+                  placeholder="Confirm your password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  required
+                />
+              </div>
+              {touched.confirmPassword && errors.confirmPassword && (
+                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+              )}
+            </div>
+
+            {!showIQACForm && (
               <div>
-                <label htmlFor="institutionType" className="block text-sm font-medium text-gray-700 mb-1">
-                  Institution Type
+                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                  Role
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                    <FaUniversity />
-                  </div>
+                <div className="flex items-center gap-3 border rounded-md bg-white">
+                  <FaUser className="text-gray-400 ml-3" size={18} />
                   <select
-                    id="institutionType"
-                    name="institutionType"
-                    className={`${getInputClasses('institutionType')} appearance-none text-gray-900`}
-                    value={formData.institutionType}
+                    id="role"
+                    name="role"
+                    className="w-full bg-white text-black outline-none text-sm py-2.5 pr-3"
+                    value={formData.role}
                     onChange={handleChange}
                     onBlur={handleBlur}
+                    required
                   >
-                    <option value="" disabled>Select type</option>
-                    {institutionTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
+                    <option value="">Select role</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="hod">HOD</option>
+                    <option value="college_authority">College Authority</option>
                   </select>
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">
-                    <FaChevronDown />
-                  </div>
+                  <FaChevronDown className="text-gray-400 mr-3" size={16} />
                 </div>
-                {touched.institutionType && errors.institutionType && (
-                  <p className="mt-1 text-sm text-red-600">{errors.institutionType}</p>
+                {touched.role && errors.role && (
+                  <p className="mt-1 text-sm text-red-600">{errors.role}</p>
                 )}
               </div>
-              {renderField('aisheId', 'AISHE ID', FaIdCard)}
-              {renderField('institutionalEmail', 'Institutional Email', FaEnvelope, 'email')}
-              {renderField('phoneNumber', 'Phone Number', FaMobileAlt, 'tel')}
-            </>
-          )}
+            )}
 
-          <div className="flex justify-center pt-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`relative flex justify-center px-6 py-3 ${
-                isSubmitting ? '!bg-blue-400' : '!bg-blue-600 hover:!bg-blue-700'
-              } text-white rounded-lg font-semibold transition`}
-            >
-              {isSubmitting ? 'Processing...' : 'Proceed'}
-              {isSubmitting && (
-                <svg
-                  className="animate-spin ml-2 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
+            {showIQACForm && (
+              <>
+                {/* Institution Name */}
+                <div>
+                  <label htmlFor="institutionName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Institution Name
+                  </label>
+                  <div className="flex items-center gap-3 border rounded-md bg-white">
+                    <FaBuilding className="text-gray-400 ml-3" size={18} />
+                    <input
+                      id="institutionName"
+                      name="institutionName"
+                      type="text"
+                      className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm py-2.5"
+                      placeholder="Enter institution name"
+                      value={formData.institutionName}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      required
+                    />
+                  </div>
+                  {touched.institutionName && errors.institutionName && (
+                    <p className="mt-1 text-sm text-red-600">{errors.institutionName}</p>
+                  )}
+                </div>
+
+                {/* Institution Type */}
+                <div>
+                  <label htmlFor="institutionType" className="block text-sm font-medium text-gray-700 mb-1">
+                    Institution Type
+                  </label>
+                  <div className="flex items-center gap-3 border rounded-md bg-white">
+                    <FaUniversity className="text-gray-400 ml-3" size={18} />
+                    <select
+                      id="institutionType"
+                      name="institutionType"
+                      className="w-full bg-white text-black outline-none text-sm py-2.5 pr-3"
+                      value={formData.institutionType}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      required
+                    >
+                      <option value="">Select institution type</option>
+                      {institutionTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                    <FaChevronDown className="text-gray-400 mr-3" size={16} />
+                  </div>
+                  {touched.institutionType && errors.institutionType && (
+                    <p className="mt-1 text-sm text-red-600">{errors.institutionType}</p>
+                  )}
+                </div>
+
+                {/* AISHE ID */}
+                <div>
+                  <label htmlFor="aisheId" className="block text-sm font-medium text-gray-700 mb-1">
+                    AISHE ID
+                  </label>
+                  <div className="flex items-center gap-3 border rounded-md bg-white">
+                    <FaIdCard className="text-gray-400 ml-3" size={18} />
+                    <input
+                      id="aisheId"
+                      name="aisheId"
+                      type="text"
+                      className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm py-2.5"
+                      placeholder="Enter AISHE ID"
+                      value={formData.aisheId}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      required
+                    />
+                  </div>
+                  {touched.aisheId && errors.aisheId && (
+                    <p className="mt-1 text-sm text-red-600">{errors.aisheId}</p>
+                  )}
+                </div>
+
+                {/* Institutional Email */}
+                <div>
+                  <label htmlFor="institutionalEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                    Institutional Email
+                  </label>
+                  <div className="flex items-center gap-3 border rounded-md bg-white">
+                    <FaEnvelope className="text-gray-400 ml-3" size={18} />
+                    <input
+                      id="institutionalEmail"
+                      name="institutionalEmail"
+                      type="email"
+                      className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm py-2.5"
+                      placeholder="institution@example.com"
+                      value={formData.institutionalEmail}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      required
+                    />
+                  </div>
+                  {touched.institutionalEmail && errors.institutionalEmail && (
+                    <p className="mt-1 text-sm text-red-600">{errors.institutionalEmail}</p>
+                  )}
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number
+                  </label>
+                  <div className="flex items-center gap-3 border rounded-md bg-white">
+                    <FaMobileAlt className="text-gray-400 ml-3" size={18} />
+                    <input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
+                      className="w-full bg-white text-black placeholder-gray-400 outline-none text-sm py-2.5"
+                      placeholder="Enter phone number"
+                      value={formData.phoneNumber}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      required
+                    />
+                  </div>
+                  {touched.phoneNumber && errors.phoneNumber && (
+                    <p className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {errors.global && (
+              <div className="p-3 text-sm text-red-700 bg-red-100 rounded-md">
+                {errors.global}
+              </div>
+            )}
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full flex justify-center items-center gap-2 !bg-[#5D6096] hover:bg-[#4a4d7a] text-white font-semibold py-2.5 rounded-lg transition-all disabled:opacity-70"
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4zm2 5.3A8 8 0 014 12H0c0 3 1.1 5.8 3 7.9l3-2.6z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
+              </button>
+
+              {!showIQACForm ? (
+                <p className="mt-4 text-center text-sm text-gray-600">
+                  Are you an IQAC Supervisor?{' '}
+                  <button
+                    type="button"
+                    className="!text-blue-600 !bg-white/20 hover:bg-white/30 px-3 py-1 rounded-md transition-colors"
+                    onClick={() => setShowIQACForm(true)}
+                  >
+                    Register as IQAC Supervisor
+                  </button>
+                </p>
+              ) : (
+                <p className="mt-4 text-center text-sm text-gray-600">
+                  Already have an account?{' '}
+                  <a href="/login" className="text-blue-600 hover:underline">
+                    Sign in
+                  </a>
+                </p>
               )}
-            </button>
-          </div>
-
-          {!showIQACForm && (
-            <div className="pt-4 text-center">
-              <p className="text-sm text-gray-600">
-                Are you an IQAC Supervisor?{' '}
-                <button
-                  type="button"
-                  className="!text-blue-600 !underline !bg-white !hover:bg-blue-600 !hover:text-white"
-                  onClick={() => setShowIQACForm(true)}
-                >
-                  Register as IQAC Supervisor
-                </button>
-              </p>
             </div>
-          )}
-
-          {errors.global && (
-            <div className="mt-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
-              {errors.global}
-            </div>
-          )}
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
