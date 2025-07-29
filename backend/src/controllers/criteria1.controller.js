@@ -681,15 +681,17 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
     throw new apiError(400, "Missing required fields");
   }
 
-  if (year_of_offering < 1990 || year_of_offering > new Date().getFullYear()) {
+  const currentYear = new Date().getFullYear();
+
+  if (year_of_offering < 1990 || year_of_offering > currentYear) {
     throw new apiError(400, "Year of offering must be between 1990 and current year");
   }
 
-  if (session < 1990 || session > new Date().getFullYear()) {
+  if (session < 1990 || session > currentYear) {
     throw new apiError(400, "Session must be between 1990 and current year");
   }
 
-  // Get IIQA session range for validation
+  // Get latest IIQA session range for validation
   const latestIIQA = await IIQA.findOne({
     attributes: ["session_end_year"],
     order: [["created_at", "DESC"]],
@@ -703,32 +705,34 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
   const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
-    throw new apiError(400, "Session must be between ${startYear} and ${endYear}");
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
-  // Start a transaction
   const transaction = await db.sequelize.transaction();
 
   try {
-    // Step 1: Get all 3 criteria from CriteriaMaster
+    // Use numeric IDs here (remove leading zeros)
     const criteriaList = await CriteriaMaster.findAll({
       where: {
-        sub_sub_criterion_id: { [Sequelize.Op.in]: ['010202', '010203'] },
-        sub_criterion_id: { [Sequelize.Op.in]: ['0102', '0102'] },
-        criterion_id: '01'
+        criterion_id: 1,
+        sub_criterion_id: 102,
+        sub_sub_criterion_id: { [Sequelize.Op.in]: [10202, 10203] }
       },
       transaction
     });
 
+    console.log("Fetched criteriaList length:", criteriaList.length);
+    criteriaList.forEach(c => {
+      console.log("sub_sub_criterion_id:", c.sub_sub_criterion_id);
+    });
+
     if (!criteriaList || criteriaList.length !== 2) {
-      await transaction.rollback();
       throw new apiError(404, "One or more criteria not found");
     }
 
-    // Step 2: Map sub_sub_criterion_id to model
     const modelMap = {
-      '010202': { model: Criteria122, name: '1.2.2' },
-      '010203': { model: Criteria123, name: '1.2.3' },
+      10202: { model: Criteria122, name: '1.2.2' },
+      10203: { model: Criteria123, name: '1.2.3' },
     };
 
     const responses = [];
@@ -737,48 +741,48 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
       const { model: Model, name } = modelMap[criteria.sub_sub_criterion_id];
       if (!Model) continue;
 
-      try {
-        const [entry, created] = await Model.findOrCreate({
-          where: {
-            session,
-            year_of_offering,
-            program_name,
-            course_code,
-            no_of_times_offered,
-            duration,
-            no_of_students_enrolled,
-            no_of_students_completed
-          },
-          defaults: {
-            id: criteria.id, // Add the criteria ID
-            criteria_code: criteria.criteria_code,
-            session,
-            year_of_offering,
-            program_name,
-            course_code,
-            no_of_times_offered,
-            duration,
-            no_of_students_enrolled,
-            no_of_students_completed  
-          },
+      const [entry, created] = await Model.findOrCreate({
+        where: {
+          session,
+          year_of_offering,
+          program_name,
+          course_code
+        },
+        defaults: {
+          id: criteria.id,
+          criteria_code: criteria.criteria_code,
+          session,
+          year_of_offering,
+          program_name,
+          course_code,
+          no_of_times_offered,
+          duration,
+          no_of_students_enrolled,
+          no_of_students_completed
+        },
+        transaction
+      });
+
+      if (!created) {
+        await Model.update({
+          no_of_times_offered,
+          duration,
+          no_of_students_enrolled,
+          no_of_students_completed
+        }, {
+          where: { id: entry.id },
           transaction
         });
-
-        responses.push({
-          criteria: name,
-          entry,
-          created,
-          message: created ? "Entry created successfully" : "Entry already exists"
-        });
-
-      } catch (error) {
-        // Rollback and throw error
-        await transaction.rollback();
-        throw new apiError(400, "Error creating entry for criteria ${name}: ${error.message}");
       }
+
+      responses.push({
+        criteria: name,
+        entry,
+        created,
+        message: created ? "Entry created successfully" : "Entry updated successfully"
+      });
     }
 
-    // If we get here, all operations were successful
     await transaction.commit();
 
     return res.status(200).json(
@@ -786,11 +790,14 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
     );
 
   } catch (error) {
-    // If we get here, the transaction has already been rolled back
-    // in one of the inner catch blocks
-    throw error; // Let the error handler deal with it
+    await transaction.rollback();
+    throw error;
   }
 });
+
+
+
+
 
 const score122 = asyncHandler(async (req, res) => {
   /*
@@ -1035,18 +1042,8 @@ const score123 = asyncHandler(async (req, res) => {
 })
 
 const createResponse132 = asyncHandler(async (req, res) => {
-  /*
-    1. Extract input from req.body
-    2. Validate required fields and logical constraints
-    3. Check if programme_name or programme_code already exists for the same year and session
-    4. Get criteria_code from criteria_master
-    5. Get latest IIQA session and validate session window
-    6. Create or update response in response_1_3_2_data table
-  */
-
   const {
     session,
-    year,
     program_name,
     program_code,
     course_name,
@@ -1055,20 +1052,17 @@ const createResponse132 = asyncHandler(async (req, res) => {
     student_name
   } = req.body;
 
-  // Step 1: Field validation
+  // Validation
   if (
-    !session || !year || !program_name || !program_code ||
-    !course_name  || !course_code || year_of_offering === undefined || student_name === undefined
+    !session || !program_name || !program_code ||
+    !course_name || !course_code || year_of_offering === undefined || student_name === undefined
   ) {
     throw new apiError(400, "Missing required fields");
   }
 
   const currentYear = new Date().getFullYear();
-  if (
-    session < 1990 || session > currentYear ||
-    year < 1990 || year > currentYear
-  ) {
-    throw new apiError(400, "Year and session must be between 1990 and current year");
+  if (session < 1990 || session > currentYear) {
+    throw new apiError(400, "Session must be between 1990 and current year");
   }
 
   if (year_of_offering < 1990 || year_of_offering > currentYear) {
@@ -1079,27 +1073,7 @@ const createResponse132 = asyncHandler(async (req, res) => {
     throw new apiError(400, "Student name cannot be undefined");
   }
 
-  // Step 2: Check for existing programme_name or programme_code in same session/year
-  const existingRecord = await Criteria132.findOne({
-    where: {
-      session,
-      year,
-      [Sequelize.Op.or]: [
-        { program_name },
-        { program_code }
-      ]
-    }
-  });
-
-  if (existingRecord) {
-    if (existingRecord.program_name === program_name) {
-      throw new apiError(400, "Program name already exists for this session and year");
-    } else {
-      throw new apiError(400, "Program code already exists for this session and year");
-    }
-  }
-
-  // Step 3: Fetch criteria details
+  // Check criteria master
   const criteria = await CriteriaMaster.findOne({
     where: {
       criterion_id: '01',
@@ -1112,7 +1086,7 @@ const createResponse132 = asyncHandler(async (req, res) => {
     throw new apiError(404, "Criteria not found");
   }
 
-  // Step 4: Validate session window against IIQA
+  // Validate session window against IIQA
   const latestIIQA = await IIQA.findOne({
     attributes: ['session_end_year'],
     order: [['created_at', 'DESC']]
@@ -1126,22 +1100,14 @@ const createResponse132 = asyncHandler(async (req, res) => {
   const startYear = endYear - 5;
 
   if (session < startYear || session > endYear) {
-    throw new apiError(400, "Session must be between ${startYear} and ${endYear}");
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
-  // Step 5: Create or update response
-  let [entry, created] = await Criteria132.findOrCreate({
+  // Optional: check if exact same record exists already (including student_name)
+  // If you want to allow duplicates fully, comment out this block
+  const duplicateRecord = await Criteria132.findOne({
     where: {
       session,
-      year,
-      program_name,
-      program_code
-    },
-    defaults: {
-      id: criteria.id,
-      criteria_code: criteria.criteria_code,
-      session,
-      year,
       program_name,
       program_code,
       course_name,
@@ -1151,33 +1117,29 @@ const createResponse132 = asyncHandler(async (req, res) => {
     }
   });
 
-  if (!created) {
-    await Criteria132.update({
-      no_of_seats,
-      no_of_students
-    }, {
-      where: {
-        session,
-        year,
-        program_name,
-        program_code
-      }
-    });
-
-    entry = await Criteria132.findOne({
-      where: {
-        session,
-        year,
-        program_name,
-        program_code
-      }
-    });
+  if (duplicateRecord) {
+    throw new apiError(400, "This student record already exists for the given program and session");
   }
 
+  // Create new record every time (no update)
+  const newEntry = await Criteria132.create({
+    id: criteria.id,
+    criteria_code: criteria.criteria_code,
+    session,
+    program_name,
+    program_code,
+    course_name,
+    course_code,
+    year_of_offering,
+    student_name
+  });
+
   return res.status(201).json(
-    new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
+    new apiResponse(201, newEntry, "Response created successfully")
   );
 });
+
+
 
 const score132 = asyncHandler(async (req, res) => {
   /*
