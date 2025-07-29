@@ -132,12 +132,12 @@ function App() {
 
             {/* Protected Routes */}
             {/* IQAC Supervisor Routes */}
-            <Route element={<PrivateRoute allowedRoles={['iqac']} />}>
+            {/* <Route element={<PrivateRoute allowedRoles={['iqac']} />}> */}
               <Route path="/iqac-dashboard" element={<IqacDashboard />} />
               <Route path='/user-management' element={<UserManagement/>} />
               <Route path='/gpa-analysis' element={<GPAAnalysis />} />
               <Route path="/iiqa" element={<IIQA/>} />
-            </Route>
+            {/* </Route> */}
 
             {/* Admin Routes */}
             {/* <Route element={<PrivateRoute allowedRoles={['college admin']} />}>   */}

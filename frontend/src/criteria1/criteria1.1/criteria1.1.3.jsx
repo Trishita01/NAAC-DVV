@@ -43,16 +43,21 @@ const Criteria1_1_3 = () => {
   }, [availableSessions]);
 
   const fetchScore = async () => {
+    console.log('Fetching score...');
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get("http://localhost:3000/criteria1/score113");
-      setProvisionalScore({
-        score: response.data.data,
-        message: response.data.message,
-      });
+      const response = await axios.get("http://localhost:3000/api/v1/criteria1/score113");
+      console.log('API Response:', response);
+      console.log('Response data:', response.data);
+      setProvisionalScore(response.data);
+      console.log('provisionalScore after set:', provisionalScore);
     } catch (error) {
       console.error("Error fetching provisional score:", error);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
+      }
       setError(error.message || "Failed to fetch score");
     } finally {
       setLoading(false);
@@ -87,7 +92,7 @@ const Criteria1_1_3 = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:3000/criteria1/createResponse113", {
+      const response = await axios.post("http://localhost:3000/api/v1/criteria1/createResponse113", {
         session,
         year,
         teacher_name: name,
@@ -148,25 +153,18 @@ const Criteria1_1_3 = () => {
             <div className="text-sm text-gray-600">1.1 - Curricular Planning and Implementation</div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex justify-center mb-4">
-              <div className="text-center">
-                <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
-                {loading ? (
-                  <span className="text-gray-500">Loading...</span>
-                ) : error ? (
-                  <span className="text-red-500">Error: {error}</span>
-                ) : provisionalScore ? (
-                  <div className="text-center">
-                    <span className="text-blue-600 text-lg font-bold">{provisionalScore.score}</span>
-                    <br />
-                    <span className="text-gray-700">{provisionalScore.message}</span>
-                  </div>
-                ) : (
-                  <span className="text-gray-500">Score not available</span>
-                )}
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+            {loading ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : provisionalScore?.data ? (
+              <div>
+                <p className="text-lg font-semibold text-green-800">
+                  Provisional Score (1.1.3): {provisionalScore.data.score}
+                </p>
               </div>
-            </div>
+            ) : (
+              <p className="text-gray-600">No score data available.</p>
+            )}
           </div>
 
           <div className="bg-white p-6 rounded shadow mb-6">
