@@ -35,6 +35,7 @@ const Register = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
   const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -129,8 +130,18 @@ const Register = () => {
 
       if (response.data.success) {
         if (showIQACForm) {
-          await setUserAfterRegistration(response.data.data.iqac);
-          navigate('/dashboard');
+          // Set user data and wait for authentication to be properly set
+          const success = await setUserAfterRegistration(response.data.data.iqac);
+          if (success) {
+            // Show success message before navigation
+            setSuccessMessage('Registration successful! Redirecting to dashboard...');
+            // Wait a moment to ensure authentication is properly set
+            setTimeout(() => {
+              navigate('/iqac-dashboard');
+            }, 1000);
+          } else {
+            setErrors(prev => ({ ...prev, global: 'Failed to set user session' }));
+          }
         } else {
           const loginSuccess = await login(
             submissionData.email, 
@@ -139,9 +150,15 @@ const Register = () => {
           );
           
           if (loginSuccess) {
-            navigate('/dashboard');
-          } else {
-            setErrors(prev => ({ ...prev, global: 'Registration successful but login failed. Please log in manually.' }));
+            setSuccessMessage('Registration successful! Redirecting to dashboard...');
+            // Show success message for 1.5 seconds before redirecting
+              navigate('/iqac-dashboard');
+            } else {
+            // For login failure case, show success message first then error
+            setSuccessMessage('Registration successful!');
+            setTimeout(() => {
+              setErrors(prev => ({ ...prev, global: 'Login failed. Please log in manually.' }));
+            }, 1000);
           }
         }
       } else {
@@ -426,6 +443,11 @@ const Register = () => {
             {errors.global && (
               <div className="p-3 text-sm text-red-700 bg-red-100 rounded-md">
                 {errors.global}
+              </div>
+            )}
+            {successMessage && (
+              <div className="p-3 text-sm text-green-700 bg-green-100 rounded-md">
+                {successMessage}
               </div>
             )}
 

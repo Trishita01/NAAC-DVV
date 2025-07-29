@@ -75,11 +75,40 @@ const Criteria2_1_1 = () => {
   const fetchScore = async () => {
     if (!currentYear) return;
     
+    // Try to load from localStorage first
+    const cachedScore = localStorage.getItem(`criteria211_score_${currentYear}`);
+    if (cachedScore) {
+      try {
+        const parsedScore = JSON.parse(cachedScore);
+        // Only use cached score if it's not too old (e.g., less than 1 hour old)
+        if (Date.now() - parsedScore.timestamp < 60 * 60 * 1000) {
+          setProvisionalScore(parsedScore.data);
+        }
+      } catch (e) {
+        console.warn("Error parsing cached score:", e);
+        localStorage.removeItem(`criteria211_score_${currentYear}`);
+      }
+    }
+    
     try {
       const response = await axios.get(
         `http://localhost:3000/api/v1/criteria2/score211/`
       );
+      
+      // Save to state
       setProvisionalScore(response.data);
+      
+      // Cache the response in localStorage with a timestamp
+      if (response.data) {
+        const cacheData = {
+          data: response.data,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(
+          `criteria211_score_${currentYear}`, 
+          JSON.stringify(cacheData)
+        );
+      }
     } catch (err) {
       console.error("Error fetching score:", err);
       setError("Failed to load score");
@@ -270,18 +299,23 @@ const Criteria2_1_1 = () => {
         });
         
         setYearData(newYearData);
-        await fetchScore();
       } catch (err) {
         console.error("Error loading data:", err);
-        setError("Failed to load data. Please try again.");
-        setTimeout(() => setError(null), 5000);
+        setError("Failed to load data");
       } finally {
         setLoading(false);
       }
     };
     
     loadData();
-  }, [availableSessions]);
+  }, [currentYear, availableSessions]);
+
+  // Fetch score when currentYear changes
+  useEffect(() => {
+    if (currentYear) {
+      fetchScore();
+    }
+  }, [currentYear]);
 
   // Set default current year when sessions load
   useEffect(() => {
@@ -330,6 +364,26 @@ const Criteria2_1_1 = () => {
             </div>
           </div>
 
+          <div className="flex-1 flex flex-col p-4">
+          
+
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="mb-4">
+              <h3 className="text-blue-600 font-medium mb-2">2.1.1 Metric Information</h3>
+              <p className="text-sm text-gray-700">
+                Average enrolment Percentage (Average of last five years)
+              </p>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-blue-600 font-medium mb-2">Required Documents:</h3>
+              <ul className="list-disc pl-5 text-sm text-gray-700">
+                <li>Any additional information</li>
+                <li>Institutional data in prescribed format</li>
+              </ul>
+            </div>
+        </div>
+        </div>
+
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year:</label>
             <select
@@ -353,14 +407,17 @@ const Criteria2_1_1 = () => {
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
             {loading ? (
               <p className="text-gray-600">Loading provisional score...</p>
-            ) : provisionalScore?.score_sub_sub_criteria !== undefined ? (
+            ) : provisionalScore?.data?.score_sub_sub_criteria !== undefined || provisionalScore?.score_sub_sub_criteria !== undefined ? (
               <p className="text-lg font-semibold text-green-800">
-                Provisional Score (2.1.1): {typeof provisionalScore.score_sub_sub_criteria === 'number'
-                  ? provisionalScore.score_sub_sub_criteria.toFixed(2)
-                  : provisionalScore.score_sub_sub_criteria} %
+                Provisional Score (2.1.1): {typeof (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria) === 'number'
+                  ? (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria).toFixed(2)
+                  : (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria)} %
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  (Last updated: {new Date(provisionalScore.timestamp || Date.now()).toLocaleString()})
+                </span>
               </p>
             ) : (
-              <p className="text-gray-600">No score data available.</p>
+              <p className="text-gray-600">No score data available. Submit data to see your score.</p>
             )}
           </div>
 

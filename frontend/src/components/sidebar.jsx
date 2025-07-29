@@ -228,7 +228,7 @@ const Sidebar = () => {
           {fullCriteriaList.map((criteria) => (
             <div className="relative border-t" key={criteria.id}>
               <button
-  className="w-full text-left p-4 pr-10 text-sm font-medium text-blue-700 !bg-white cursor-pointer"
+  className="w-full text-left p-4 pr-10 text-sm font-medium !text-blue-700 !bg-white cursor-pointer"
   onClick={() => toggleCriteria(criteria.id)}
 >
   {criteria.title}
@@ -238,7 +238,7 @@ const Sidebar = () => {
                   {criteria.subCriteria.map((sub) => (
                     <div key={sub.id}>
                       <div
-                        className="py-2 px-4 text-sm text-blue-700 bg-blue-50 font-medium cursor-pointer"
+                        className="py-2 px-4 text-sm !text-blue-700 !bg-blue-50 font-medium cursor-pointer"
                         onClick={() => toggleSubCriteria(sub.id)}
                       >
                         {sub.name}

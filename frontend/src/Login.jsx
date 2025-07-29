@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import { FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +6,6 @@ import { AuthContext } from './auth/authProvider';
 import api from './api';
 import LandingNavbar from './components/landing-navbar';
 import { AppContext } from './contextprovider/appContext';
-import axios from 'axios';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -17,20 +16,19 @@ const Login = () => {
   const [role, setRole] = useState('faculty');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useContext(AuthContext);
+  const { checkAuth, login } = useContext(AuthContext);
 
   const getAuthState = async () => {
     try {
-      const response = await axios.get(`${backendUrl}/auth/me`, {
-        withCredentials: true,
-      });
-      if (response.data.authenticated) {
+      const isAuthenticated = await checkAuth();
+      if (isAuthenticated) {
         setIsLoggedIn(true);
         navigate('/iqac-dashboard');
       } else {
         setIsLoggedIn(false);
       }
     } catch (error) {
+      console.error('Error checking auth status:', error);
       setIsLoggedIn(false);
     }
   };
@@ -41,26 +39,31 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await axios.post(
-        `${backendUrl}/auth/login`,
-        { email, password, role },
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (response.data.success || response.data.sucess) {
+      console.log('Attempting login with:', { email, role });
+      const result = await login(email, password, role);
+      console.log('Login result:', result);
+      
+      if (result && result.success) {
+        console.log('Login successful, user data:', result.user);
         setIsLoggedIn(true);
-        navigate('/iqac-dashboard');
+        
+        // Check if user has the required role for the dashboard
+        if (result.user && result.user.role === 'iqac') {
+          console.log('User has iqac role, navigating to /iqac-dashboard');
+          navigate('/iqac-dashboard', { replace: true });
+        } else {
+          console.log('User does not have iqac role, checking other roles');
+          // Handle other roles here if needed
+          setError('You do not have permission to access the dashboard');
+        }
       } else {
-        setError(response.data.message || 'Invalid credentials');
+        const errorMsg = result?.error || 'Invalid credentials';
+        console.error('Login failed:', errorMsg);
+        setError(errorMsg);
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.response?.data?.message || 'Invalid credentials');
+      setError(error.message || 'An error occurred during login');
     } finally {
       setIsLoading(false);
     }

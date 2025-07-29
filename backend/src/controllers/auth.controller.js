@@ -227,71 +227,98 @@ const userLogin = asyncHandler(async (req, res) => {
 
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
+  const { refreshToken } = req.body;
 
   if (!refreshToken) {
-      throw new apiError(401, "Refresh token missing");
+    throw new apiError(401, 'Refresh token is required');
   }
 
   try {
-      // Verify refresh token
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    if (!decoded.id) {
+      throw new apiError(401, 'Invalid refresh token');
+    }
 
-      const userId = decoded.id;
-      const role = decoded.role;
+    // Generate new access and refresh tokens
+    const { accessToken } = await generateAccessandRefreshToken(decoded.id);
 
-      // Get user by role
-      let userModel;
-      switch (role) {
-          case "iqac":
-              userModel = IQAC;
-              break;
-          case "faculty":
-          case "hod":
-          case "admin":
-          case "mentor":
-              userModel = User;
-              break;
-          default:
-              throw new apiError(400, "Invalid user role");
-      }
+    // Set access token in cookie
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 1000, // 1 hour
+      path: '/'
+    });
 
-      const user = await userModel.findOne({ where: { uuid: userId } });
-
-      if (!user) {
-          throw new apiError(404, "User not found");
-      }
-
-      // Generate new access token
-      const newAccessToken = jwt.sign(
-          { id: userId, role, type: "access" },
-          process.env.JWT_ACCESS_TOKEN,
-          { expiresIn: "1h", algorithm: "HS256" }
-      );
-
-      // Set the new access token in cookie
-      res.cookie("accessToken", newAccessToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 60 * 60 * 1000, // 1 hour
-          path: "/"
-      });
-
-      return res.status(200).json(
-          new apiResponse(200, { accessToken: newAccessToken }, "Access token refreshed")
-      );
+    // Respond with token
+    return res.status(200).json({
+      success: true,
+      data: { accessToken },
+      message: 'Access token refreshed'
+    });
 
   } catch (err) {
-      console.error("Error refreshing token:", err.message);
-      throw new apiError(401, "Invalid or expired refresh token");
+    console.error('Error refreshing token:', err.message);
+    throw new apiError(401, 'Invalid or expired refresh token');
   }
 });
 
+/**
+ * @route GET /api/v1/auth/me
+ * @description Get current user information
+ * @since 1.0.0
+ * @access Protected
+ */
+const getAuthStatus = asyncHandler(async (req, res) => {
+  try {
+    // Get token from cookies or Authorization header
+    let token = req.cookies?.accessToken || req.headers.authorization?.split('Bearer ')[1];
+    console.log('Token:', token);
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No authentication token provided'
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN);
+    if (!decoded.id) {
+      throw new apiError(401, 'Invalid token');
+    }
+
+    // Get user by UUID
+    const user = await IQAC.findOne({ where: { uuid: decoded.id } });
+    if (!user) {
+      throw new apiError(404, 'User not found');
+    }
+
+    // Return user data
+    const userData = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: 'iqac',
+      institution_name: user.institution_name,
+      institution_type: user.institution_type
+    };
+
+    res.json({
+      success: true,
+      data: { user: userData }
+    });
+  } catch (error) {
+    throw new apiError(401, error.message);
+  }
+});
 
 
 export {
     iqacRegister,
     userLogin,
-    refreshAccessToken
+    refreshAccessToken,
+    getAuthStatus
 }

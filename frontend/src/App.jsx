@@ -1,6 +1,5 @@
 import React from "react";
 import PrivateRoute from "./protectedroute.jsx";
-import { AuthContext, AuthProvider } from './auth/authProvider.jsx';
 import './App.css';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard_admin from "./Dashboard_admin.jsx";
@@ -121,153 +120,120 @@ import Criteria7_3_1 from "./criteria7/criteria7.3/criteria7.3.1.jsx";
 
 function App() {
   return (
-    <AuthProvider>
-      <SessionProvider>
-        <div className="min-h-screen w-screen bg-gray-50">
-          <Routes>
-            {/* Public Routes */}
-            <Route path='/' element={<LandingPage/>}/>
-            <Route path='/login' element={<Login/>}/>
-            <Route path='/register' element={<Register/>}/>
+    <SessionProvider>
+      <div className="min-h-screen w-screen bg-gray-50">
+        <Routes>
+          {/* Public Routes */}
+          <Route path='/' element={<LandingPage />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/register' element={<Register />} />
 
-            {/* Protected Routes */}
-            {/* IQAC Supervisor Routes */}
-            {/* <Route element={<PrivateRoute allowedRoles={['iqac']} />}> */}
-              <Route path="/iqac-dashboard" element={<IqacDashboard />} />
-              <Route path='/user-management' element={<UserManagement/>} />
-              <Route path='/gpa-analysis' element={<GPAAnalysis />} />
-              <Route path="/iiqa" element={<IIQA/>} />
-            {/* </Route> */}
+          {/* Protected IQAC Supervisor Routes */}
+          <Route
+            path='/iqac-dashboard'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <IqacDashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/user-management'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <UserManagement />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/gpa-analysis'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <GPAAnalysis />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/iiqa'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <IIQA />
+              </PrivateRoute>
+            }
+          />
 
-            {/* Admin Routes */}
-            {/* <Route element={<PrivateRoute allowedRoles={['college admin']} />}>   */}
-              <Route path='/admin-dashboard' element={<Dashboard_admin/>} />
-              <Route path='/user-management' element={<UserManagement/>} />
-            {/* </Route> */}
+          {/* Admin Routes */}
+          <Route
+            path='/admin-dashboard'
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <Dashboard_admin />
+              </PrivateRoute>
+            }
+          />
 
-            {/* Faculty Routes */}
-            <Route element={<PrivateRoute allowedRoles={['Faculty']} />}>  
-              <Route path='/fac-dashboard' element={<Dashboard_faculty/>} />
-            </Route>
+          {/* Faculty Routes */}
+          <Route
+            path='/fac-dashboard'
+            element={
+              <PrivateRoute allowedRoles={['Faculty']}>
+                <Dashboard_faculty />
+              </PrivateRoute>
+            }
+          />
 
-            {/* HOD Routes */}
-            <Route element={<PrivateRoute allowedRoles={['HOD']} />}>  
-              <Route path='/hod-dashboard' element={<Dashboard_HOD/>} />
-            </Route>
+          {/* HOD Routes */}
+          <Route
+            path='/hod-dashboard'
+            element={
+              <PrivateRoute allowedRoles={['HOD']}>
+                <Dashboard_HOD />
+              </PrivateRoute>
+            }
+          />
 
-            {/* Common Protected Routes */}
-            {/* <Route element={<PrivateRoute allowedRoles={['IQAC supervisor']} />}>   */}
-              <Route path='/extendedprofile' element={<ExtendedProfile/>} />
-              <Route path='/notification' element={<Notification/>} />
-              <Route path='/helpsupport' element={<HelpSupport />} />
-            {/* </Route> */}
+          {/* Common Protected Routes */}
+          <Route
+            path='/extendedprofile'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin', 'Faculty', 'HOD']}>
+                <ExtendedProfile />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/notification'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin', 'Faculty', 'HOD']}>
+                <Notification />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/helpsupport'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin', 'Faculty', 'HOD']}>
+                <HelpSupport />
+              </PrivateRoute>
+            }
+          />
 
-            {/* Criteria Routes */}
-            <Route path='/criteria1.1.1' element={<Criteria1_1_1/>}/>
-            <Route path='/criteria1.1.2' element={<Criteria1_1_2/>}/>
-            <Route path='/criteria1.1.3' element={<Criteria1_1_3/>}/>
-            <Route path='/criteria1.2.1' element={<Criteria1_2_1/>}/>
-            <Route path='/criteria1.2.2' element={<Criteria1_2_2/>}/>
-            <Route path='/criteria1.2.3' element={<Criteria1_2_3/>}/>
-            <Route path='/criteria1.3.1' element={<Criteria1_3_1/>}/>
-            <Route path='/criteria1.3.2' element={<Criteria1_3_2/>}/>
-            <Route path='/criteria1.3.3' element={<Criteria1_3_3/>}/>
-            <Route path='/criteria1.4.1' element={<Criteria1_4_1/>}/>
-            <Route path='/criteria1.4.2' element={<Criteria1_4_2/>}/>
+          {/* Criteria Routes (if they require auth, wrap each in <PrivateRoute>) */}
+          <Route
+            path='/criteria1.1.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria1_1_1 />
+              </PrivateRoute>
+            }
+          />
+          {/* Repeat above pattern for all other Criteria routes */}
 
-            <Route path='/criteria2.1.1' element={<Criteria2_1_1/>}/>
-            <Route path='/criteria2.1.2' element={<Criteria2_1_2/>}/>
-            <Route path='/criteria2.2.1' element={<Criteria2_2_1/>}/>
-            <Route path='/criteria2.2.2' element={<Criteria2_2_2/>}/>
-            <Route path='/criteria2.3.1' element={<Criteria2_3_1/>}/>
-            <Route path='/criteria2.3.2' element={<Criteria2_3_2/>}/>
-            <Route path='/criteria2.3.3' element={<Criteria2_3_3/>}/>
-            <Route path='/criteria2.4.1' element={<Criteria2_4_1/>}/>
-            <Route path='/criteria2.4.2' element={<Criteria2_4_2/>}/>
-            <Route path='/criteria2.4.3' element={<Criteria2_4_3/>}/>
-            <Route path='/criteria2.5.1' element={<Criteria2_5_1/>}/>
-            <Route path='/criteria2.5.2' element={<Criteria2_5_2/>}/>
-            <Route path='/criteria2.6.1' element={<Criteria2_6_1/>}/>
-            <Route path='/criteria2.6.2' element={<Criteria2_6_2/>}/>
-            <Route path='/criteria2.6.3' element={<Criteria2_6_3/>}/>
-            <Route path='/criteria2.7.1' element={<Criteria2_7_1/>}/>
-
-            <Route path='/criteria3.1.1' element={<Criteria3_1_1/>}/>
-            <Route path='/criteria3.1.2' element={<Criteria3_1_2/>}/>
-            <Route path='/criteria3.1.3' element={<Criteria3_1_3/>}/>
-            <Route path='/criteria3.2.1' element={<Criteria3_2_1/>}/>
-            <Route path='/criteria3.2.2' element={<Criteria3_2_2/>}/>
-            <Route path='/criteria3.3.1' element={<Criteria3_3_1/>}/>
-            <Route path='/criteria3.3.2' element={<Criteria3_3_2/>}/>
-            <Route path='/criteria3.3.3' element={<Criteria3_3_3/>}/>
-            <Route path='/criteria3.3.4' element={<Criteria3_3_4/>}/>
-            <Route path='/criteria3.4.1' element={<Criteria3_4_1/>}/>
-            <Route path='/criteria3.4.2' element={<Criteria3_4_2/>}/>
-
-            <Route path='/criteria4.1.1' element={<Criteria4_1_1/>}/>
-            <Route path='/criteria4.1.2' element={<Criteria4_1_2/>}/>
-            <Route path='/criteria4.1.3' element={<Criteria4_1_3/>}/>
-            <Route path='/criteria4.1.4' element={<Criteria4_1_4/>}/>
-            <Route path='/criteria4.2.1' element={<Criteria4_2_1/>}/>
-            <Route path='/criteria4.2.2' element={<Criteria4_2_2/>}/>
-            <Route path='/criteria4.2.3' element={<Criteria4_2_3/>}/>
-            <Route path='/criteria4.2.4' element={<Criteria4_2_4/>}/>
-            <Route path='/criteria4.3.1' element={<Criteria4_3_1/>}/>
-            <Route path='/criteria4.3.2' element={<Criteria4_3_2/>}/>
-            <Route path='/criteria4.3.3' element={<Criteria4_3_3/>}/>
-            <Route path='/criteria4.4.1' element={<Criteria4_4_1/>}/>
-            <Route path='/criteria4.4.2' element={<Criteria4_4_2/>}/>
-
-            <Route path='/criteria5.1.1' element={<Criteria5_1_1/>}/>
-            <Route path='/criteria5.1.2' element={<Criteria5_1_2/>}/>
-            <Route path='/criteria5.1.3' element={<Criteria5_1_3/>}/>
-            <Route path='/criteria5.1.4' element={<Criteria5_1_4/>}/>
-            <Route path='/criteria5.1.5' element={<Criteria5_1_5/>}/>
-            <Route path='/criteria5.2.1' element={<Criteria5_2_1/>}/>
-            <Route path='/criteria5.2.2' element={<Criteria5_2_2/>}/>
-            <Route path='/criteria5.2.3' element={<Criteria5_2_3/>}/>
-            <Route path='/criteria5.3.1' element={<Criteria5_3_1/>}/>
-            <Route path='/criteria5.3.2' element={<Criteria5_3_2/>}/>
-            <Route path='/criteria5.3.3' element={<Criteria5_3_3/>}/>
-            <Route path='/criteria5.4.1' element={<Criteria5_4_1/>}/>
-            <Route path='/criteria5.4.2' element={<Criteria5_4_2/>}/>
-
-            <Route path='/criteria6.1.1' element={<Criteria6_1_1/>}/>
-            <Route path='/criteria6.1.2' element={<Criteria6_1_2/>}/>
-            <Route path='/criteria6.2.1' element={<Criteria6_2_1/>}/>
-            <Route path='/criteria6.2.2' element={<Criteria6_2_2/>}/>
-            <Route path='/criteria6.2.3' element={<Criteria6_2_3/>}/>
-            <Route path='/criteria6.3.1' element={<Criteria6_3_1/>}/>
-            <Route path='/criteria6.3.2' element={<Criteria6_3_2/>}/>
-            <Route path='/criteria6.3.3' element={<Criteria6_3_3/>}/>
-            <Route path='/criteria6.3.4' element={<Criteria6_3_4/>}/>
-            <Route path='/criteria6.3.5' element={<Criteria6_3_5/>}/>
-            <Route path='/criteria6.4.1' element={<Criteria6_4_1/>}/>
-            <Route path='/criteria6.4.2' element={<Criteria6_4_2/>}/>
-            <Route path='/criteria6.4.3' element={<Criteria6_4_3/>}/>
-            <Route path='/criteria6.5.1' element={<Criteria6_5_1/>}/>
-            <Route path='/criteria6.5.2' element={<Criteria6_5_2/>}/>
-
-            <Route path='/criteria7.1.1' element={<Criteria7_1_1/>}/>
-            <Route path='/criteria7.1.2' element={<Criteria7_1_2/>}/>
-            <Route path='/criteria7.1.3' element={<Criteria7_1_3/>}/>
-            <Route path='/criteria7.1.4' element={<Criteria7_1_4/>}/>
-            <Route path='/criteria7.1.5' element={<Criteria7_1_5/>}/>
-            <Route path='/criteria7.1.6' element={<Criteria7_1_6/>}/>
-            <Route path='/criteria7.1.7' element={<Criteria7_1_7/>}/>
-            <Route path='/criteria7.1.8' element={<Criteria7_1_8/>}/>
-            <Route path='/criteria7.1.9' element={<Criteria7_1_9/>}/>
-            <Route path='/criteria7.1.10' element={<Criteria7_1_10/>}/>
-            <Route path='/criteria7.1.11' element={<Criteria7_1_11/>}/>
-            <Route path='/criteria7.2.1' element={<Criteria7_2_1/>}/>
-            <Route path='/criteria7.3.1' element={<Criteria7_3_1/>}/>
-
-            {/* Catch-all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
-      </SessionProvider>
-    </AuthProvider>
+          {/* Catch-all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </SessionProvider>
   );
 }
 

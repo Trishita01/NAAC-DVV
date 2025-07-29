@@ -1,26 +1,23 @@
-import React, { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
-import { AuthContext } from './auth/authProvider';
+// src/PrivateRoute.jsx
+import React from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from './auth/authProvider';
 
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
-  const { isAuthenticated, user } = useContext(AuthContext);
-  
+  const { isAuthenticated, user, hasRole, initialized } = useAuth();
+  const location = useLocation();
+
+  if (!initialized) return null;
+
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If allowedRoles is empty, allow access
-  if (allowedRoles.length === 0) {
+  if (allowedRoles.length === 0 || hasRole(allowedRoles)) {
     return children;
   }
 
-  // Check if user's role is in allowedRoles
-  if (user && allowedRoles.includes(user.role)) {
-    return children;
-  }
-
-  // If user doesn't have required role, redirect to unauthorized page
-  return <Navigate to="/unauthorized" />;
+  return <Navigate to="/unauthorized" state={{ from: location }} replace />;
 };
 
 export default PrivateRoute;
