@@ -316,9 +316,24 @@ const getAuthStatus = asyncHandler(async (req, res) => {
 });
 
 
+
+const logout = asyncHandler(async (req, res) => {
+    // Clear cookies
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    // Respond with success
+    res.json({
+      success: true,
+      message: 'User logged out successfully'
+    });
+});
+
+
 export {
     iqacRegister,
     userLogin,
     refreshAccessToken,
-    getAuthStatus
+    getAuthStatus,
+    logout
 }

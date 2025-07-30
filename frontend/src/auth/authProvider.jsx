@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = useCallback(async () => {
     try {
-      const response = await api.get('/me');
+      const response = await api.get('/auth/me');
       if (response.data?.success && response.data.data?.user) {
         setUserAndLogin(response.data.data.user);
         return true;
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshTokens = useCallback(async () => {
     try {
-      const res = await api.post('/refresh');
+      const res = await api.post('/auth/refresh');
       if (res.data?.success) {
         return await checkAuth(); // re-fetch user
       }
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password, role) => {
     try {
-      const res = await api.post('/userLogin', { email, password, role: role.toLowerCase() });
+      const res = await api.post('/auth/userLogin', { email, password, role: role.toLowerCase() });
       if (res.data?.data?.user) {
         setUserAndLogin(res.data.data.user);
         return { success: true, user: res.data.data.user };

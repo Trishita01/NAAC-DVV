@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
-
+import axios from 'axios';
 const Sidebar = ({ collapsed, setCollapsed, navItems, navigate }) => (
   <div className={`h-screen bg-gray-900 text-white flex flex-col fixed top-0 left-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
     <div className="flex justify-between items-center p-4 border-b border-gray-800">
@@ -16,9 +16,17 @@ const Sidebar = ({ collapsed, setCollapsed, navItems, navigate }) => (
             key={text}
             onClick={() => {
               if (path === '/logout') {
-                // Handle logout logic here
-                localStorage.removeItem('token');
-                navigate('/login');
+                axios.post('http://localhost:3000/api/v1/auth/logout')
+                  .then(() => {
+                    localStorage.removeItem('token');
+                    navigate('/login');
+                  })
+                  .catch(error => {
+                    console.error('Logout failed:', error);
+                    // Still proceed with logout on frontend even if API call fails
+                    localStorage.removeItem('token');
+                    navigate('/login');
+                  });
               } else {
                 navigate(path);
               }

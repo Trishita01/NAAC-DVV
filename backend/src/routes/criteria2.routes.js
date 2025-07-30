@@ -4,52 +4,52 @@ import { createResponse211, updateResponse211, score211,createResponse212,score2
 import verifyToken from '../middlewares/auth.middlewares.js';
 
 router.route('/createResponse211')
-    .post(createResponse211);
+    .post(verifyToken, createResponse211);
 
 router.route('/updateResponse211/:sl_no')
-    .put(updateResponse211);
+    .put(verifyToken, updateResponse211);
 
 router.route('/score211')
-    .get(score211);
+    .get(verifyToken, score211);
 
 router.route('/createResponse212')
-    .post(createResponse212);
+    .post(verifyToken, createResponse212);
 
 router.route('/score212')
-    .get(score212);
+    .get(verifyToken, score212);
 
 router.route('/score233')
-    .get(score233);
+    .get(verifyToken, score233);
 
 router.route('/createResponse233')
-    .post(createResponse233);
+    .post(verifyToken, createResponse233);
 
 router.route('/createResponse263')
-    .post(createResponse263);
+    .post(verifyToken, createResponse263);
 
 router.route('/score263')
-    .get(score263);
+    .get(verifyToken, score263);
 
 router.route('/createResponse222_241_243')
-    .post(createResponse222_241_243);
+    .post(verifyToken, createResponse222_241_243);
 
 router.route('/createResponse242')
-    .post(createResponse242);
+    .post(verifyToken, createResponse242);
 
 router.route('/score222')
-    .get(score222);
+    .get(verifyToken, score222);
 
 
 router.route('/score242')
-    .get(score242);
+    .get(verifyToken, score242);
 
 router.route('/score243')
-    .get(score243);
+    .get(verifyToken, score243);
 
 router.route('/score241')
-    .get(score241);
+    .get(verifyToken, score241);
 router.route('/getResponse/:criteriaCode')
-    .get(getResponsesByCriteriaCode);
+    .get(verifyToken, getResponsesByCriteriaCode);
 // router.route('/score233')
 //     .get(score233);
 

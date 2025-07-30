@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import api from "../../api";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
@@ -39,8 +39,8 @@ const Criteria2_1_1 = () => {
     
     try {
       const yearToSend = year.split("-")[0];
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/criteria2/getResponse/2.1.1`, 
+      const response = await api.get(
+        `/criteria2/getResponse/2.1.1`, 
         { params: { session: yearToSend } }
       );
       
@@ -91,9 +91,7 @@ const Criteria2_1_1 = () => {
     }
     
     try {
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/criteria2/score211/`
-      );
+      const response = await api.get(`/criteria2/score211`);
       
       // Save to state
       setProvisionalScore(response.data);
@@ -131,10 +129,7 @@ const Criteria2_1_1 = () => {
         year: parseInt(yearToSend)
       };
       
-      const response = await axios.post(
-        'http://localhost:3000/api/v1/criteria2/createResponse211',
-        payload
-      );
+      const response = await api.post('/criteria2/createResponse211', payload);
       
       if (response.data.success) {
         // Store the SL number in localStorage
@@ -195,10 +190,7 @@ const Criteria2_1_1 = () => {
         year: parseInt(yearToSend)
       };
       
-      const response = await axios.put(
-        `http://localhost:3000/api/v1/criteria2/updateResponse211/${formDataToSubmit.slNo}`,
-        payload
-      );
+      const response = await api.put(`/criteria2/updateResponse211/${formDataToSubmit.slNo}`, payload);
       
       if (response.data.success) {
         // Refresh the data

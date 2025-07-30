@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 
-import {iqacRegister, userLogin, refreshAccessToken, getAuthStatus} from '../controllers/auth.controller.js';
+import {iqacRegister, userLogin, refreshAccessToken, getAuthStatus, logout} from '../controllers/auth.controller.js';
 //http://localhost:3000/api/v1/auth/iqacRegister
 
 router.route('/iqacRegister')
@@ -15,5 +15,8 @@ router.route('/refresh')
 
 router.route('/me')
     .get(getAuthStatus);
+
+router.route('/logout')
+    .post(logout);
 
 export default router;
