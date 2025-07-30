@@ -351,19 +351,19 @@ const score113 = asyncHandler(async (req, res) => {
 
   if (totalUniqueTeachers >= 30) {
     score = 4;
-    grade = "A";
+    grade = 4;
   } else if (totalUniqueTeachers >= 20) {
     score = 3;
-    grade = "B";
+    grade = 3;
   } else if (totalUniqueTeachers >= 10) {
     score = 2;
-    grade = "C";
+    grade = 2;
   } else if (totalUniqueTeachers >= 5) {
     score = 1;
-    grade = "D";
+    grade = 1;
   } else {
     score = 0;
-    grade = "E";
+    grade = 0;
   }
 
   // Step 5: Create or update the score
@@ -375,6 +375,7 @@ const score113 = asyncHandler(async (req, res) => {
     score_criteria: 0,
     score_sub_criteria: 0,
     score_sub_sub_criteria: score,
+    sub_sub_cr_grade: grade,
     session: sessionYear,
     year: currentYear,
     cycle_year: 1
@@ -602,12 +603,18 @@ const score121 = asyncHandler(async (req, res) => {
   // Step 4: Count total programs and programs with CBCS implemented
   const totalPrograms = responses.length;
   const cbcsImplementedPrograms = responses.filter(
-    program => program.status_of_implementation_of_CBCS === 'Yes'
+    program => program.status_of_implementation_of_CBCS === 'YES'
   ).length;
 
   // Calculate score (percentage of programs with CBCS implemented)
   const score = totalPrograms > 0 ? (cbcsImplementedPrograms / totalPrograms) * 100 : 0;
 
+  let grade;
+  if (score >= 25) grade = 4;
+  else if (score >= 15) grade = 3;
+  else if (score >= 5) grade = 2;
+  else if (score >= 1) grade = 1;
+  else grade = 0;
   // Step 5: Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -622,6 +629,7 @@ const score121 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
       session
     }
   });
@@ -629,6 +637,7 @@ const score121 = asyncHandler(async (req, res) => {
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
       session
     }, {
       where: {
@@ -648,6 +657,7 @@ const score121 = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new apiResponse(200, {
       score: entry.score_sub_sub_criteria,
+      grade: entry.sub_sub_cr_grade,
       totalPrograms,
       cbcsImplementedPrograms,
       criteria_code: criteria.criteria_code,
@@ -878,6 +888,12 @@ const score122 = asyncHandler(async (req, res) => {
     ? yearlyPercentages.reduce((sum, p) => sum + p, 0) / yearlyPercentages.length 
     : 0;
 
+  let grade;
+  if (avgPercentage >= 50) grade = 4;
+  else if (avgPercentage >= 35) grade = 3;
+  else if (avgPercentage >= 20) grade = 2;
+  else if (avgPercentage >= 10) grade = 1;
+  else grade = 0;
   // Step 4: Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -892,6 +908,7 @@ const score122 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: avgPercentage,
+      sub_sub_cr_grade: grade,
       session: currentYear
     }
   });
@@ -899,6 +916,7 @@ const score122 = asyncHandler(async (req, res) => {
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: avgPercentage,
+      sub_sub_cr_grade: grade,
       session: currentYear
     }, {
       where: {
@@ -918,6 +936,7 @@ const score122 = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new apiResponse(200, {
       score: entry.score_sub_sub_criteria,
+      sub_sub_cr_grade: entry.sub_sub_cr_grade,
       yearlyPercentages,
       criteria_code: criteria.criteria_code,
       session: currentYear
@@ -994,6 +1013,12 @@ const score123 = asyncHandler(async (req, res) => {
     ? yearlyPercentages.reduce((sum, p) => sum + p, 0) / yearlyPercentages.length 
     : 0;
 
+    let grade;
+  if (avgPercentage >= 50) grade = 4;
+  else if (avgPercentage >= 35) grade = 3;
+  else if (avgPercentage >= 20) grade = 2;
+  else if (avgPercentage >= 10) grade = 1;
+  else grade = 0;
   // Step 4: Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -1008,6 +1033,7 @@ const score123 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: avgPercentage,
+      sub_sub_cr_grade: grade,
       session: currentYear
     }
   });
@@ -1015,6 +1041,7 @@ const score123 = asyncHandler(async (req, res) => {
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: avgPercentage,
+      sub_sub_cr_grade: grade,
       session: currentYear
     }, {
       where: {
@@ -1034,6 +1061,7 @@ const score123 = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new apiResponse(200, {
       score: entry.score_sub_sub_criteria,
+      sub_sub_cr_grade: entry.sub_sub_cr_grade,
       yearlyPercentages,
       criteria_code: criteria.criteria_code,
       session: currentYear
@@ -1206,6 +1234,12 @@ const score132 = asyncHandler(async (req, res) => {
     ? yearlyPercentages.reduce((sum, p) => sum + p, 0) / yearlyPercentages.length
     : 0;
 
+    let grade;
+  if (avgPercentage >= 35) grade = 4;
+  else if (avgPercentage >= 20) grade = 3;
+  else if (avgPercentage >= 10) grade = 2;
+  else if (avgPercentage >= 5) grade = 1;
+  else grade = 0;
   // Step 5: Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -1220,6 +1254,7 @@ const score132 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: avgPercentage,
+      sub_sub_cr_grade: grade,
       session: currentYear
     }
   });
@@ -1227,6 +1262,7 @@ const score132 = asyncHandler(async (req, res) => {
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: avgPercentage,
+      sub_sub_cr_grade: grade,
       session: currentYear
     }, {
       where: {
@@ -1246,6 +1282,7 @@ const score132 = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new apiResponse(200, {
       score: entry.score_sub_sub_criteria,
+      sub_sub_cr_grade: entry.sub_sub_cr_grade,
       yearlyPercentages,
       criteria_code: criteria.criteria_code,
       session: currentYear
@@ -1414,6 +1451,12 @@ const score133 = asyncHandler(async (req, res) => {
   // Calculate overall percentage
   const percentage = totalStudents > 0 ? (totalHigherStudies / totalStudents) * 100 : 0;
 
+  let grade;
+  if (percentage >= 80) grade = 4;
+  else if (percentage >= 60) grade = 3;
+  else if (percentage >= 40) grade = 2;
+  else if (percentage >= 20) grade = 1;
+  else grade = 0;
   // Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -1428,13 +1471,15 @@ const score133 = asyncHandler(async (req, res) => {
       score_criteria: 0,
       score_sub_criteria: 0,
       score_sub_sub_criteria: percentage,
+      sub_sub_cr_grade: grade,
       session: currentYear
     }
   });
 
   if (!created) {
     await Score.update({
-      score_sub_sub_criteria: percentage
+      score_sub_sub_criteria: percentage,
+      sub_sub_cr_grade: grade,
     }, {
       where: {
         criteria_code: criteria.criteria_code,
@@ -1591,24 +1636,24 @@ const score141 = asyncHandler(async (req, res) => {
   switch (optionSelected) {
     case 4:
       score = 4;
-      grade = "A";
+      grade = 4;
       break;
     case 3:
       score = 3;
-      grade = "B";
+      grade = 3;
       break;
     case 2:
       score = 2;
-      grade = "C";
+      grade = 2;
       break;
     case 1:
       score = 1;
-      grade = "D";
+      grade = 1;
       break;
     case 0:
     default:
       score = 0;
-      grade = "E";
+      grade = 0;
   }
 
   // Step 3: Create or update score entry
@@ -1620,6 +1665,7 @@ const score141 = asyncHandler(async (req, res) => {
     score_criteria: 0,
     score_sub_criteria: 0,
     score_sub_sub_criteria: score,
+    sub_sub_cr_grade: grade,
     session: currentYear,
     year: currentYear,
     cycle_year: 1
@@ -1762,24 +1808,24 @@ const score142 = asyncHandler(async (req, res) => {
   switch(optionSelected) {
     case 4:
       score = 4;
-      grade = "A";
+      grade = 4;
       break;
     case 3:
       score = 3;
-      grade = "B";
+      grade = 3;
       break;
     case 2:
       score = 2;
-      grade = "C";
+      grade = 2;
       break;
     case 1:
       score = 1;
-      grade = "D";
+      grade = 1;
       break;
     case 0:
     default:
       score = 0;
-      grade = "E";
+      grade = 0;
   }
 
   // Create or update score entry
@@ -1791,6 +1837,7 @@ const score142 = asyncHandler(async (req, res) => {
     score_criteria: 0,
     score_sub_criteria: 0,
     score_sub_sub_criteria: score,
+    sub_sub_cr_grade: grade,
     session: sessionDate,
     year: currentYear,
     cycle_year: 1
