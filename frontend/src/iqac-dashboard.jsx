@@ -5,12 +5,14 @@ import { Search, Users, Building2, Shield, BarChart3, FileText, Upload, Settings
 import Sidebar from './components/iqac-sidebar';
 import { useNavigate } from 'react-router-dom';
 import { navItems } from './config/navigation';
+import { useAuth } from './auth/authProvider';
 import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaBell, FaUser } from 'react-icons/fa';
 
 const IqacDashboard = () => {
   const [currentDate] = useState(new Date('2025-06-25'));
   const [collapsed, setCollapsed] = useState(false);
   const { desiredGrade } = useContext(SessionContext);
+  const { user } = useAuth();
 
   const navigate = useNavigate();
 
@@ -168,7 +170,7 @@ const IqacDashboard = () => {
 
           {/* Welcome Message */}
           <div className="mb-6 ">
-            <h2 className="text-lg font-medium text-gray-800">Welcome, John Smith</h2>
+            <h2 className="text-lg font-medium text-gray-800">Welcome, {user?.name || 'User'}</h2>
             <p className="text-sm text-gray-600">Your NAAC accreditation progress is on track, keep up the good work!</p>
           </div>
 

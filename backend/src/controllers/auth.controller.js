@@ -319,8 +319,20 @@ const getAuthStatus = asyncHandler(async (req, res) => {
 
 const logout = asyncHandler(async (req, res) => {
     // Clear cookies
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'lax', 
+      maxAge: 60 * 60 * 1000, 
+      path: '/', 
+    });
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', 
+      sameSite: 'lax', 
+      maxAge: 60 * 60 * 1000, 
+      path: '/', 
+    });
 
     // Respond with success
     res.json({

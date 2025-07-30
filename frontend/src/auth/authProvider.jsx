@@ -100,11 +100,25 @@ export const AuthProvider = ({ children }) => {
     return true;
   }, [setUserAndLogin]);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    setIsLoggedIn(false);
-    document.cookie = 'accessToken=; Max-Age=0; path=/;';
-    document.cookie = 'refreshToken=; Max-Age=0; path=/;';
+  const logout = useCallback(async () => {
+    try {
+      // Call the logout API if needed
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear all auth-related state
+      setUser(null);
+      setIsLoggedIn(false);
+      // Clear cookies
+      document.cookie = 'accessToken=; Max-Age=0; path=/;';
+      document.cookie = 'refreshToken=; Max-Age=0; path=/;';
+      // Clear any cached data
+      localStorage.clear();
+      sessionStorage.clear();
+      // Force a full page reload to ensure all state is cleared
+      window.location.href = '/login';
+    }
   }, [setIsLoggedIn]);
 
   return (
