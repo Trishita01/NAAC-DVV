@@ -122,95 +122,7 @@ try {
 }
 });
 
-const createResponse211 = asyncHandler(async (req, res) => {
-  const {
-    session,
-    year,
-    programme_name,
-    programme_code,
-    no_of_seats,
-    no_of_students
-  } = req.body;
 
-  // Step 1: Field validation
-  if (
-    !session || !year || !programme_name || !programme_code ||
-    no_of_seats === undefined || no_of_students === undefined
-  ) {
-    throw new apiError(400, "Missing required fields");
-  }
-
-  const currentYear = new Date().getFullYear();
-  if (
-    session < 1990 || session > currentYear ||
-    year < 1990 || year > currentYear
-  ) {
-    throw new apiError(400, "Year and session must be between 1990 and current year");
-  }
-
-  if (no_of_seats < 0 || no_of_students < 0) {
-    throw new apiError(400, "Number of seats and students cannot be negative");
-  }
-
-  if (no_of_seats < no_of_students) {
-    throw new apiError(400, "Number of seats cannot be less than number of students");
-  }
-
-  // Step 2: Prevent duplicates — same session + year + programme_code
-  const duplicate = await Criteria211.findOne({
-    where: { session, year, programme_code }
-  });
-
-  if (duplicate) {
-    throw new apiError(409, "Entry already exists for this session, year, and programme");
-  }
-
-  // Step 3: Fetch criteria details
-  const criteria = await CriteriaMaster.findOne({
-    where: {
-      criterion_id: '02',
-      sub_criterion_id: '0201',
-      sub_sub_criterion_id: '020101'
-    }
-  });
-
-  if (!criteria) {
-    throw new apiError(404, "Criteria not found");
-  }
-
-  // Step 4: Validate session window against latest IIQA
-  const latestIIQA = await IIQA.findOne({
-    attributes: ['session_end_year'],
-    order: [['created_at', 'DESC']]
-  });
-
-  if (!latestIIQA) {
-    throw new apiError(404, "No IIQA form found");
-  }
-
-  const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5;
-
-  if (session < startYear || session > endYear) {
-    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
-  }
-
-  // Step 5: Create new entry
-  const newEntry = await Criteria211.create({
-    id: criteria.id,
-    criteria_code: criteria.criteria_code,
-    session,
-    year,
-    programme_name,
-    programme_code,
-    no_of_seats,
-    no_of_students
-  });
-
-  return res.status(201).json(
-    new apiResponse(201, newEntry, "Response created successfully")
-  );
-});
 
 
 const updateResponse211 = asyncHandler(async (req, res) => {
@@ -421,130 +333,6 @@ else {
 
   return res.status(200).json(
     new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
-  );
-});
-
-const createResponse212 = asyncHandler(async (req, res) => {
-  /*
-  1. get the user input from the req body
-  2. query the criteria_master table to get the id and criteria_code 
-  3. validate the user input(check for missing data, year and session must be between 1990 and current year and req body logic)
-  4. Fetch the criteria_code from the criteria_master table
-  5. Fetch the latest IIQA session
-  6. check if the session is between the latest IIQA session and the current year
-  7. create a new response or Update the existing response
-  8. return the response
-  */
-
-  const {
-    session,
-    year,
-    number_of_seats_earmarked_for_reserved_category_as_per_GOI,
-    number_of_students_admitted_from_the_reserved_category
-  } = req.body;
-
-  // Convert to numbers in case values come as strings
-  const sessionYear = Number(session);
-  const entryYear = Number(year);
-  const numberOfSeats = Number(number_of_seats_earmarked_for_reserved_category_as_per_GOI);
-  const numberOfStudents = Number(number_of_students_admitted_from_the_reserved_category);
-
-  // Validate required fields
-  if (
-    !sessionYear || !entryYear ||
-    isNaN(numberOfSeats) || isNaN(numberOfStudents)
-  ) {
-    throw new apiError(400, "Missing or invalid required fields");
-  }
-
-  if (sessionYear < 1990 || sessionYear > new Date().getFullYear()) {
-    throw new apiError(400, "Session must be between 1990 and the current year");
-  }
-
-  if (entryYear < 1990 || entryYear > new Date().getFullYear()) {
-    throw new apiError(400, "Year must be between 1990 and the current year");
-  }
-
-  if (numberOfSeats < 0 || numberOfStudents < 0) {
-    throw new apiError(400, "Number of seats and students cannot be negative");
-  }
-
-  if (numberOfSeats < numberOfStudents) {
-    throw new apiError(400, "Number of seats cannot be less than number of students admitted");
-  }
-
-  // Fetch Criteria Code from Master Table
-  const criteria = await CriteriaMaster.findOne({
-    where: {
-      sub_sub_criterion_id: '020102',
-      sub_criterion_id: '0201',
-      criterion_id: '02'
-    }
-  });
-
-  if (!criteria) {
-    throw new apiError(404, "Criteria not found");
-  }
-
-  // Get IIQA session range for validation
-  const latestIIQA = await IIQA.findOne({
-    attributes: ['session_end_year'],
-    order: [['created_at', 'DESC']]
-  });
-
-  if (!latestIIQA) {
-    throw new apiError(404, "No IIQA form found");
-  }
-
-  const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5;
-
-  if (sessionYear < startYear || sessionYear > endYear) {
-    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
-  }
-
-  // Upsert logic
-  let [entry, created] = await Criteria212.findOrCreate({
-    where: {
-      criteria_code: criteria.criteria_code,
-      session: sessionYear,
-      year: entryYear
-    },
-    defaults: {
-      id: criteria.id,
-      criteria_code: criteria.criteria_code,
-      session: sessionYear,
-      year: entryYear,
-      number_of_seats_earmarked_for_reserved_category_as_per_GOI: numberOfSeats,
-      number_of_students_admitted_from_the_reserved_category: numberOfStudents
-    }
-  });
-
-  // If already exists, update it
-  if (!created) {
-    await Criteria212.update({
-      number_of_seats_earmarked_for_reserved_category_as_per_GOI: numberOfSeats,
-      number_of_students_admitted_from_the_reserved_category: numberOfStudents
-    }, {
-      where: {
-        criteria_code: criteria.criteria_code,
-        session: sessionYear,
-        year: entryYear
-      }
-    });
-
-    // Fetch updated entry
-    entry = await Criteria212.findOne({
-      where: {
-        criteria_code: criteria.criteria_code,
-        session: sessionYear,
-        year: entryYear
-      }
-    });
-  }
-
-  return res.status(201).json(
-    new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
   );
 });
 
@@ -1061,6 +849,347 @@ const createResponse242 = asyncHandler(async (req, res) => {
   );
 });
 
+const createResponse211 = asyncHandler(async (req, res) => {
+  const {
+    session,
+    year,
+    programme_name,
+    programme_code,
+    no_of_seats,
+    no_of_students
+  } = req.body;
+
+  // Step 1: Field validation
+  if (
+    !session || !year || !programme_name || !programme_code ||
+    no_of_seats === undefined || no_of_students === undefined
+  ) {
+    throw new apiError(400, "Missing required fields");
+  }
+
+  const currentYear = new Date().getFullYear();
+  if (
+    session < 1990 || session > currentYear ||
+    year < 1990 || year > currentYear
+  ) {
+    throw new apiError(400, "Year and session must be between 1990 and current year");
+  }
+
+  if (no_of_seats < 0 || no_of_students < 0) {
+    throw new apiError(400, "Number of seats and students cannot be negative");
+  }
+
+  if (no_of_seats < no_of_students) {
+    throw new apiError(400, "Number of seats cannot be less than number of students");
+  }
+
+  // Step 2: Prevent duplicates — same session + year + programme_code
+  const duplicate = await Criteria211.findOne({
+    where: { session, year, programme_code }
+  });
+
+  if (duplicate) {
+    throw new apiError(409, "Entry already exists for this session, year, and programme");
+  }
+
+  // Step 3: Fetch criteria details
+  const criteria = await CriteriaMaster.findOne({
+    where: {
+      criterion_id: '02',
+      sub_criterion_id: '0201',
+      sub_sub_criterion_id: '020101'
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // Step 4: Validate session window against latest IIQA
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5;
+
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+  }
+
+  // Step 5: Create new entry
+  const newEntry = await Criteria211.create({
+    id: criteria.id,
+    criteria_code: criteria.criteria_code,
+    session,
+    year,
+    programme_name,
+    programme_code,
+    no_of_seats,
+    no_of_students
+  });
+
+  return res.status(201).json(
+    new apiResponse(201, newEntry, "Response created successfully")
+  );
+});
+
+const createResponse212 = asyncHandler(async (req, res) => {
+  /*
+  1. get the user input from the req body
+  2. query the criteria_master table to get the id and criteria_code 
+  3. validate the user input(check for missing data, year and session must be between 1990 and current year and req body logic)
+  4. Fetch the criteria_code from the criteria_master table
+  5. Fetch the latest IIQA session
+  6. check if the session is between the latest IIQA session and the current year
+  7. create a new response or Update the existing response
+  8. return the response
+  */
+
+  const {
+    session,
+    year,
+    number_of_seats_earmarked_for_reserved_category_as_per_GOI,
+    number_of_students_admitted_from_the_reserved_category
+  } = req.body;
+
+  // Convert to numbers in case values come as strings
+  const sessionYear = Number(session);
+  const entryYear = Number(year);
+  const numberOfSeats = Number(number_of_seats_earmarked_for_reserved_category_as_per_GOI);
+  const numberOfStudents = Number(number_of_students_admitted_from_the_reserved_category);
+
+  // Validate required fields
+  if (
+    !sessionYear || !entryYear ||
+    isNaN(numberOfSeats) || isNaN(numberOfStudents)
+  ) {
+    throw new apiError(400, "Missing or invalid required fields");
+  }
+
+  if (sessionYear < 1990 || sessionYear > new Date().getFullYear()) {
+    throw new apiError(400, "Session must be between 1990 and the current year");
+  }
+
+  if (entryYear < 1990 || entryYear > new Date().getFullYear()) {
+    throw new apiError(400, "Year must be between 1990 and the current year");
+  }
+
+  if (numberOfSeats < 0 || numberOfStudents < 0) {
+    throw new apiError(400, "Number of seats and students cannot be negative");
+  }
+
+  if (numberOfSeats < numberOfStudents) {
+    throw new apiError(400, "Number of seats cannot be less than number of students admitted");
+  }
+
+  // Fetch Criteria Code from Master Table
+  const criteria = await CriteriaMaster.findOne({
+    where: {
+      sub_sub_criterion_id: '020102',
+      sub_criterion_id: '0201',
+      criterion_id: '02'
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // Get IIQA session range for validation
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5;
+
+  if (sessionYear < startYear || sessionYear > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+  }
+
+  // Upsert logic
+  let [entry, created] = await Criteria212.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: sessionYear,
+      year: entryYear
+    },
+    defaults: {
+      id: criteria.id,
+      criteria_code: criteria.criteria_code,
+      session: sessionYear,
+      year: entryYear,
+      number_of_seats_earmarked_for_reserved_category_as_per_GOI: numberOfSeats,
+      number_of_students_admitted_from_the_reserved_category: numberOfStudents
+    }
+  });
+
+  // If already exists, update it
+  if (!created) {
+    await Criteria212.update({
+      number_of_seats_earmarked_for_reserved_category_as_per_GOI: numberOfSeats,
+      number_of_students_admitted_from_the_reserved_category: numberOfStudents
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: sessionYear,
+        year: entryYear
+      }
+    });
+
+    // Fetch updated entry
+    entry = await Criteria212.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: sessionYear,
+        year: entryYear
+      }
+    });
+  }
+
+  return res.status(201).json(
+    new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
+  );
+});
+
+const createResponse263 = asyncHandler(async (req, res) => {
+  const {
+    session,
+    year,
+    programme_name,
+    programme_code,
+    number_of_students_appeared_in_the_final_year_examination,
+    number_of_students_passed_in_the_final_year_examination
+  } = req.body;
+
+  // Convert to numbers
+  const sessionYear = Number(session);
+  const entryYear = Number(year);
+  const numAppeared = Number(number_of_students_appeared_in_the_final_year_examination);
+  const numPassed = Number(number_of_students_passed_in_the_final_year_examination);
+
+  // Step 1: Validate required fields
+  if (
+    !sessionYear || !entryYear || !programme_name || !programme_code ||
+    isNaN(numAppeared) || isNaN(numPassed)
+  ) {
+    throw new apiError(400, "Missing or invalid required fields");
+  }
+
+  const currentYear = new Date().getFullYear();
+
+  if (sessionYear < 1990 || sessionYear > currentYear) {
+    throw new apiError(400, "Session must be between 1990 and current year");
+  }
+
+  if (entryYear < 1990 || entryYear > currentYear) {
+    throw new apiError(400, "Year must be between 1990 and current year");
+  }
+
+  if (numAppeared < 0 || numPassed < 0) {
+    throw new apiError(400, "Number of students cannot be negative");
+  }
+
+  if (numPassed > numAppeared) {
+    throw new apiError(400, "Number of students passed cannot exceed those who appeared");
+  }
+
+  // Step 2: Fetch criteria from master
+  const criteria = await CriteriaMaster.findOne({
+    where: {
+      criterion_id: '02',
+      sub_criterion_id: '0206',
+      sub_sub_criterion_id: '020603'
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // Step 3: Fetch latest IIQA session range
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5;
+
+  if (sessionYear < startYear || sessionYear > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+  }
+
+  // Step 4: Insert or Update response
+  let [entry, created] = await Criteria263.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: sessionYear,
+      year: entryYear,
+      program_name:programme_name,
+      program_code:programme_code
+    },
+    defaults: {
+      id: criteria.id,
+      criteria_code: criteria.criteria_code,
+      session: sessionYear,
+      year: entryYear,
+      program_name:programme_name,
+      program_code:programme_code,
+      number_of_students_appeared_in_the_final_year_examination: numAppeared,
+      number_of_students_passed_in_the_final_year_examination: numPassed
+    }
+  });
+
+  if (!created) {
+    await Criteria263.update({
+      number_of_students_appeared_in_the_final_year_examination: numAppeared,
+      number_of_students_passed_in_the_final_year_examination: numPassed,
+      program_name:programme_name,
+      program_code:programme_code
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: sessionYear,
+        year: entryYear,
+        program_name:programme_name,
+        program_code:programme_code
+      }
+    });
+
+    // Re-fetch updated entry
+    entry = await Criteria263.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: sessionYear,
+        year: entryYear,
+        program_name:programme_name,
+        program_code:programme_code
+      }
+    });
+  }
+
+  return res.status(created ? 201 : 200).json(
+    new apiResponse(created ? 201 : 200, entry,
+      created ? "Response created successfully" : "Response updated successfully")
+  );
+});
+
 const score242 = asyncHandler(async (req, res) => {
   const session = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("2.4.2");
@@ -1173,95 +1302,6 @@ const score242 = asyncHandler(async (req, res) => {
 
   res.status(200).json(
     new apiResponse(200, entry, "Score 2.4.2 calculated and updated successfully")
-  );
-});
-
-const createResponse263 = asyncHandler(async (req, res) => {
-  const {
-    session,
-    year,
-    programme_name,
-    programme_code,
-    number_of_students_appeared_in_the_final_year_examination,
-    number_of_students_passed_in_the_final_year_examination
-  } = req.body;
-
-  // Convert to numbers
-  const sessionYear = Number(session);
-  const entryYear = Number(year);
-  const numberofstudentsappeared = Number(number_of_students_appeared_in_the_final_year_examination);
-  const numberofstudentspassed = Number(number_of_students_passed_in_the_final_year_examination);
-
-  // Validate required fields
-  if (!sessionYear || !entryYear || !programme_name || !programme_code || 
-      isNaN(numberofstudentsappeared) || isNaN(numberofstudentspassed)) {
-    throw new apiError(400, "Missing or invalid required fields");
-  }
-
-  if (sessionYear < 1990 || sessionYear > new Date().getFullYear()) {
-    throw new apiError(400, "Session must be between 1990 and current year");
-  }
-
-  if (entryYear < 1990 || entryYear > new Date().getFullYear()) {
-    throw new apiError(400, "Year must be between 1990 and current year");
-  }
-
-  if (numberofstudentsappeared < 0 || numberofstudentspassed < 0) {
-    throw new apiError(400, "Number of students must be a positive integer");
-  }
-
-  if (numberofstudentspassed > numberofstudentsappeared) {
-    throw new apiError(400, "Number of students passed cannot be greater than number of students appeared");
-  }
-
-  // Fetch criteria
-  const criteria = await CriteriaMaster.findOne({
-    where: {
-      sub_sub_criterion_id: '020603',
-      sub_criterion_id: '0206',
-      criterion_id: '02'
-    }
-  });
-
-  if (!criteria) {
-    throw new apiError(404, "Criteria not found");
-  }
-
-  // Get IIQA session range
-  const latestIIQA = await IIQA.findOne({
-    attributes: ['session_end_year'],
-    order: [['created_at', 'DESC']]
-  });
-
-  if (!latestIIQA) {
-    throw new apiError(404, "No IIQA form found");
-  }
-
-  const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5;
-
-  if (sessionYear < startYear || sessionYear > endYear) {
-    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
-  }
-
-  // Create or update entry
-  const [entry, created] = await Criteria263.upsert({
-    id: criteria.id,
-    criteria_code: criteria.criteria_code,
-    session: sessionYear,  // Using sessionYear instead of sessionDate
-    year: entryYear,
-    programme_name,
-    programme_code,
-    number_of_students_appeared_in_the_final_year_examination: numberofstudentsappeared,
-    number_of_students_passed_in_the_final_year_examination: numberofstudentspassed
-  }, {
-    conflictFields: ['criteria_code', 'session', 'year', 'programme_name', 'programme_code'],
-    returning: true
-  });
-
-  return res.status(created ? 201 : 200).json(
-    new apiResponse(created ? 201 : 200, entry, 
-      created ? "Response created successfully" : "Response updated successfully")
   );
 });
 
@@ -1765,14 +1805,12 @@ const score233 = asyncHandler(async (req, res) => {
   }
   console.log(latestResponse)
   console.log(latestResponse.No_of_mentee, latestResponse.No_of_mentors)
-
+  const noOfMentees = latestResponse.No_of_mentee;
+  const noOfMentors = latestResponse.No_of_mentors;
   // Calculate ratio using the latest response
-  const ratio = latestResponse.No_of_mentee / latestResponse.No_of_mentors;
+  const ratio = noOfMentees > 0 ? Math.round(noOfMentees / noOfMentors) : 0;
+  const score = parseFloat(`${ratio}.1`);
   console.log(ratio)
-  
-  // Format the ratio as decimal (e.g., 13.1)
-  const score = Number(ratio.toFixed(1));
-  console.log('Calculated ratio:', score);
   
   let grade;
   if (score <= 20) grade = 4;
@@ -1780,6 +1818,9 @@ const score233 = asyncHandler(async (req, res) => {
   else if (score <= 40) grade = 2;
   else if (score <= 50) grade = 1;
   else grade = 0;
+
+  console.log("Score", score)
+  console.log("Grade", grade)
   try {
     // First try to find existing score
     let entry = await Score.findOne({
@@ -1792,7 +1833,7 @@ const score233 = asyncHandler(async (req, res) => {
     if (entry) {
       // Update existing entry
       await Score.update(
-        { score_sub_sub_criteria: score },
+        { score_sub_sub_criteria: score, sub_sub_cr_grade: grade },
         {
           where: {
             criteria_code: criteria.criteria_code,
@@ -1811,7 +1852,7 @@ const score233 = asyncHandler(async (req, res) => {
         score_sub_criteria: 0,
         score_sub_sub_criteria: score,
         sub_sub_cr_grade: grade,
-          session: session,
+        session: session,
         cycle_year: 1
       });
     }
