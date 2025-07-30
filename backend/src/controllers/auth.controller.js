@@ -318,27 +318,26 @@ const getAuthStatus = asyncHandler(async (req, res) => {
 
 
 const logout = asyncHandler(async (req, res) => {
-    // Clear cookies
-    res.clearCookie('accessToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'lax', 
-      maxAge: 60 * 60 * 1000, 
-      path: '/', 
-    });
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', 
-      sameSite: 'lax', 
-      maxAge: 60 * 60 * 1000, 
-      path: '/', 
-    });
+  console.log("Logout route hit");
+  console.log("Cookies before clear:", req.cookies);
 
-    // Respond with success
-    res.json({
-      success: true,
-      message: 'User logged out successfully'
-    });
+  // Ensure these flags match exactly how the cookies were set during login/register
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // should match how you set it
+    sameSite: 'lax',
+    path: '/',
+  };
+
+  res.clearCookie('accessToken', cookieOptions);
+  res.clearCookie('refreshToken', cookieOptions);
+
+  console.log("Cookies cleared");
+
+  res.json({
+    success: true,
+    message: 'User logged out successfully'
+  });
 });
 
 

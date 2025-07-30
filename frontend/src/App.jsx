@@ -2,7 +2,7 @@ import React from "react";
 import PrivateRoute from "./protectedroute.jsx";
 import './App.css';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthContextProvider } from "./auth/authProvider.jsx";
+import { AuthProvider } from "./auth/authProvider.jsx";
 import Dashboard_admin from "./Dashboard_admin.jsx";
 import HelpSupport from "./helpsupport.jsx";
 import Notification from "./Notification.jsx";
@@ -121,7 +121,7 @@ import Criteria7_3_1 from "./criteria7/criteria7.3/criteria7.3.1.jsx";
 
 function App() {
   return (
-    <AuthContextProvider>
+    <AuthProvider>
     <SessionProvider>
       <div className="min-h-screen w-screen bg-gray-50">
         <Routes>
@@ -447,7 +447,7 @@ function App() {
       </div>
      
     </SessionProvider>
-    </AuthContextProvider>
+    </AuthProvider>
   );
 }
 

@@ -102,25 +102,31 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
-      // Call the logout API if needed
-      await api.post('/auth/logout');
+      console.log("Calling /auth/logout API");
+  
+      const response = await api.post('/auth/logout');
+      console.log("Logout API response:", response.data);
+  
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Logout error:', error?.response?.data || error.message);
     } finally {
-      // Clear all auth-related state
+      // Clear frontend state
       setUser(null);
       setIsLoggedIn(false);
-      // Clear cookies
-      document.cookie = 'accessToken=; Max-Age=0; path=/;';
-      document.cookie = 'refreshToken=; Max-Age=0; path=/;';
-      // Clear any cached data
+  
+      // Clear frontend storage
       localStorage.clear();
       sessionStorage.clear();
-      // Force a full page reload to ensure all state is cleared
+  
+      // Optional: Clear non-HttpOnly cookies (won’t affect accessToken if HttpOnly)
+      document.cookie = 'accessToken=; Max-Age=0; path=/;';
+      document.cookie = 'refreshToken=; Max-Age=0; path=/;';
+  
+      // Redirect to login
       window.location.href = '/login';
     }
   }, [setIsLoggedIn]);
-
+  
   return (
     <AuthContext.Provider value={{
       isAuthenticated: !!user,
