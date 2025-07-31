@@ -9,8 +9,14 @@ import { useAuth } from './auth/authProvider';
 import LandingNavbar from './components/landing-navbar';
 import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaBell, FaUser, FaEnvelope, FaUserCircle } from 'react-icons/fa';
 import UserDropdown from './components/UserDropdown';
+import {useGpa} from './contextprovider/GpaContext';
+import RadarGraphSection from './Radar';
 
 const IqacDashboard = () => {
+  const {
+      grade,
+      
+    } = useGpa();
  
   const [currentDate] = useState(new Date('2025-06-25'));
   const [collapsed, setCollapsed] = useState(false);
@@ -45,51 +51,6 @@ const IqacDashboard = () => {
   }, []);
 
   useEffect(() => {
-    // GPA Visuals Chart with animation
-    const gpaChart = echarts.init(document.getElementById('gpa-chart'));
-    const gpaOption = {
-      animation: true,
-      animationDuration: 1500,
-      animationEasing: 'elasticOut',
-      radar: {
-        indicator: [
-          { name: 'Criterion 1', max: 100 },
-          { name: 'Criterion 2', max: 100 },
-          { name: 'Criterion 3', max: 100 },
-          { name: 'Criterion 4', max: 100 },
-          { name: 'Criterion 5', max: 100 },
-          { name: 'Criterion 6', max: 100 },
-          { name: 'Criterion 7', max: 100 },
-        ],
-        radius: '65%',
-        splitNumber: 4,
-        axisName: { color: '#666', fontSize: 12 },
-        splitArea: { areaStyle: { color: ['#f8f9fa', '#f1f3f5', '#e9ecef', '#dee2e6'] } }
-      },
-      series: [
-        {
-          type: 'radar',
-          data: [
-            {
-              value: [62, 70, 52, 58, 65,43,23],
-              name: 'Current Score',
-              itemStyle: { color: '#3b82f6' },
-              areaStyle: { color: 'rgba(59, 130, 246, 0.2)' },
-              lineStyle: { color: '#3b82f6', width: 2 }
-            },
-            {
-              value: [90, 85, 75, 80, 85,23,23],
-              name: 'Target Score',
-              itemStyle: { color: '#9ca3af' },
-              areaStyle: { color: 'rgba(156, 163, 175, 0.2)' },
-              lineStyle: { color: '#9ca3af', width: 2 }
-            }
-          ]
-        }
-      ]
-    };
-    gpaChart.setOption(gpaOption);
-
     // Monthly Progress Chart with animation
     const progressChart = echarts.init(document.getElementById('progress-chart'));
     const progressOption = {
@@ -134,14 +95,12 @@ const IqacDashboard = () => {
     progressChart.setOption(progressOption);
 
     const handleResize = () => {
-      gpaChart.resize();
       progressChart.resize();
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      gpaChart.dispose();
       progressChart.dispose();
     };
   }, []);
@@ -167,7 +126,7 @@ const IqacDashboard = () => {
   ];
 
   const statusCards = [
-    { label: 'Projected Grade', value: 'A', color: 'text-blue-600', sub: 'Based on current progress', bgGradient: 'from-blue-50 to-blue-100' },
+    { label: 'Projected Grade', value: grade, color: 'text-blue-600', sub: 'Based on current progress', bgGradient: 'from-blue-50 to-blue-100' },
     { label: 'Desired Grade', value: desiredGrade || 'N/A', color: 'text-amber-500', sub: 'Target accreditation level', bgGradient: 'from-amber-50 to-amber-100' },
     { label: 'Criteria Lacking', value: '4', color: 'text-red-500', sub: 'Need immediate attention', bgGradient: 'from-red-50 to-red-100' },
     { label: 'Next Deadline', value: 'Jun 15', color: 'text-gray-800', sub: '10 days remaining', bgGradient: 'from-gray-50 to-gray-100' }
@@ -289,17 +248,8 @@ const IqacDashboard = () => {
             {/* GPA Visuals */}
             <div className="bg-white rounded-lg shadow p-5 hover:shadow-xl transition-shadow duration-300">
               <h3 className="text-sm font-medium text-gray-700 mb-4">GPA Visuals</h3>
-              <div id="gpa-chart" className="w-full h-64"></div>
-              <div className="flex justify-center mt-4 text-xs text-gray-500 space-x-6">
-                <div className="flex items-center hover:scale-105 transition-transform duration-200">
-                  <div className="w-3 h-3 bg-blue-500 rounded-sm mr-2"></div>
-                  <span>Current Score</span>
-                </div>
-                <div className="flex items-center hover:scale-105 transition-transform duration-200">
-                  <div className="w-3 h-3 bg-gray-400 rounded-sm mr-2"></div>
-                  <span>Target Score</span>
-                </div>
-              </div>
+              {/* Embedded Radar Graph */}
+              <RadarGraphSection />
             </div>
 
             {/* Monthly Progress */}
