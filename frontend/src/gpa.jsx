@@ -9,6 +9,7 @@ import UserDropdown from './components/UserDropdown';
 import { useAuth } from './auth/authProvider';
 import { navItems } from './config/navigation';
 import {useGpa} from './contextprovider/GpaContext';
+import RadarGraphSection from './Radar';
 import { FaArrowLeft, FaChartLine, FaBullseye, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 const Header = () => {
@@ -200,8 +201,8 @@ const GPAAnalysis = () => {
 
   const radarData = criteria?.map((c) => ({
     criteria: `C${c.id}`,
-    current: parseFloat(c.score?.toFixed(2)),
-    target: parseFloat(c.target?.toFixed(2)),
+    current: c.score,
+    target: c.target
   })) || [];
 
   if (isLoading) return <div className="p-8">Loading GPA data...</div>;
@@ -249,7 +250,8 @@ const GPAAnalysis = () => {
             </div>
 
             {/* Overview Radar Chart */}
-            <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 mb-8">
+            <RadarGraphSection />
+            {/* <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 mb-8">
               <div className="text-center mb-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Criteria Overview</h3>
                 <p className="text-gray-600">Visual representation of NAAC criteria performance</p>
@@ -282,7 +284,7 @@ const GPAAnalysis = () => {
                   </ResponsiveContainer>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Criteria Breakdown */}
             <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">

@@ -2,8 +2,8 @@ import React from "react";
 import PrivateRoute from "./protectedroute.jsx";
 import './App.css';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { GpaProvider } from "./contextprovider/GpaContext.jsx";
-import { AuthProvider } from "./auth/authProvider.jsx";
+import {AuthProvider}  from "./auth/authProvider.jsx";
+import {GpaProvider}  from "./contextprovider/GpaContext.jsx";
 import Dashboard_admin from "./Dashboard_admin.jsx";
 import HelpSupport from "./helpsupport.jsx";
 import Notification from "./Notification.jsx";
@@ -577,6 +577,7 @@ function App() {
     </SessionProvider>
     </GpaProvider>
     </AuthProvider>
+    
   );
 }
 

@@ -1184,143 +1184,155 @@ const score1 = asyncHandler(async (req, res) => {
 //         });
 
 
+const getCollegeSummary = asyncHandler(async (req, res) => {
+  const collegeId = 1; // Hardcoded college ID
+  const session = new Date().getFullYear();
 
-// const getCollegeSummary = asyncHandler(async (req, res) => {
-//   const collegeId = 1; // Hardcoded college ID
-//   const session = new Date().getFullYear();
+  // 🎯 Grade → Target GPA and Score Map
+  const gradeTargetMap = {
+    "A++": { gpa: 2.455, score: 0.7365 },
+    "A+": { gpa: 2.205, score: 0.6615 },
+    "A": { gpa: 2.04, score: 0.612 },
+    "B++": { gpa: 1.88, score: 0.564 },
+    "B+": { gpa: 1.715, score: 0.5145 },
+    "B": { gpa: 1.47, score: 0.441 },
+    "C": { gpa: 1.145, score: 0.3435 },
+    "D": { gpa: 0.49, score: 0.24 }
+  };
 
-//   // 🎯 Grade → Target GPA and Score Map
-//   const gradeTargetMap = {
-//     "A++": { gpa: 2.455, score: 0.7365 },
-//     "A+": { gpa: 2.205, score: 0.6615 },
-//     "A": { gpa: 2.04, score: 0.612 },
-//     "B++": { gpa: 1.88, score: 0.564 },
-//     "B+": { gpa: 1.715, score: 0.5145 },
-//     "B": { gpa: 1.47, score: 0.441 },
-//     "C": { gpa: 1.145, score: 0.3435 },
-//     "D": { gpa: 0.49, score: 0.24 }
-//   };
+  // 🎯 Sub-criteria Targets by Grade
+  const subCriteriaTargetMap = {
+    "2.1": { "A++": 98, "A+": 88.2, "A": 81.6, "B++": 75.2, "B+": 68.6, "B": 58.8, "C": 45.8 },
+    "2.2": { "A++": 49, "A+": 44.1, "A": 40.8, "B++": 37.6, "B+": 34.3, "B": 29.4, "C": 22.9 },
+    "2.3": { "A++": 36.75, "A+": 33.075, "A": 30.6, "B++": 28.2, "B+": 25.725, "B": 22.05, "C": 17.175 },
+    "2.4": { "A++": 147, "A+": 132.3, "A": 122.4, "B++": 112.8, "B+": 102.9, "B": 88.2, "C": 68.7 },
+    "2.6": { "A++": 73.5, "A+": 66.15, "A": 61.2, "B++": 56.4, "B+": 51.45, "B": 44.1, "C": 34.35 },
+    "2.7": { "A++": 147, "A+": 132.3, "A": 122.4, "B++": 112.8, "B+": 102.9, "B": 88.2, "C": 68.7 }
+  };
 
-//   // 1️⃣ Desired grade
-//   const iiqaForm = await IIQA.findOne({ 
-//     attributes: ['desired_grade'],
-//     where: { 
-//       institution_id: collegeId,
-//     }, 
-//     order: [['year_filled', 'DESC']],
-//     limit: 1
-//   });
-//   const desiredGrade = iiqaForm?.dataValues?.desired_grade || "A";
-//   console.log("desiredGrade",desiredGrade)
-//   const { gpa: targetGPA, score: targetScore } = gradeTargetMap[desiredGrade] || gradeTargetMap["A"];
+  // 1️⃣ Desired grade
+  const iiqaForm = await IIQA.findOne({
+    attributes: ['desired_grade'],
+    where: { institution_id: collegeId },
+    order: [['year_filled', 'DESC']],
+    limit: 1
+  });
 
-//   // 2️⃣ GPA (score_criteria) and total score (weighted_cr_score / 1000) for criteria 02
-// const gpaRow = await Score.findOne({ 
-//   where: { criteria_id: '02', session }, 
-//   attributes: ['score_criteria', 'weighted_cr_score']
-// });
+  const desiredGrade = iiqaForm?.dataValues?.desired_grade || "A";
+  const resolvedGrade = desiredGrade === "D" ? "C" : desiredGrade; // fallback to C for subcriteria targets
 
-// const currentGPA = parseFloat(gpaRow?.score_criteria || 0);
-// const totalScore = gpaRow?.weighted_cr_score ? +(parseFloat(gpaRow.weighted_cr_score) / 1000).toFixed(2) : 0;
+  const { gpa: targetGPA, score: targetScore } = gradeTargetMap[desiredGrade] || gradeTargetMap["A"];
 
-//   // 3️⃣ Grade from GPA
-//   const getGrade = (gpa) => {
-//     if (gpa >= 2.29) return "A++";
-//     if (gpa >= 2.12) return "A+";
-//     if (gpa >= 1.96) return "A";
-//     if (gpa >= 1.8) return "B++";
-//     if (gpa >= 1.63) return "B+";
-//     if (gpa >= 1.31) return "B";
-//     if (gpa >= 0.98) return "C";
-//     return "D";
-//   };
-//   const grade = getGrade(currentGPA);
+  // 2️⃣ GPA and total score (weighted_cr_score / 1000) for criteria 02
+  const gpaRow = await Score.findOne({
+    where: { criteria_id: '02', session },
+    attributes: ['score_criteria', 'weighted_cr_score']
+  });
 
-//   // 4️⃣ Criteria Master rows for criteria_id = '02'
-//   const masterRows = await CriteriaMaster.findAll({
-//     where: { criterion_id: '02' },
-//     raw: true
-//   });
+  const currentGPA = parseFloat(gpaRow?.score_criteria || 0);
+  const totalScore = gpaRow?.weighted_cr_score ? +(parseFloat(gpaRow.weighted_cr_score) / 1000).toFixed(2) : 0;
 
-//   // 5️⃣ Score rows for this session and criteria_id = '02'
-//   const scoreRows = await Score.findAll({
-//     where: { criteria_id: '02', session },
-//     raw: true
-//   });
+  // 3️⃣ Grade from GPA
+  const getGrade = (gpa) => {
+    if (gpa >= 2.29) return "A++";
+    if (gpa >= 2.12) return "A+";
+    if (gpa >= 1.96) return "A";
+    if (gpa >= 1.8) return "B++";
+    if (gpa >= 1.63) return "B+";
+    if (gpa >= 1.31) return "B";
+    if (gpa >= 0.98) return "C";
+    return "D";
+  };
 
-//   // 🧠 Group by sub_criteria_id
-//   const criteriaMap = {};
+  const grade = getGrade(currentGPA);
 
-//   for (const row of masterRows) {
-//     const { sub_criterion_id, sub_sub_criterion_id, sub_criterion_name, sub_sub_criterion_name, criterion_name } = row;
+  // 4️⃣ Criteria Master rows for criteria_id = '02'
+  const masterRows = await CriteriaMaster.findAll({
+    where: { criterion_id: '02' },
+    raw: true
+  });
 
-//     if (!criteriaMap[sub_criterion_id]) {
-//       criteriaMap[sub_criterion_id] = {
-//         code: sub_criterion_id.replace(/^02/, "2."),
-//         title: sub_criterion_name,
-//         score: 0,
-//         grade: 0,
-//         target: 100, // you can refine per-subcriterion target if needed
-//         sub_sub_criteria: []
-//       };
-//     }
+  // 5️⃣ Score rows for this session and criteria_id = '02'
+  const scoreRows = await Score.findAll({
+    where: { criteria_id: '02', session },
+    raw: true
+  });
 
-//     const scoreRow = scoreRows.find(s => s.sub_sub_criteria_id === sub_sub_criterion_id);
-//     const score = parseFloat(scoreRow?.score_sub_sub_criteria || 0);
-//     const gradeVal = parseFloat(scoreRow?.sub_sub_cr_grade || 0);
+  // 🧠 Group by sub_criteria_id
+  const criteriaMap = {};
 
-//     // Push sub-sub row
-//     criteriaMap[sub_criterion_id].sub_sub_criteria.push({
-//       code: sub_sub_criterion_id.replace(/^02/, "2."),
-//       title: sub_sub_criterion_name,
-//       score,
-//       grade: gradeVal
-//     });
+  for (const row of masterRows) {
+    const {
+      sub_criterion_id,
+      sub_sub_criterion_id,
+      sub_criterion_name,
+      sub_sub_criterion_name,
+      criterion_name
+    } = row;
 
-//     // Sum into parent
-//     criteriaMap[sub_criterion_id].score += score;
-//     criteriaMap[sub_criterion_id].grade += gradeVal;
-//   }
+    const subCode = sub_criterion_id.replace(/^02/, "2.");
+    const target = subCriteriaTargetMap[subCode]?.[resolvedGrade] || 100;
 
-//   // Convert sub_criteria map to array with stats
-//   const subcriteriaArr = Object.values(criteriaMap).map(obj => {
-//     const totalGrade = obj.grade;
-//     const averageGrade = obj.sub_sub_criteria.length ? (totalGrade / obj.sub_sub_criteria.length).toFixed(2) : 0;
-//     const targetPercentage = obj.score ? ((obj.score / obj.target) * 100).toFixed(2) : 0;
-//     console.log("obj",obj)
-//     return {
-//       code: obj.code,
-//       title: obj.title,
-//       score: +obj.score.toFixed(2),
-//       target: obj.target,
-//       grade: +averageGrade,
-//       targetPercentage: +targetPercentage
-//     };
-//   });
+    if (!criteriaMap[sub_criterion_id]) {
+      criteriaMap[sub_criterion_id] = {
+        code: subCode,
+        title: sub_criterion_name,
+        score: 0,
+        target,
+        sub_sub_criteria: []
+      };
+    }
 
-//   console.log("subcriteriaArr",subcriteriaArr)
+    const scoreRow = scoreRows.find(s => s.sub_sub_criteria_id === sub_sub_criterion_id);
+    const score = parseFloat(scoreRow?.score_sub_sub_criteria || 0);
+    const gradeVal = parseFloat(scoreRow?.sub_sub_cr_grade || 0);
 
-//   // Total score of criteria 2
-//   const avgGrade = subcriteriaArr.reduce((acc, sc) => acc + sc.grade, 0) / subcriteriaArr.length;
-//   console.log("avgGrade",avgGrade)
-//   return res.status(200).json({
-//     collegeId,
-//     currentGPA: +currentGPA.toFixed(2),
-//     targetGPA,
-//     grade,
-//     criteria: [
-//       {
-//         id: 2,
-//         title: masterRows[0]?.criterion_name || "Teaching-Learning and Evaluation",
-//         score: +totalScore.toFixed(2),
-//         target: targetScore,
-//         status: (totalScore >= targetScore ? "Near Target" : "Below Target"),
-//         averageGrade: +avgGrade.toFixed(2),
-//         subcriteria: subcriteriaArr
-//       }
-//     ]
-//   });
-// });
+    criteriaMap[sub_criterion_id].sub_sub_criteria.push({
+      code: sub_sub_criterion_id.replace(/^02/, "2."),
+      title: sub_sub_criterion_name,
+      score
+    });
+
+    criteriaMap[sub_criterion_id].score += score;
+  }
+
+  // Convert sub_criteria map to array
+  const subcriteriaArr = Object.values(criteriaMap).map(obj => {
+    const targetPercentage = obj.score ? ((obj.score / obj.target) * 100).toFixed(2) : 0;
+
+    return {
+      code: obj.code,
+      title: obj.title,
+      score: +obj.score.toFixed(2),
+      target: obj.target,
+      targetPercentage: +targetPercentage
+    };
+  });
+
+  // Total average grade across subcriteria (based on sub-sub-criteria grades)
+  const avgGrade =
+    scoreRows.length > 0
+      ? scoreRows.reduce((sum, r) => sum + (parseFloat(r.sub_sub_cr_grade) || 0), 0) / scoreRows.length
+      : 0;
+
+  return res.status(200).json({
+    collegeId,
+    currentGPA: +currentGPA.toFixed(2),
+    targetGPA,
+    grade,
+    criteria: [
+      {
+        id: 2,
+        title: masterRows[0]?.criterion_name || "Teaching-Learning and Evaluation",
+        score: +totalScore.toFixed(2),
+        target: targetScore,
+        status: totalScore >= targetScore ? "Near Target" : "Below Target",
+        averageGrade: +avgGrade.toFixed(2),
+        subcriteria: subcriteriaArr
+      }
+    ]
+  });
+});
 
 
         
@@ -1425,7 +1437,150 @@ const scoreTotal = asyncHandler(async (req, res) => {
   );
 });
 
+const radarGrade = asyncHandler(async (req, res) => {
+  const weightedTargetMap = {
+    "1": {
+      "A++": 0.2455,
+      "A+": 0.2205,
+      "A": 0.204,
+      "B++": 0.188,
+      "B+": 0.1715,
+      "B": 0.147,
+      "C": 0.1145
+    },
+    "2": {
+      "A++": 0.7365,
+      "A+": 0.6615,
+      "A": 0.612,
+      "B++": 0.564,
+      "B+": 0.5145,
+      "B": 0.441,
+      "C": 0.3435
+    },
+    "3": {
+      "A++": 0.491,
+      "A+": 0.441,
+      "A": 0.408,
+      "B++": 0.376,
+      "B+": 0.343,
+      "B": 0.294,
+      "C": 0.229
+    },
+    "4": {
+      "A++": 0.2455,
+      "A+": 0.2205,
+      "A": 0.204,
+      "B++": 0.188,
+      "B+": 0.1715,
+      "B": 0.147,
+      "C": 0.1145
+    },
+    "5": {
+      "A++": 0.2455,
+      "A+": 0.2205,
+      "A": 0.204,
+      "B++": 0.188,
+      "B+": 0.1715,
+      "B": 0.147,
+      "C": 0.1145
+    },
+    "6": {
+      "A++": 0.2455,
+      "A+": 0.2205,
+      "A": 0.204,
+      "B++": 0.188,
+      "B+": 0.1715,
+      "B": 0.147,
+      "C": 0.1145
+    },
+    "7": {
+      "A++": 0.2455,
+      "A+": 0.2205,
+      "A": 0.204,
+      "B++": 0.188,
+      "B+": 0.1715,
+      "B": 0.147,
+      "C": 0.1145
+    }
+  };
+  
+  const session = new Date().getFullYear();
+  const collegeId = 1; // Or get from request if needed
+
+  // 1️⃣ Get desired grade from IIQA form
+  const iiqaForm = await IIQA.findOne({
+    attributes: ['desired_grade'],
+    where: { institution_id: collegeId },
+    order: [['year_filled', 'DESC']],
+    limit: 1
+  });
+  const desiredGrade = iiqaForm?.dataValues?.desired_grade || "A";
+
+  // 2️⃣ Fetch all criteria scores for the current session
+  const criteriaScores = await Score.findAll({
+    where: {
+      session: session,
+      criteria_id: {
+        [Sequelize.Op.in]: ['01', '02', '03', '04', '05', '06', '07']
+      }
+    },
+    attributes: ['criteria_id', 'weighted_cr_score'],
+    raw: true
+  });
+
+  // 3️⃣ Get criteria names from CriteriaMaster
+  const criteriaList = await CriteriaMaster.findAll({
+    where: {
+      criterion_id: {
+        [Sequelize.Op.in]: ['01', '02', '03', '04', '05', '06', '07']
+      }
+    },
+    attributes: [
+      'criterion_id',
+      [Sequelize.fn('MAX', Sequelize.col('criterion_name')), 'criterion_name']
+    ],
+    group: ['criterion_id'],
+    raw: true
+  });
+
+  // 4️⃣ Process current scores
+  const currentScores = Array(7).fill(0);
+  criteriaScores.forEach(score => {
+    const index = parseInt(score.criteria_id) - 1;
+    if (index >= 0 && index < 7) {
+      console.log(score.weighted_cr_score);
+      currentScores[index] = parseFloat(score.weighted_cr_score)/1000 || 0;
+    }
+  });
+
+  // 5️⃣ Get target scores based on desired grade
+  const targetScores = Array(7).fill(0).map((_, index) => {
+    const criteriaId = (index + 1).toString();
+    return weightedTargetMap[criteriaId]?.[desiredGrade] || 0; // Convert to percentage
+  });
+
+  // 6️⃣ Prepare response
+  const criteriaData = {
+    criteria: criteriaList.map(criteria => ({
+      id: parseInt(criteria.criterion_id),
+      name: criteria.criterion_name || `Criterion ${criteria.criterion_id}`,
+      max: 1
+    })).sort((a, b) => a.id - b.id), // Ensure proper ordering
+    
+    scores: [
+      {
+        name: 'Current Score',
+        values: currentScores.map(score => Math.min(100, Math.max(0, score))) // Ensure scores are within 0-100 range
+      },
+      {
+        name: 'Target Score',
+        values: targetScores
+      }
+    ]
+  };
+
+  return res.status(200).json(criteriaData);
+});
 
 
-
-export { score21, score22, score23, score24, score26, score2, score11, score12, score13, score14, score1, scoreTotal };
+export { score21, score22, score23, score24, score26, score2, score11, score12, score13, score14, score1, scoreTotal, getCollegeSummary, radarGrade };
