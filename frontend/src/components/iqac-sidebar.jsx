@@ -1,9 +1,9 @@
 import React from 'react';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
-import { useAuth } from '../auth/authProvider'; // ✅ import useAuth
+import { useAuth } from '../auth/authProvider';
 
-const Sidebar = ({ collapsed, setCollapsed, navItems, navigate }) => {
-  const { logout } = useAuth(); // ✅ use auth context logout
+const Sidebar = ({ collapsed, setCollapsed, navItems = [], navigate }) => {
+  const { logout } = useAuth();
 
   return (
     <div className={`h-screen bg-gray-900 text-white flex flex-col fixed top-0 left-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
@@ -15,12 +15,12 @@ const Sidebar = ({ collapsed, setCollapsed, navItems, navigate }) => {
       </div>
       <div className="flex-1 overflow-auto">
         <nav className="mt-4 space-y-1">
-          {navItems.map(({ icon: Icon, text, path }) => (
+          {Array.isArray(navItems) && navItems.map(({ icon: Icon, text, path }) => (
             <div
               key={text}
               onClick={async () => {
                 if (path === '/logout') {
-                  await logout(); // ✅ use global logout logic
+                  await logout();
                 } else {
                   navigate(path);
                 }

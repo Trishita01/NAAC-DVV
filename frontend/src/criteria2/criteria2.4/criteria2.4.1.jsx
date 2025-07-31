@@ -6,6 +6,7 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria2_4_1 = () => {
   const { sessions, isLoading: sessionsLoading, error: sessionsError } = useContext(SessionContext);
@@ -174,11 +175,10 @@ const Criteria2_4_1 = () => {
 
   return (
     <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden text-black">
-      <Header />
-      <Navbar />
-      <div className="flex w-full">
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">
         <Sidebar />
-        <div className="flex-1 p-6">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           {/* Metric Info Block */}
           <div className="bg-white border-l-4 border-blue-900 p-4 mb-6 rounded shadow-sm">
             <h3 className="font-semibold text-blue-900 mb-2">2.4.1 Metric Information</h3>

@@ -5,6 +5,7 @@ import Sidebar from "../../components/sidebar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { SessionContext } from "../../contextprovider/sessioncontext";
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria2_1_2 = () => {
   const navigate = useNavigate();
@@ -195,11 +196,10 @@ const Criteria2_1_2 = () => {
 
   return (
     <div className="w-screen min-h-screen bg-white text-black overflow-x-auto">
-      <Header />
-      <Navbar />
-      <div className="flex">
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">6
         <Sidebar />
-        <div className="flex-1 p-6">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           <h2 className="text-lg font-semibold mb-4">
             2.1.2 Average percentage of seats filled against seats reserved for various categories (SC, ST, OBC, Divyangjan, etc.) during the last five years
           </h2>

@@ -5,6 +5,7 @@ import Sidebar from "../../components/sidebar";
 import { useNavigate } from "react-router-dom";
 import Bottom from "../../components/bottom";
 import axios from "axios";
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria2_2_2 = () => {
   const navigate = useNavigate();
@@ -60,11 +61,10 @@ const Criteria2_2_2 = () => {
 
   return (
     <div className="w-screen min-h-screen bg-white text-black overflow-x-auto">
-      <Header />
-      <Navbar />
-      <div className="flex w-full">
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">
         <Sidebar />
-        <div className="flex-1 p-6 space-y-8">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           <h2 className="text-2xl font-bold text-blue-900">
             2.2.2 Student - Full-time Teacher Ratio
           </h2>

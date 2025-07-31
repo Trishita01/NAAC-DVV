@@ -4,6 +4,7 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from 'react-router-dom';
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria1_1_1 = () => {
   const [metrics, setMetrics] = useState([
@@ -134,13 +135,13 @@ const Criteria1_1_1 = () => {
 
 
   return (
-    <div className="min-h-screen w-[1520px] bg-gray-50 flex flex-col">
-      <Header />
-      <Navbar />
-      <div className="flex flex-1 ">
+    <div className="min-h-screen w-screen bg-gray-50 flex flex-col">
+    
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1 ">
         <Sidebar />
 
-        <div className="flex-1 flex flex-col p-4">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           {/* Page Title and Date */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Criteria 1: Curricular Aspects</h2>
@@ -195,7 +196,9 @@ planned and documented process </p>
                       value={metric.response}
                       onChange={e => handleResponseChange(metric.id, e.target.value)}
                       placeholder="Enter your qualitative response here (minimum 500 words required)..."
-                      className={`w-full min-h-[200px] text-gray-950 p-4 border rounded-md shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500 ${metric.wordCount >= 100 ? 'border-green-300' : 'border-gray-300'}`}
+                      className={`w-full min-h-[200px] text-gray-950 p-4 border rounded-md shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500 ${
+                        metric.wordCount >= 100 ? 'border-green-300' : 'border-gray-300'
+                      } block`}
                     ></textarea>
                     <div className="mt-2 flex justify-between text-xs text-gray-500">
                       <span>

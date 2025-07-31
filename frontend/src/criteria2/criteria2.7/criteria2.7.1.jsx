@@ -4,6 +4,7 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria2_7_1 = () => {
   const years = [2020, 2021, 2022, 2023, 2024];
@@ -63,11 +64,10 @@ const Criteria2_7_1 = () => {
 
   return (
     <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden text-black">
-      <Header />
-      <Navbar />
-      <div className="flex w-full">
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">
         <Sidebar />
-        <div className="flex-1 p-6">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-medium text-gray-800">
               Criteria 2: Teaching-Learning and Evaluation

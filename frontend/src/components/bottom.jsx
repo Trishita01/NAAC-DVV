@@ -18,7 +18,7 @@ const Bottom = ({ onNext, onPrevious }) => {
           onClick={() => alert("Draft saved!")}
           className="!bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-gray-800 transition duration-200"
         >
-          Save draft
+          Export data
         </button>
         <button
           onClick={() => alert("Entry submitted!")}

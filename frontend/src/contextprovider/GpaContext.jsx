@@ -2,31 +2,6 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import axios from 'axios';
 
 export const GpaContext = createContext();
-const createEmptyCriteria = () => {
-  const criteriaTitles = [
-    'Curricular Aspects',
-    'Teaching-Learning and Evaluation',
-    'Research, Innovations and Extension',
-    'Infrastructure and Learning Resources',
-    'Student Support and Progression',
-    'Governance, Leadership and Management',
-    'Institutional Values and Best Practices'
-  ];
-
-  return criteriaTitles.map((title, index) => ({
-    id: index + 1,
-    title,
-    score: 0,
-    target: 0,
-    status: 'Not Set',
-    subcriteria: Array(6).fill().map((_, i) => ({
-      code: `${index + 1}.${Math.floor(i/2) + 1}.${(i % 2) + 1}`,
-      title: `${title} - Subcriteria ${i + 1}`,
-      score: 0,
-      target: 0
-    }))
-  }));
-};
 
 export const GpaProvider = ({ children }) => {
   const [gpaData, setGpaData] = useState({
@@ -34,35 +9,52 @@ export const GpaProvider = ({ children }) => {
     currentGPA: 0,
     targetGPA: 0,
     grade: 'N/A',
-    criteria: createEmptyCriteria(),
+    criteria: [],
     isLoading: true,
-    error: null
+    error: null,
   });
 
   const fetchGpaData = useCallback(async () => {
     try {
       setGpaData(prev => ({ ...prev, isLoading: true, error: null }));
-      const response = await axios.get('/api/gpa/college-summary');
-      
+
+      const response = await axios.get('http://localhost:3000/api/v1/scores/getCollegeSummary');
+
       const apiData = response.data;
-      
-      setGpaData(prev => ({
-        ...prev,
-        ...apiData,
-        isLoading: false,
-        criteria: apiData.criteria || createEmptyCriteria(),
-        currentGPA: apiData.currentGPA || 0,
-        targetGPA: apiData.targetGPA || 0,
-        grade: apiData.grade || 'N/A',
-        error: null
+
+      // If data is missing, fall back to default
+      const criteria = (apiData.criteria || []).map((crit, index) => ({
+        id: crit.id ?? index + 1,
+        title: crit.title?.trim() ?? `Criteria ${index + 1}`,
+        score: crit.score ?? 0,
+        target: crit.target ?? 0,
+        status: crit.status ?? 'Not Set',
+        averageGrade: crit.averageGrade ?? 0,
+        subcriteria: (crit.subcriteria || []).map((sub, subIndex) => ({
+          code: sub.code ?? `${crit.id ?? index + 1}.0${subIndex + 1}`,
+          title: sub.title ?? `Subcriteria ${subIndex + 1}`,
+          score: sub.score ?? 0,
+          target: sub.target ?? 0,
+          grade: sub.grade ?? 0,
+          targetPercentage: sub.targetPercentage ?? 0
+        }))
       }));
+
+      setGpaData({
+        collegeId: apiData.collegeId ?? '',
+        currentGPA: apiData.currentGPA ?? 0,
+        targetGPA: apiData.targetGPA ?? 0,
+        grade: apiData.grade ?? 'N/A',
+        criteria,
+        isLoading: false,
+        error: null,
+      });
     } catch (error) {
       console.error('Error fetching GPA data:', error);
       setGpaData(prev => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Failed to load GPA data',
-        criteria: createEmptyCriteria()
+        error: error.message || 'Failed to fetch GPA data'
       }));
     }
   }, []);

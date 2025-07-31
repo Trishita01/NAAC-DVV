@@ -6,6 +6,7 @@ import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { SessionContext } from "../../contextprovider/sessioncontext";
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria2_6_3 = () => {
   const { sessions } = useContext(SessionContext);
@@ -126,11 +127,10 @@ const Criteria2_6_3 = () => {
 
   return (
     <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden text-black">
-      <Header />
-      <Navbar />
-      <div className="flex w-full">
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">
         <Sidebar />
-        <div className="flex-1 p-6">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           <div className="bg-white border rounded p-4 mb-6">
             <h2 className="text-lg font-semibold text-blue-800 mb-2">
               2.6.3 Metric Information
