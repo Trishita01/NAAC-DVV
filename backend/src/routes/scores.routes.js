@@ -38,6 +38,11 @@ router.route('/grade1')
 
 router.route('/gradeTotal')
     .post(scoreTotal);    
-    
+
+router.route('/getCollegeSummary')
+    .post(getCollegeSummary);
+
+router.route('/radarGrade')
+    .get(radarGrade);
 
 export default router;
