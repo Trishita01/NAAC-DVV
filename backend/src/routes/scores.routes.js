@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { score21, score22, score23, score24, score26, score2, score11, score12, score13, score14, score1, scoreTotal} from '../controllers/score.controller.js';
+import { score21, score22, score23, score24, score26, score2, score11, score12, score13, score14, score1, scoreTotal, getCollegeSummary, radarGrade} from '../controllers/score.controller.js';
 
 // Create a new score
 router.route('/grade21')
@@ -41,6 +41,9 @@ router.route('/gradeTotal')
 
 router.route('/getCollegeSummary')
     .get(getCollegeSummary);
+
+router.route('/radarGrade')
+    .get(radarGrade);
 
 
 
