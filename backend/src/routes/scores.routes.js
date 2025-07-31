@@ -38,10 +38,6 @@ router.route('/grade1')
 
 router.route('/gradeTotal')
     .post(scoreTotal);    
-
-router.route('/getCollegeSummary')
-    .get(getCollegeSummary);
-
-
+    
 
 export default router;

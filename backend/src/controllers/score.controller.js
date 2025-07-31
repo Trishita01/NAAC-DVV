@@ -933,7 +933,7 @@ const score14 = asyncHandler(async (req, res) => {
 //score1
 const score1 = asyncHandler(async (req, res) => {
   const session = new Date().getFullYear().toString();
-  const criteria_id = "01";
+  const criteria_id = "01"; // Criterion 1
 
   let scores = await Score.findAll({
     attributes: [
@@ -967,6 +967,7 @@ const score1 = asyncHandler(async (req, res) => {
     }
   }
 
+  // Group by sub_criteria_id, pick highest value between sub_criteria and sub_sub_criteria scores
   const subCriteriaScores = {};
   scores.forEach(score => {
     const subId = score.sub_criteria_id;
@@ -981,63 +982,38 @@ const score1 = asyncHandler(async (req, res) => {
     }
   });
 
-  const totalScore = Object.values(subCriteriaScores).reduce((sum, score) => sum + parseFloat(score), 0);
-  const cri_score = totalScore / 75;
-  const weighted_cri_score = cri_score * 0.1;
+  // Final total and score calculation
+  const totalScore = Object.values(subCriteriaScores).reduce((sum, s) => sum + parseFloat(s), 0);
+  const cri_score = parseFloat((totalScore / 75).toFixed(2)); // Fixed denominator = 75
 
+  // Optional: Create/update a row in Score for reference
   const criteria = await CriteriaMaster.findOne({ where: { criterion_id: criteria_id } });
   if (!criteria) throw new apiError(404, "Criteria not found");
-  const criteria2Weight = 30;
-  const weightedScore = cri_score * (criteria2Weight/100);
-  const weightedScoreWorkAround = weightedScore * 1000;
 
-  // Update or create a placeholder row (this helps if you still want to keep one main entry)
-const [entry, created] = await Score.findOrCreate({
-  where: {
-    criteria_id: criteria_id,
-    session: session
-  },
-  defaults: {
-    criteria_code: criteria.criteria_code,
-    criteria_id: criteria.criterion_id,
-    sub_criteria_id: criteria.sub_criterion_id,
-    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
-    score_criteria: cri_score,
-    weighted_cr_score: weighted_cri_score,
-    score_sub_criteria: 0,
-    score_sub_sub_criteria: 0,
-    session: session,
-    weighted_cr_score: weightedScoreWorkAround
-  }
-});
-
-// Always update all rows with this criteria_id
-await Score.update(
-  { score_criteria: cri_score, weighted_cr_score: weightedScoreWorkAround },
-  { score_criteria: cri_score,
-    weighted_cr_score: weighted_cri_score },
-  {
-    where: {
-      criteria_id: criteria_id,
-      session: session
+  await Score.update(
+    {
+      score_criteria: cri_score
+    },
+    {
+      where: {
+        criteria_id: criteria_id,
+        session: session
+      }
     }
-  }
-);
-
+  );
 
   return res.status(200).json(
     new apiResponse(200, {
       score: cri_score,
       totalSubCriteriaScore: totalScore,
-      weightedCRScore:weighted_cri_score,
       subCriteriaScores: Object.entries(subCriteriaScores).map(([id, score]) => ({
         sub_criteria_id: id,
-        score_sub_criteria: score,
-        weighted_cr_score: weightedScore
+        score_sub_criteria: score
       }))
-    }, created ? "Score created successfully" : "Score updated successfully")
+    }, "Score for Criterion 1 calculated successfully")
   );
 });
+
  /*        4       3       2       1       0
     2.1.1	>=80%	60%-80%	40%- 60%	30%-40%	<30%
     2.1.2	>=80%	60%-80%	40%- 60%	30%-40%	<30%
@@ -1058,300 +1034,299 @@ await Score.update(
         2.4		240.0      2.4.3		    20
         2.6		120.0      2.6.3		    30
     */
-  const calculateTarget21 = async () => {
-      const weights = [20, 20]; // 2.1.1 and 2.1.2
-      const target = 160;
+//   const calculateTarget21 = async () => {
+//       const weights = [20, 20]; // 2.1.1 and 2.1.2
+//       const target = 160;
         
-      const scores = await Score.findAll({
-        attributes: ['sub_sub_cr_grade'],
-        where: { sub_criteria_id: '0201' }
-      });
+//       const scores = await Score.findAll({
+//         attributes: ['sub_sub_cr_grade'],
+//         where: { sub_criteria_id: '0201' }
+//       });
         
-      const grades = scores.map(r => Number(r.sub_sub_cr_grade));
-      if (grades.length !== 2) throw new Error("Expected 2 grades for 2.1.1 and 2.1.2");
+//       const grades = scores.map(r => Number(r.sub_sub_cr_grade));
+//       if (grades.length !== 2) throw new Error("Expected 2 grades for 2.1.1 and 2.1.2");
         
-      const weighted = grades.map((g, i) => g * weights[i]);
-      const total = weighted.reduce((a, b) => a + b, 0);
-      const percentage = (total / target) * 100;
-      const averageGrade = grades.reduce((a, b) => a + b, 0) / grades.length;
+//       const weighted = grades.map((g, i) => g * weights[i]);
+//       const total = weighted.reduce((a, b) => a + b, 0);
+//       const percentage = (total / target) * 100;
+//       const averageGrade = grades.reduce((a, b) => a + b, 0) / grades.length;
         
-      return {
-            "2.1.1": { grade: grades[0], targetPercentage: (weighted[0] / target) * 100 },
-            "2.1.2": { grade: grades[1], targetPercentage: (weighted[1] / target) * 100 },
-            percentage: +percentage.toFixed(2),
-            averageGrade: +averageGrade.toFixed(2)
-          };
-};
+//       return {
+//             "2.1.1": { grade: grades[0], targetPercentage: (weighted[0] / target) * 100 },
+//             "2.1.2": { grade: grades[1], targetPercentage: (weighted[1] / target) * 100 },
+//             percentage: +percentage.toFixed(2),
+//             averageGrade: +averageGrade.toFixed(2)
+//           };
+// };
         
-        const calculateTarget22 = async () => {
-          const weight = 20, target = 80;
-          const score = await Score.findOne({
-            attributes: ['sub_sub_cr_grade'],
-            where: { sub_criteria_id: '0202' }
-          });
+//         const calculateTarget22 = async () => {
+//           const weight = 20, target = 80;
+//           const score = await Score.findOne({
+//             attributes: ['sub_sub_cr_grade'],
+//             where: { sub_criteria_id: '0202' }
+//           });
         
-          if (!score) throw new Error("No grade for 2.2.2");
+//           if (!score) throw new Error("No grade for 2.2.2");
         
-          const grade = Number(score.sub_sub_cr_grade);
-          return {
-            "2.2.2": {
-              grade,
-              targetPercentage: +(grade * weight / target * 100).toFixed(2)
-            }
-          };
-        };
+//           const grade = Number(score.sub_sub_cr_grade);
+//           return {
+//             "2.2.2": {
+//               grade,
+//               targetPercentage: +(grade * weight / target * 100).toFixed(2)
+//             }
+//           };
+//         };
         
-        const calculateTarget23 = async () => {
-          const weight = 15, target = 60;
-          const score = await Score.findOne({
-            attributes: ['sub_sub_cr_grade'],
-            where: { sub_criteria_id: '0203' }
-          });
+//         const calculateTarget23 = async () => {
+//           const weight = 15, target = 60;
+//           const score = await Score.findOne({
+//             attributes: ['sub_sub_cr_grade'],
+//             where: { sub_criteria_id: '0203' }
+//           });
         
-          if (!score) throw new Error("No grade for 2.3.3");
+//           if (!score) throw new Error("No grade for 2.3.3");
         
-          const grade = Number(score.sub_sub_cr_grade);
-          return {
-            "2.3.3": {
-              grade,
-              targetPercentage: +(grade * weight / target * 100).toFixed(2)
-            }
-          };
-        };
+//           const grade = Number(score.sub_sub_cr_grade);
+//           return {
+//             "2.3.3": {
+//               grade,
+//               targetPercentage: +(grade * weight / target * 100).toFixed(2)
+//             }
+//           };
+//         };
         
-        const calculateTarget24 = async () => {
-          const weights = [20, 20, 20];
-          const target = 240;
+//         const calculateTarget24 = async () => {
+//           const weights = [20, 20, 20];
+//           const target = 240;
         
-          const scores = await Score.findAll({
-            attributes: ['sub_sub_cr_grade'],
-            where: { sub_criteria_id: '0204' },
-            order: [['sub_sub_criteria_id', 'ASC']]
-          });
+//           const scores = await Score.findAll({
+//             attributes: ['sub_sub_cr_grade'],
+//             where: { sub_criteria_id: '0204' },
+//             order: [['sub_sub_criteria_id', 'ASC']]
+//           });
         
-          const grades = scores.map(r => Number(r.sub_sub_cr_grade));
-          if (grades.length !== 3) throw new Error("Expected 3 grades for 2.4.1, 2.4.2, 2.4.3");
+//           const grades = scores.map(r => Number(r.sub_sub_cr_grade));
+//           if (grades.length !== 3) throw new Error("Expected 3 grades for 2.4.1, 2.4.2, 2.4.3");
         
-          const keys = ["2.4.1", "2.4.2", "2.4.3"];
-          const weightedScores = grades.map((g, i) => g * weights[i]);
+//           const keys = ["2.4.1", "2.4.2", "2.4.3"];
+//           const weightedScores = grades.map((g, i) => g * weights[i]);
         
-          const data = {};
-          keys.forEach((k, i) => {
-            data[k] = {
-              grade: grades[i],
-              targetPercentage: +(weightedScores[i] / target * 100).toFixed(2)
-            };
-          });
+//           const data = {};
+//           keys.forEach((k, i) => {
+//             data[k] = {
+//               grade: grades[i],
+//               targetPercentage: +(weightedScores[i] / target * 100).toFixed(2)
+//             };
+//           });
         
-          const totalWeighted = weightedScores.reduce((a, b) => a + b, 0);
-          const averageGrade = +(grades.reduce((a, b) => a + b, 0) / grades.length).toFixed(2);
+//           const totalWeighted = weightedScores.reduce((a, b) => a + b, 0);
+//           const averageGrade = +(grades.reduce((a, b) => a + b, 0) / grades.length).toFixed(2);
         
-          return {
-            ...data,
-            percentage: +(totalWeighted / target * 100).toFixed(2),
-            averageGrade
-          };
-        };
+//           return {
+//             ...data,
+//             percentage: +(totalWeighted / target * 100).toFixed(2),
+//             averageGrade
+//           };
+//         };
         
-        const calculateTarget26 = async () => {
-          const weight = 30, target = 120;
-          const score = await Score.findOne({
-            attributes: ['sub_sub_cr_grade'],
-            where: { sub_criteria_id: '0206' }
-          });
+//         const calculateTarget26 = async () => {
+//           const weight = 30, target = 120;
+//           const score = await Score.findOne({
+//             attributes: ['sub_sub_cr_grade'],
+//             where: { sub_criteria_id: '0206' }
+//           });
         
-          if (!score) throw new Error("No grade for 2.6.3");
+//           if (!score) throw new Error("No grade for 2.6.3");
         
-          const grade = Number(score.sub_sub_cr_grade);
-          return {
-            "2.6.3": {
-              grade,
-              targetPercentage: +(grade * weight / target * 100).toFixed(2)
-            }
-          };
-        };
+//           const grade = Number(score.sub_sub_cr_grade);
+//           return {
+//             "2.6.3": {
+//               grade,
+//               targetPercentage: +(grade * weight / target * 100).toFixed(2)
+//             }
+//           };
+//         };
         
 
-        const target2 = asyncHandler(async (req, res) => {
-          const weights = [40, 30, 30, 25, 40, 60]; // example weights for 2.1 to 2.6
-          const maxTarget = 225; // Total weight
+//         const target2 = asyncHandler(async (req, res) => {
+//           const weights = [40, 30, 30, 25, 40, 60]; // example weights for 2.1 to 2.6
+//           const maxTarget = 225; // Total weight
 
-          const scoreResponse = await Score.findAll({
-            attributes: ['score_sub_criteria', 'sub_criteria_id'],
-            where: {
-              criteria_id: '02',
-            }
-          });
+//           const scoreResponse = await Score.findAll({
+//             attributes: ['score_sub_criteria', 'sub_criteria_id'],
+//             where: {
+//               criteria_id: '02',
+//             }
+//           });
 
-          const subCriteria = {
-            '0201': 0,
-            '0202': 1,
-            '0203': 2,
-            '0204': 3,
-            '0205': 4,
-            '0206': 5
-          };
+//           const subCriteria = {
+//             '0201': 0,
+//             '0202': 1,
+//             '0203': 2,
+//             '0204': 3,
+//             '0205': 4,
+//             '0206': 5
+//           };
 
-          const weightedScores = scoreResponse
-            .filter(score => subCriteria[score.sub_criteria_id] !== undefined)
-            .map(score => {
-              const index = subCriteria[score.sub_criteria_id];
-              return (parseFloat(score.score_sub_criteria) || 0) * weights[index];
-            });
+//           const weightedScores = scoreResponse
+//             .filter(score => subCriteria[score.sub_criteria_id] !== undefined)
+//             .map(score => {
+//               const index = subCriteria[score.sub_criteria_id];
+//               return (parseFloat(score.score_sub_criteria) || 0) * weights[index];
+//             });
 
-          const total = weightedScores.reduce((sum, s) => sum + s, 0);
-          const percentage = (total / maxTarget) * 100;
+//           const total = weightedScores.reduce((sum, s) => sum + s, 0);
+//           const percentage = (total / maxTarget) * 100;
 
-          return res.status(200).json(
-            new apiResponse(200, { percentage: percentage.toFixed(2) }, "Overall percentage for Criterion 2")
-          );
-        });
+//           return res.status(200).json(
+//             new apiResponse(200, { percentage: percentage.toFixed(2) }, "Overall percentage for Criterion 2")
+//           );
+//         });
 
 
 
-const getCollegeSummary = asyncHandler(async (req, res) => {
-  const collegeId = 1; // Hardcoded college ID
-  const session = new Date().getFullYear();
+// const getCollegeSummary = asyncHandler(async (req, res) => {
+//   const collegeId = 1; // Hardcoded college ID
+//   const session = new Date().getFullYear();
 
-  // 🎯 Grade → Target GPA and Score Map
-  const gradeTargetMap = {
-    "A++": { gpa: 2.455, score: 0.7365 },
-    "A+": { gpa: 2.205, score: 0.6615 },
-    "A": { gpa: 2.04, score: 0.612 },
-    "B++": { gpa: 1.88, score: 0.564 },
-    "B+": { gpa: 1.715, score: 0.5145 },
-    "B": { gpa: 1.47, score: 0.441 },
-    "C": { gpa: 1.145, score: 0.3435 },
-    "D": { gpa: 0.49, score: 0.24 }
-  };
+//   // 🎯 Grade → Target GPA and Score Map
+//   const gradeTargetMap = {
+//     "A++": { gpa: 2.455, score: 0.7365 },
+//     "A+": { gpa: 2.205, score: 0.6615 },
+//     "A": { gpa: 2.04, score: 0.612 },
+//     "B++": { gpa: 1.88, score: 0.564 },
+//     "B+": { gpa: 1.715, score: 0.5145 },
+//     "B": { gpa: 1.47, score: 0.441 },
+//     "C": { gpa: 1.145, score: 0.3435 },
+//     "D": { gpa: 0.49, score: 0.24 }
+//   };
 
-  // 1️⃣ Desired grade
-  const iiqaForm = await IIQA.findOne({ 
-    attributes: ['desired_grade'],
-    where: { 
-      institution_id: collegeId,
-    }, 
-    order: [['year_filled', 'DESC']],
-    limit: 1
-  });
-  const desiredGrade = iiqaForm?.dataValues?.desired_grade || "A";
-  console.log("desiredGrade",desiredGrade)
-  const { gpa: targetGPA, score: targetScore } = gradeTargetMap[desiredGrade] || gradeTargetMap["A"];
+//   // 1️⃣ Desired grade
+//   const iiqaForm = await IIQA.findOne({ 
+//     attributes: ['desired_grade'],
+//     where: { 
+//       institution_id: collegeId,
+//     }, 
+//     order: [['year_filled', 'DESC']],
+//     limit: 1
+//   });
+//   const desiredGrade = iiqaForm?.dataValues?.desired_grade || "A";
+//   console.log("desiredGrade",desiredGrade)
+//   const { gpa: targetGPA, score: targetScore } = gradeTargetMap[desiredGrade] || gradeTargetMap["A"];
 
-  // 2️⃣ GPA (score_criteria) and total score (weighted_cr_score / 1000) for criteria 02
-const gpaRow = await Score.findOne({ 
-  where: { criteria_id: '02', session }, 
-  attributes: ['score_criteria', 'weighted_cr_score']
-});
+//   // 2️⃣ GPA (score_criteria) and total score (weighted_cr_score / 1000) for criteria 02
+// const gpaRow = await Score.findOne({ 
+//   where: { criteria_id: '02', session }, 
+//   attributes: ['score_criteria', 'weighted_cr_score']
+// });
 
-const currentGPA = parseFloat(gpaRow?.score_criteria || 0);
-const totalScore = gpaRow?.weighted_cr_score ? +(parseFloat(gpaRow.weighted_cr_score) / 1000).toFixed(2) : 0;
+// const currentGPA = parseFloat(gpaRow?.score_criteria || 0);
+// const totalScore = gpaRow?.weighted_cr_score ? +(parseFloat(gpaRow.weighted_cr_score) / 1000).toFixed(2) : 0;
 
-  // 3️⃣ Grade from GPA
-  const getGrade = (gpa) => {
-    if (gpa >= 2.29) return "A++";
-    if (gpa >= 2.12) return "A+";
-    if (gpa >= 1.96) return "A";
-    if (gpa >= 1.8) return "B++";
-    if (gpa >= 1.63) return "B+";
-    if (gpa >= 1.31) return "B";
-    if (gpa >= 0.98) return "C";
-    return "D";
-  };
-  const grade = getGrade(currentGPA);
+//   // 3️⃣ Grade from GPA
+//   const getGrade = (gpa) => {
+//     if (gpa >= 2.29) return "A++";
+//     if (gpa >= 2.12) return "A+";
+//     if (gpa >= 1.96) return "A";
+//     if (gpa >= 1.8) return "B++";
+//     if (gpa >= 1.63) return "B+";
+//     if (gpa >= 1.31) return "B";
+//     if (gpa >= 0.98) return "C";
+//     return "D";
+//   };
+//   const grade = getGrade(currentGPA);
 
-  // 4️⃣ Criteria Master rows for criteria_id = '02'
-  const masterRows = await CriteriaMaster.findAll({
-    where: { criterion_id: '02' },
-    raw: true
-  });
+//   // 4️⃣ Criteria Master rows for criteria_id = '02'
+//   const masterRows = await CriteriaMaster.findAll({
+//     where: { criterion_id: '02' },
+//     raw: true
+//   });
 
-  // 5️⃣ Score rows for this session and criteria_id = '02'
-  const scoreRows = await Score.findAll({
-    where: { criteria_id: '02', session },
-    raw: true
-  });
+//   // 5️⃣ Score rows for this session and criteria_id = '02'
+//   const scoreRows = await Score.findAll({
+//     where: { criteria_id: '02', session },
+//     raw: true
+//   });
 
-  // 🧠 Group by sub_criteria_id
-  const criteriaMap = {};
+//   // 🧠 Group by sub_criteria_id
+//   const criteriaMap = {};
 
-  for (const row of masterRows) {
-    const { sub_criterion_id, sub_sub_criterion_id, sub_criterion_name, sub_sub_criterion_name, criterion_name } = row;
+//   for (const row of masterRows) {
+//     const { sub_criterion_id, sub_sub_criterion_id, sub_criterion_name, sub_sub_criterion_name, criterion_name } = row;
 
-    if (!criteriaMap[sub_criterion_id]) {
-      criteriaMap[sub_criterion_id] = {
-        code: sub_criterion_id.replace(/^02/, "2."),
-        title: sub_criterion_name,
-        score: 0,
-        grade: 0,
-        target: 100, // you can refine per-subcriterion target if needed
-        sub_sub_criteria: []
-      };
-    }
+//     if (!criteriaMap[sub_criterion_id]) {
+//       criteriaMap[sub_criterion_id] = {
+//         code: sub_criterion_id.replace(/^02/, "2."),
+//         title: sub_criterion_name,
+//         score: 0,
+//         grade: 0,
+//         target: 100, // you can refine per-subcriterion target if needed
+//         sub_sub_criteria: []
+//       };
+//     }
 
-    const scoreRow = scoreRows.find(s => s.sub_sub_criteria_id === sub_sub_criterion_id);
-    const score = parseFloat(scoreRow?.score_sub_sub_criteria || 0);
-    const gradeVal = parseFloat(scoreRow?.sub_sub_cr_grade || 0);
+//     const scoreRow = scoreRows.find(s => s.sub_sub_criteria_id === sub_sub_criterion_id);
+//     const score = parseFloat(scoreRow?.score_sub_sub_criteria || 0);
+//     const gradeVal = parseFloat(scoreRow?.sub_sub_cr_grade || 0);
 
-    // Push sub-sub row
-    criteriaMap[sub_criterion_id].sub_sub_criteria.push({
-      code: sub_sub_criterion_id.replace(/^02/, "2."),
-      title: sub_sub_criterion_name,
-      score,
-      grade: gradeVal
-    });
+//     // Push sub-sub row
+//     criteriaMap[sub_criterion_id].sub_sub_criteria.push({
+//       code: sub_sub_criterion_id.replace(/^02/, "2."),
+//       title: sub_sub_criterion_name,
+//       score,
+//       grade: gradeVal
+//     });
 
-    // Sum into parent
-    criteriaMap[sub_criterion_id].score += score;
-    criteriaMap[sub_criterion_id].grade += gradeVal;
-  }
+//     // Sum into parent
+//     criteriaMap[sub_criterion_id].score += score;
+//     criteriaMap[sub_criterion_id].grade += gradeVal;
+//   }
 
-  // Convert sub_criteria map to array with stats
-  const subcriteriaArr = Object.values(criteriaMap).map(obj => {
-    const totalGrade = obj.grade;
-    const averageGrade = obj.sub_sub_criteria.length ? (totalGrade / obj.sub_sub_criteria.length).toFixed(2) : 0;
-    const targetPercentage = obj.score ? ((obj.score / obj.target) * 100).toFixed(2) : 0;
-    console.log("obj",obj)
-    return {
-      code: obj.code,
-      title: obj.title,
-      score: +obj.score.toFixed(2),
-      target: obj.target,
-      grade: +averageGrade,
-      targetPercentage: +targetPercentage
-    };
-  });
+//   // Convert sub_criteria map to array with stats
+//   const subcriteriaArr = Object.values(criteriaMap).map(obj => {
+//     const totalGrade = obj.grade;
+//     const averageGrade = obj.sub_sub_criteria.length ? (totalGrade / obj.sub_sub_criteria.length).toFixed(2) : 0;
+//     const targetPercentage = obj.score ? ((obj.score / obj.target) * 100).toFixed(2) : 0;
+//     console.log("obj",obj)
+//     return {
+//       code: obj.code,
+//       title: obj.title,
+//       score: +obj.score.toFixed(2),
+//       target: obj.target,
+//       grade: +averageGrade,
+//       targetPercentage: +targetPercentage
+//     };
+//   });
 
-  console.log("subcriteriaArr",subcriteriaArr)
+//   console.log("subcriteriaArr",subcriteriaArr)
 
-  // Total score of criteria 2
-  const avgGrade = subcriteriaArr.reduce((acc, sc) => acc + sc.grade, 0) / subcriteriaArr.length;
-  console.log("avgGrade",avgGrade)
-  return res.status(200).json({
-    collegeId,
-    currentGPA: +currentGPA.toFixed(2),
-    targetGPA,
-    grade,
-    criteria: [
-      {
-        id: 2,
-        title: masterRows[0]?.criterion_name || "Teaching-Learning and Evaluation",
-        score: +totalScore.toFixed(2),
-        target: targetScore,
-        status: (totalScore >= targetScore ? "Near Target" : "Below Target"),
-        averageGrade: +avgGrade.toFixed(2),
-        subcriteria: subcriteriaArr
-      }
-    ]
-  });
-});
+//   // Total score of criteria 2
+//   const avgGrade = subcriteriaArr.reduce((acc, sc) => acc + sc.grade, 0) / subcriteriaArr.length;
+//   console.log("avgGrade",avgGrade)
+//   return res.status(200).json({
+//     collegeId,
+//     currentGPA: +currentGPA.toFixed(2),
+//     targetGPA,
+//     grade,
+//     criteria: [
+//       {
+//         id: 2,
+//         title: masterRows[0]?.criterion_name || "Teaching-Learning and Evaluation",
+//         score: +totalScore.toFixed(2),
+//         target: targetScore,
+//         status: (totalScore >= targetScore ? "Near Target" : "Below Target"),
+//         averageGrade: +avgGrade.toFixed(2),
+//         subcriteria: subcriteriaArr
+//       }
+//     ]
+//   });
+// });
 
 //totalscore
 const scoreTotal = asyncHandler(async (req, res) => {
-  // Get current year as session string (e.g., "2025")
   const session = new Date().getFullYear().toString();
 
-  // Step 1: Fetch all rows with non-zero weighted_cr_score, ensuring they're linked to proper sub-criteria
+  // Step 1: Fetch all rows with non-zero weighted_cr_score for session
   const allScores = await Score.findAll({
     attributes: ['criteria_id', 'weighted_cr_score'],
     where: {
@@ -1363,7 +1338,7 @@ const scoreTotal = asyncHandler(async (req, res) => {
     raw: true
   });
 
-  // Step 2: For each criteria_id, keep the highest weighted_cr_score
+  // Step 2: For each criteria_id, retain max weighted_cr_score
   const weightedMap = {};
   for (const score of allScores) {
     const id = score.criteria_id;
@@ -1373,30 +1348,30 @@ const scoreTotal = asyncHandler(async (req, res) => {
     }
   }
 
-  // Step 3: Compute total score by summing all max weighted scores per criterion
+  // Step 3: Sum available weighted scores
   const totalWeighted = Object.values(weightedMap).reduce((sum, w) => sum + w, 0);
 
+  // Step 4: Determine grade (do not store this, only return it)
   let grade;
-if (totalWeighted >= 2.29 && totalWeighted <= 2.62) {
-  grade = 'A++';
-} else if (totalWeighted >= 2.12 && totalWeighted < 2.29) {
-  grade = 'A+';
-} else if (totalWeighted >= 1.96 && totalWeighted < 2.12) {
-  grade = 'A';
-} else if (totalWeighted >= 1.8 && totalWeighted < 1.96) {
-  grade = 'B++';
-} else if (totalWeighted >= 1.63 && totalWeighted < 1.8) {
-  grade = 'B+';
-} else if (totalWeighted >= 1.31 && totalWeighted < 1.63) {
-  grade = 'B';
-} else if (totalWeighted >= 0.98 && totalWeighted < 1.31) {
-  grade = 'C';
-} else {
-  grade = 'D';
-}
+  if (totalWeighted >= 2.29 && totalWeighted <= 2.62) {
+    grade = 'A++';
+  } else if (totalWeighted >= 2.12 && totalWeighted < 2.29) {
+    grade = 'A+';
+  } else if (totalWeighted >= 1.96 && totalWeighted < 2.12) {
+    grade = 'A';
+  } else if (totalWeighted >= 1.8 && totalWeighted < 1.96) {
+    grade = 'B++';
+  } else if (totalWeighted >= 1.63 && totalWeighted < 1.8) {
+    grade = 'B+';
+  } else if (totalWeighted >= 1.31 && totalWeighted < 1.63) {
+    grade = 'B';
+  } else if (totalWeighted >= 0.98 && totalWeighted < 1.31) {
+    grade = 'C';
+  } else {
+    grade = 'D';
+  }
 
-
-  // Step 4: Create or find the TOTAL SCORE row (criteria_id = '00')
+  // Step 5: Insert or update total score row (criteria_id = '00')
   const [entry, created] = await Score.findOrCreate({
     where: {
       criteria_id: '00',
@@ -1405,24 +1380,23 @@ if (totalWeighted >= 2.29 && totalWeighted <= 2.62) {
       sub_sub_criteria_id: '000000'
     },
     defaults: {
-      criteria_code: '000000000000',  // Placeholder code for total score
+      criteria_code: '000000000000',
       criteria_id: '00',
       sub_criteria_id: '0000',
       sub_sub_criteria_id: '000000',
       score_criteria: totalWeighted,
-      weighted_cr_score: grade,
+      weighted_cr_score: totalWeighted,  // ✅ numeric value only
       score_sub_criteria: 0,
       score_sub_sub_criteria: 0,
       session: session
     }
   });
 
-  // Step 5: If the row already existed, update it with the new total score
   if (!created) {
     await Score.update(
       {
         score_criteria: totalWeighted,
-        weighted_cr_score: grade
+        weighted_cr_score: totalWeighted  // ✅ numeric value only
       },
       {
         where: {
@@ -1435,11 +1409,11 @@ if (totalWeighted >= 2.29 && totalWeighted <= 2.62) {
     );
   }
 
-  // Step 6: Return a response with the total and breakdown
+  // Step 6: Return response with grade string
   return res.status(200).json(
     new apiResponse(200, {
       totalWeightedScore: totalWeighted,
-      Grade:grade,
+      Grade: grade,
       criteriaWiseWeightedScores: Object.entries(weightedMap).map(([id, score]) => ({
         criteria_id: id,
         weighted_cr_score: score
@@ -1449,4 +1423,6 @@ if (totalWeighted >= 2.29 && totalWeighted <= 2.62) {
 });
 
 
-export { score21, score22, score23, score24, score26, score2, score12, score13, score14, score1, scoreTotal, getCollegeSummary };
+
+
+export { score21, score22, score23, score24, score26, score2, score11, score12, score13, score14, score1, scoreTotal };
