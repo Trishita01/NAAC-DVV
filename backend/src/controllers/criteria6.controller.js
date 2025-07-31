@@ -172,6 +172,89 @@ const createResponse623 = asyncHandler(async (req, res) => {
   );
 });
 
+const score623 = asyncHandler(async (req, res) => {
+  const criteria_code = convertToPaddedFormat("6.2.3");
+  const currentYear = new Date().getFullYear();
+  const session = currentYear;
+
+  // Step 1: Get criteria details
+  const criteria = await CriteriaMaster.findOne({
+    where: {
+      sub_sub_criterion_id: criteria_code
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria 6.2.3 not found in criteria_master");
+  }
+
+  // Step 2: Get latest response
+  const response = await Criteria623.findOne({
+    where: {
+      criteria_code: criteria.criteria_code
+    },
+    order: [['id', 'DESC']],
+    raw: true
+  });
+
+  if (!response) {
+    throw new apiError(404, "No response found for criteria 6.2.3");
+  }
+
+  const implementation = Number(response.implimentation); // Get the implementation value
+
+  let score, grade;
+
+  // Map implementation to score and grade (0-4 scale)
+  switch (implementation) {
+    case 4:
+      score = 4;
+      grade = 4;
+      break;
+    case 3:
+      score = 3;
+      grade = 3;
+      break;
+    case 2:
+      score = 2;
+      grade = 2;
+      break;
+    case 1:
+      score = 1;
+      grade = 1;
+      break;
+    case 0:
+    default:
+      score = 0;
+      grade = 0;
+  }
+
+  // Step 3: Create or update score entry
+  const [entry, created] = await Score.upsert({
+    criteria_code: criteria.criteria_code,
+    criteria_id: criteria.criterion_id,
+    sub_criteria_id: criteria.sub_criterion_id,
+    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+    score_criteria: 0,
+    score_sub_criteria: 0,
+    score_sub_sub_criteria: score,
+    sub_sub_cr_grade: grade,
+    session: currentYear,
+    year: currentYear,
+    cycle_year: 1
+  }, {
+    conflictFields: ['criteria_code', 'session', 'year']
+  });
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      score,
+      implementation,
+      grade,
+      message: `Grade is ${grade} (Implementation level: ${implementation})`
+    }, created ? "Score created successfully" : "Score updated successfully")
+  );
+});
  //6.3.2
 
 
@@ -290,6 +373,139 @@ const createResponse623 = asyncHandler(async (req, res) => {
   );
 });
 
+const score632 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("6.3.2");
+
+  // 1. Get criteria details
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // 2. Get latest IIQA session
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "IIQA not found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5; // 5 years total (inclusive)
+
+  // 3. Get total number of teachers from extended profile
+  const extendedProfile = await extended_profile.findOne({
+    order: [['id', 'DESC']],
+    raw: true
+  });
+
+  if (!extendedProfile) {
+    throw new apiError(404, "Extended profile not found");
+  }
+
+  // Try all possible keys
+  const totalTeachers =
+    parseInt(extendedProfile.full_time_teachers)
+
+    0;
+
+  if (isNaN(totalTeachers) || totalTeachers <= 0) {
+    throw new apiError(400, "Valid total number of teachers not found or is zero");
+  }
+
+  // 4. Fetch 6.3.2 responses in that 5-year range
+  const responses = await Criteria632.findAll({
+    attributes: ['session', 'teacher_name'],
+    where: {
+      session: {
+        [Sequelize.Op.between]: [startYear, endYear]
+      }
+    },
+    raw: true
+  });
+
+  // 5. Group unique teachers by session
+  const yearlyTeachers = {};
+  for (const res of responses) {
+    if (!yearlyTeachers[res.session]) {
+      yearlyTeachers[res.session] = new Set();
+    }
+    yearlyTeachers[res.session].add(res.teacher_name);
+  }
+
+  // 6. Calculate percentage per year
+  const yearlyPercentages = [];
+  for (const [year, teachersSet] of Object.entries(yearlyTeachers)) {
+    const uniqueTeachers = teachersSet.size;
+    const percentage = (uniqueTeachers / totalTeachers) * 100;
+    yearlyPercentages.push({
+      year: parseInt(year),
+      percentage: parseFloat(percentage.toFixed(2)),
+      teachersCount: uniqueTeachers,
+      totalTeachers
+    });
+  }
+
+  // 7. Calculate average percentage
+  let averagePercentage = 0;
+  if (yearlyPercentages.length > 0) {
+    const totalPercentage = yearlyPercentages.reduce((sum, item) => sum + item.percentage, 0);
+    averagePercentage = parseFloat((totalPercentage / yearlyPercentages.length).toFixed(2));
+  }
+
+  // 8. Calculate grade
+  let grade;
+  if (averagePercentage >= 50) grade = 4;
+  else if (averagePercentage >= 40) grade = 3;
+  else if (averagePercentage >= 20) grade = 2;
+  else if (averagePercentage >= 5) grade = 1;
+  else grade = 0;
+
+  // 9. Upsert into Score table
+  let entry = await Score.findOne({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    }
+  });
+
+  if (!entry) {
+    entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: averagePercentage,
+      sub_sub_cr_grade: grade,
+      session,
+      cycle_year: 1
+    });
+  } else {
+    await entry.update({
+      score_sub_sub_criteria: averagePercentage,
+      sub_sub_cr_grade: grade
+    });
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      averagePercentage,
+      grade,
+      yearlyBreakdown: yearlyPercentages,
+      totalTeachers,
+      message: `Average ${averagePercentage}% of teachers received support over the last 5 years`
+    }, "Score 6.3.2 calculated and updated successfully")
+  );
+});
+
 
 //6.3.3
 
@@ -362,6 +578,121 @@ const createResponse633 = asyncHandler(async (req, res) => {
 
   return res.status(201).json(
     new apiResponse(201, newEntry, "Response created successfully")
+  );
+});
+
+const score633 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("6.3.3");
+
+  // 1. Get criteria details
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // 2. Get latest IIQA session range
+  const currentIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!currentIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const startYear = currentIIQA.session_end_year - 4; // 5 years total
+  const endYear = currentIIQA.session_end_year;
+
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, "Session must be between the latest IIQA session and the current year");
+  }
+
+  // 3. Fetch all responses from the last 5 years
+  const responses = await Criteria633.findAll({
+    attributes: ['title_of_prof_dev', 'title_of_add_training', 'session'],
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: {
+        [Sequelize.Op.between]: [startYear, endYear]
+      }
+    },
+    raw: true
+  });
+
+  if (!responses.length) {
+    throw new apiError(404, "No responses found for Criteria 6.3.3 in the session range");
+  }
+
+  // 4. Count total valid entries (where either title is provided)
+  let totalValidEntries = 0;
+  responses.forEach(response => {
+    if (response.title_of_prof_dev || response.title_of_add_training) {
+      totalValidEntries++;
+    }
+  });
+
+  // 5. Calculate score (total valid entries / 5)
+  const score = (totalValidEntries / 5).toFixed(2);
+
+  // 6. Calculate grade
+  let grade;
+  if (score >= 50) grade = 4;
+  else if (score >= 40) grade = 3;
+  else if (score >= 20) grade = 2;
+  else if (score >= 5) grade = 1;
+  else grade = 0;
+
+  // 7. Create or update score
+  let entry = await Score.findOne({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    }
+  });
+
+  if (!entry) {
+    entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
+      session,
+      cycle_year: 1
+    });
+  } else {
+    await Score.update({
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      score,
+      grade,
+      totalValidEntries,
+      message: `Score calculated successfully with ${totalValidEntries} valid entries over 5 years`
+    }, "Score 6.3.3 calculated and updated successfully")
   );
 });
 
@@ -441,6 +772,136 @@ const createResponse634 = asyncHandler(async (req, res) => {
 });
 
 
+const score634 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("6.3.4");
+
+  // 1. Get criteria details
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // 2. Get latest IIQA session
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "IIQA not found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5; // 5 years total (inclusive)
+
+  // 3. Get total number of teachers from extended profile
+  const extendedProfile = await extended_profile.findOne({
+    order: [['id', 'DESC']],
+    raw: true
+  });
+
+  if (!extendedProfile) {
+    throw new apiError(404, "Extended profile not found");
+  }
+
+  const totalTeachers = parseInt(extendedProfile.full_time_teachers) || 0;
+
+  if (isNaN(totalTeachers) || totalTeachers <= 0) {
+    throw new apiError(400, "Valid total number of teachers not found or is zero");
+  }
+
+  // 4. Fetch 6.3.4 responses in that 5-year range
+  const responses = await Criteria634.findAll({
+    attributes: ['session', 'teacher_name'],
+    where: {
+      session: {
+        [Sequelize.Op.between]: [startYear, endYear]
+      }
+    },
+    raw: true
+  });
+
+  // 5. Group unique teachers by session
+  const yearlyTeachers = {};
+  for (const res of responses) {
+    if (!yearlyTeachers[res.session]) {
+      yearlyTeachers[res.session] = new Set();
+    }
+    yearlyTeachers[res.session].add(res.teacher_name);
+  }
+
+  // 6. Calculate percentage per year
+  const yearlyPercentages = [];
+  for (const [year, teachersSet] of Object.entries(yearlyTeachers)) {
+    const uniqueTeachers = teachersSet.size;
+    const percentage = (uniqueTeachers / totalTeachers) * 100;
+    yearlyPercentages.push({
+      year: parseInt(year),
+      percentage: parseFloat(percentage.toFixed(2)),
+      teachersCount: uniqueTeachers,
+      totalTeachers
+    });
+  }
+
+  // 7. Calculate average percentage over 5 years
+  let averagePercentage = 0;
+  if (yearlyPercentages.length > 0) {
+    const totalPercentage = yearlyPercentages.reduce((sum, item) => sum + item.percentage, 0);
+    averagePercentage = parseFloat((totalPercentage / 5).toFixed(2)); // Divide by 5 for 5-year average
+  }
+
+  // 8. Calculate grade
+  let grade;
+  if (averagePercentage >= 50) grade = 4;
+  else if (averagePercentage >= 40) grade = 3;
+  else if (averagePercentage >= 20) grade = 2;
+  else if (averagePercentage >= 5) grade = 1;
+  else grade = 0;
+
+  // 9. Upsert into Score table
+  let entry = await Score.findOne({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    }
+  });
+
+  if (!entry) {
+    entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: averagePercentage,
+      sub_sub_cr_grade: grade,
+      session,
+      cycle_year: 1
+    });
+  } else {
+    await entry.update({
+      score_sub_sub_criteria: averagePercentage,
+      sub_sub_cr_grade: grade
+    });
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      averagePercentage,
+      grade,
+      yearlyBreakdown: yearlyPercentages,
+      totalTeachers,
+      message: `Average ${averagePercentage}% of teachers received support over the last 5 years`
+    }, "Score 6.3.4 calculated and updated successfully")
+  );
+});
+
+
 //6.4.2
 
 const createResponse642 = asyncHandler(async (req, res) => {
@@ -516,6 +977,133 @@ const createResponse642 = asyncHandler(async (req, res) => {
 
   return res.status(201).json(
     new apiResponse(201, newEntry, "Response created successfully")
+  );
+});
+
+const score642 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("6.4.2");
+
+  // 1. Get criteria details
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // 2. Get latest IIQA session range
+  const currentIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if (!currentIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const startYear = currentIIQA.session_end_year - 4; // 5 years total
+  const endYear = currentIIQA.session_end_year;
+
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, "Session must be between the latest IIQA session and the current year");
+  }
+
+  // 3. Fetch all grant amounts from the last 5 years
+  const responses = await Criteria642.findAll({
+    attributes: ['grant_amount_lakhs', 'session'],
+    where: {
+      session: {
+        [Sequelize.Op.between]: [startYear, endYear]
+      },
+      grant_amount_lakhs: {
+        [Sequelize.Op.ne]: null // Only include records with non-null grant amounts
+      }
+    },
+    raw: true
+  });
+
+  // 4. Calculate total grant amount across all years
+  let totalGrantAmount = 0;
+  responses.forEach(response => {
+    if (response.grant_amount_lakhs) {
+      totalGrantAmount += parseFloat(response.grant_amount_lakhs) || 0;
+    }
+  });
+
+  // 5. Calculate average grant amount per year
+  const averageGrantPerYear = (totalGrantAmount / 5).toFixed(2);
+
+  // 6. Calculate score based on the average grant amount
+  let score;
+  let grade;
+  
+  if (averageGrantPerYear >= 100) {
+    score = 4;
+    grade = 4;
+  } else if (averageGrantPerYear >=80 && averageGrantPerYear < 100) {
+    score = 3;
+    grade = 3;
+  } else if (averageGrantPerYear >= 60 && averageGrantPerYear < 80) {
+    score = 2;
+    grade = 2;
+  } else if (averageGrantPerYear >=30 && averageGrantPerYear < 60) {
+    score = 1;
+    grade = 1;
+  } else {
+    score = 0;
+    grade = 0;
+  }
+
+  // 7. Create or update score
+  let entry = await Score.findOne({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    }
+  });
+
+  if (!entry) {
+    entry = await Score.create({
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
+      session,
+      cycle_year: 1
+    });
+  } else {
+    await Score.update({
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      totalGrantAmount: parseFloat(totalGrantAmount.toFixed(2)),
+      averageGrantPerYear: parseFloat(averageGrantPerYear),
+      score,
+      grade,
+      message: `Average grant amount of ₹${averageGrantPerYear} lakhs per year over 5 years`
+    }, "Score 6.4.2 calculated and updated successfully")
   );
 });
 
@@ -620,3 +1208,110 @@ const createResponse653 = asyncHandler(async (req, res) => {
     new apiResponse(201, entry, existingRecord ? "Response updated successfully" : "Response created successfully")
   );
 });
+
+const score653 = asyncHandler(async (req, res) => {
+  const criteria_code = convertToPaddedFormat("6.5.3");
+  const currentYear = new Date().getFullYear();
+  const session = currentYear;
+
+  // Step 1: Get criteria details
+  const criteria = await CriteriaMaster.findOne({
+    where: {
+      sub_sub_criterion_id: criteria_code
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria 6.5.3 not found in criteria_master");
+  }
+
+  // Step 2: Get latest response
+  const response = await Criteria653.findOne({
+    where: {
+      criteria_code: criteria.criteria_code
+    },
+    order: [['id', 'DESC']],
+    raw: true
+  });
+
+  if (!response) {
+    throw new apiError(404, "No response found for criteria 6.5.3");
+  }
+
+  const initiativeType = Number(response.initiative_type); // Get the initiative_type value
+
+  let score, grade;
+
+  // Map initiative_type to score and grade (0-4 scale)
+  // The mapping is direct since initiative_type is already in 0-4 scale
+  switch (initiativeType) {
+    case 4:
+      score = 4;
+      grade = 4;
+      break;
+    case 3:
+      score = 3;
+      grade = 3;
+      break;
+    case 2:
+      score = 2;
+      grade = 2;
+      break;
+    case 1:
+      score = 1;
+      grade = 1;
+      break;
+    case 0:
+    default:
+      score = 0;
+      grade = 0;
+  }
+
+  // Step 3: Create or update score entry
+  const [entry, created] = await Score.upsert({
+    criteria_code: criteria.criteria_code,
+    criteria_id: criteria.criterion_id,
+    sub_criteria_id: criteria.sub_criterion_id,
+    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+    score_criteria: 0,
+    score_sub_criteria: 0,
+    score_sub_sub_criteria: score,
+    sub_sub_cr_grade: grade,
+    session: currentYear,
+    year: currentYear,
+    cycle_year: 1
+  }, {
+    conflictFields: ['criteria_code', 'session', 'year']
+  });
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      score,
+      initiativeType,
+      grade,
+      message: `Grade is ${grade} (Initiative type: ${initiativeType})`
+    }, created ? "Score created successfully" : "Score updated successfully")
+  );
+});
+
+const getResponsesByCriteriaCode = asyncHandler(async (req, res) => {
+  const { criteriaCode } = req.params;
+
+  const responses = await Criteria6.findAll({
+    where: { criteria_code: criteriaCode }
+  });
+
+  return res.status(200).json(
+    new apiResponse(200, responses, "Responses retrieved successfully")
+  );
+});
+
+const getAllCriteria6 = asyncHandler(async (req, res) => {
+  const responses = await Criteria6.findAll();
+
+  return res.status(200).json(
+    new apiResponse(200, responses, "Responses retrieved successfully")
+  );
+});
+
+export { getResponsesByCriteriaCode,getAllCriteria6, createResponse623, createResponse632, createResponse633, createResponse634, createResponse642, createResponse653, score623, score632, score633,score634,score642,score653 };
