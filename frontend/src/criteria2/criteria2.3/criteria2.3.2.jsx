@@ -4,6 +4,7 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from 'react-router-dom';
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria2_3_2 = () => {
 
@@ -135,10 +136,9 @@ const Criteria2_3_2 = () => {
 
 
   return (
-    <div className="min-h-screen w-[1690px] bg-gray-50 flex flex-col">
-      <Header />
-      <Navbar />
-      <div className="flex flex-1">
+    <div className="min-h-screen w-screen bg-gray-50 flex flex-col">
+      <LandingNavbar />
+      <div className="flex-1 mt-6 flex flex-col p-4">
         <Sidebar />
 
         <div className="flex-1 flex flex-col p-4">

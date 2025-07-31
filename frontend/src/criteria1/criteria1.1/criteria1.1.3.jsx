@@ -6,6 +6,7 @@ import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
 import { SessionContext } from "../../contextprovider/sessioncontext";
 import axios from "axios";
+import LandingNavbar from "../../components/landing-navbar";
 
 // Mapping between body options and their numbers (server expects numeric option_selected)
 const bodyOptions = {
@@ -141,13 +142,13 @@ const Criteria1_1_3 = () => {
   };
 
   return (
-    <div className="min-h-screen w-[1520px] bg-gray-50 flex flex-col">
-      <Header />
-      <Navbar />
-      <div className="flex flex-1">
+    <div className="min-h-screen w-screen bg-gray-50 flex flex-col">
+    
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">
         <Sidebar />
 
-        <div className="flex-1 p-6">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-medium text-gray-800">Criteria 1: Curricular Aspects</h2>
             <div className="text-sm text-gray-600">1.1 - Curricular Planning and Implementation</div>

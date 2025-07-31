@@ -4,6 +4,7 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from 'react-router-dom';
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria2_2_1 = () => {
 
@@ -135,13 +136,12 @@ const Criteria2_2_1 = () => {
  
 
   return (
-    <div className="min-h-screen w-[1520px] bg-gray-50 flex flex-col">
-      <Header />
-      <Navbar />
-      <div className="flex flex-1">
+    <div className="min-h-screen w-screen bg-gray-50 flex flex-col">
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">
         <Sidebar />
 
-        <div className="flex-1 flex flex-col p-4">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           {/* Page Title and Date */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Criteria 2- Teaching- Learning and Evaluation</h2>

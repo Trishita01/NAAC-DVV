@@ -11,10 +11,14 @@ import {
   FaDownload,
   FaQuestionCircle,
   FaCog,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaBell
 } from 'react-icons/fa';
+import { useAuth } from './auth/authProvider';
 import axios from 'axios';
 import Sidebar from './components/iqac-sidebar';
+import UserDropdown from './components/UserDropdown';
+
 
 export default function IIQA() {
   const navigate = useNavigate();
@@ -206,6 +210,8 @@ export default function IIQA() {
     }
   }
 
+  const { user } = useAuth();
+
   return (
     <div className="flex min-h-screen w-screen bg-gray-100">
       <Sidebar
@@ -218,8 +224,18 @@ export default function IIQA() {
       <div className={`flex-1 transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center h-[50px] w-[130px] shadow border border-black/10 rounded-2xl">
+            <div className="flex items-center h-[50px] w-[350px] shadow border border-black/10 rounded-2xl">
+              <a href="#" className="text-gray-500 hover:text-gray-700 mr-2">
+                <i className="fas fa-arrow-left"></i>
+              </a>
               <p className="text-2xl font-bold text-gray-800">IIQA Form</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              {/* <div className="relative cursor-pointer group">
+                <FaBell className="text-gray-600 text-xl transform transition-transform duration-200 group-hover:scale-110"/>
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center animate-pulse">1</span>
+              </div> */}
+              <UserDropdown user={user} className="ml-2" />
             </div>
           </div>
         </div>

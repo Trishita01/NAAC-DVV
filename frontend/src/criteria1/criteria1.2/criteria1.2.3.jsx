@@ -1,69 +1,155 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import LandingNavbar from "../../components/landing-navbar";  
+import { SessionContext } from "../../contextprovider/sessioncontext";
+
+// Fallback static list if SessionContext not loaded
+const fallbackYears = ["2024-25", "2023-24", "2022-23", "2021-22", "2020-21"];
 
 const Criteria1_2_3 = () => {
-  const [yearData, setYearData] = useState({});
-  const currentYear = new Date().getFullYear();
-  
-    const pastFiveYears=Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`)
-    {/*const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${currentYear - i}-${(currentYear - i + 1).toString().slice(-2)}`);*/}
-  
-    const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
+  const { sessions, isLoading: sessionLoading, error: sessionError } = useContext(SessionContext);
 
+  const [selectedSession, setSelectedSession] = useState("");
+
+  const [yearData, setYearData] = useState({});
   const [formData, setFormData] = useState({
-    names: "",
-    code: "",
-    yearofoffering: "",
-    times: "",
+    program_name: "",
+    course_code: "",
+    year_of_offering: "",
+    no_of_times_offered: "",
     duration: "",
-    students: "",
-    totalstudents: "",
+    no_of_students_enrolled: "",
+    no_of_students_completed: "",
   });
-   const [yearCount, setYearCount] = useState(5);
-    const [yearScores, setYearScores] = useState({
-      "2024-25": 0,
-      "2023-24": 0,
-      "2022-23": 0,
-      "2021-22": 0,
-      "2020-21": 0,
-    });
-    const [averageScore, setAverageScore] = useState(null);
-  
+
+  const [currentYear, setCurrentYear] = useState("");
+  const [yearCount, setYearCount] = useState(5);
+  const [yearScores, setYearScores] = useState({
+    "2024-25": 0,
+    "2023-24": 0,
+    "2022-23": 0,
+    "2021-22": 0,
+    "2020-21": 0,
+  });
+  const [averageScore, setAverageScore] = useState(null);
+
+  const [score, setScore] = useState(null);
+  const [provisionalScore, setProvisionalScore] = useState(null);
+  const [scoreLoading, setScoreLoading] = useState(false);
+  const [scoreError, setScoreError] = useState(null);
 
   const navigate = useNavigate();
-  const years = ["2024-25", "2023-24", "2022-23", "2021-22", "2020-21"];
 
+  // Fetch score from backend on mount and after successful submit
+  // Default to most recent session once sessions load
+  useEffect(() => {
+    if (sessions && sessions.length > 0 && !selectedSession) {
+      setSelectedSession(sessions[0]);
+      setCurrentYear(sessions[0]);
+    }
+  }, [sessions, selectedSession]);
+
+  const fetchScore = async () => {
+    console.log('Fetching score...');
+    setScoreLoading(true);
+    setScoreError(null);
+    try {
+      const response = await axios.get("http://localhost:3000/api/v1/criteria1/score123");
+      console.log('API Response:', response);
+      console.log('Response data:', response.data);
+      setProvisionalScore(response.data);
+      console.log('provisionalScore after set:', provisionalScore);
+    } catch (error) {
+      console.error("Error fetching provisional score:", error);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
+      }
+      setScoreError(error.message || "Failed to fetch score");
+    } finally {
+      setScoreLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchScore();
+  }, []);
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleSubmit = () => {
-    const { names, code, yearofoffering, times, duration, students, totalstudents } = formData;
-    if (names && code && yearofoffering && times && duration && students && totalstudents) {
-      const updatedYearData = {
-        ...yearData,
-        [currentYear]: [...(yearData[currentYear] || []), formData],
-      };
-      setYearData(updatedYearData);
-      setFormData({
-        names: "",
-        code: "",
-        yearofoffering: "",
-        times: "",
-        duration: "",
-        students: "",
-        totalstudents: "",
-      });
+  const handleSubmit = async () => {
+    const {
+      program_name,
+      course_code,
+      year_of_offering,
+      no_of_times_offered,
+      duration,
+      no_of_students_enrolled,
+      no_of_students_completed,
+    } = formData;
+
+    // Validate
+    if (
+      formData.program_name &&
+      formData.course_code &&
+      formData.year_of_offering &&
+      formData.no_of_times_offered &&
+      formData.duration &&
+      formData.no_of_students_enrolled &&
+      no_of_students_completed
+    ) {
+      try {
+        // Get first year from session string, eg "2023-24" => "2023"
+        const session = selectedSession.split("-")[0] || selectedSession;
+
+        const payload = {
+          session: session,
+          program_name: formData.program_name,
+          course_code: formData.course_code,
+          year_of_offering: formData.year_of_offering,
+          no_of_times_offered: formData.no_of_times_offered,
+          duration: formData.duration,
+          no_of_students_enrolled,
+          no_of_students_completed,
+          supportLinks: formData.supportLinks,
+        };
+
+        const response= await axios.post("http://localhost:3000/api/v1/criteria1/createResponse122_123", payload);
+        console.log(response);
+
+        // Update frontend table
+        const updatedYearData = {
+          ...yearData,
+          [selectedSession]: [...(yearData[selectedSession] || []), payload],
+        }; 
+        setYearData(updatedYearData);
+        setFormData({
+          program_name: "",
+          course_code: "",
+          year_of_offering: "",
+          no_of_times_offered: "",
+          duration: "",
+          no_of_students_enrolled: "",
+          no_of_students_completed: "",
+        });
+
+        alert("Data submitted successfully!");
+        fetchScore();
+      } catch (err) {
+        alert("Submission failed. " + (err?.response?.data?.message || err.message));
+      }
     } else {
       alert("Please fill in all fields.");
     }
   };
 
-   const goToNextPage = () => {
+  const goToNextPage = () => {
     navigate("/criteria1.3.1");
   };
 
@@ -72,12 +158,11 @@ const Criteria1_2_3 = () => {
   };
 
   return (
-    <div className="w-[1520px] min-h-screen bg-gray-50 overflow-x-hidden">
-      <Header />
-      <Navbar />
-      <div className="flex w-full">
+    <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden">
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">
         <Sidebar />
-        <div className="flex-1 p-6">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-medium text-gray-800">Criteria 1: Curricular Aspects</h2>
             <div className="text-sm">
@@ -86,32 +171,75 @@ const Criteria1_2_3 = () => {
             </div>
           </div>
 
+          {/* Score display */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="mb-4">
-              <h3 className="text-blue-600 font-medium mb-2">1.2.3 Metric Information</h3>
+            <div>
+              <h3 className="text-blue-600 font-medium mb-2">
+                1.2.3 Metric Information
+              </h3>
+              
               <p className="text-sm text-gray-700">
-                Average percentage of students enrolled in Certificate/ Add-on 
-programs as against the total number of students during the last five 
-years
+                Average percentage of students enrolled in Certificate/Add-on programs as against the total number of students during the last five years
               </p>
             </div>
-
-            <div className="mb-6">
+            
+            <div className="mb-6 mt-4">
               <h3 className="text-blue-600 font-medium mb-2">Requirements:</h3>
               <ul className="list-disc pl-5 text-sm text-gray-700">
-                <li>Details of the students enrolled in Subjects related to 
-certificate/Add-on programs </li>
-                
+                <li>Details of the students enrolled in Subjects related to certificate/Add-on programs </li>
               </ul>
             </div>
           </div>
 
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="flex justify-center mb-4">
+              <div className="text-center">
+                <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
+                {scoreLoading ? (
+                  <span className="text-gray-500">Loading...</span>
+                ) : scoreError ? (
+                  <span className="text-red-500">Error: {scoreError}</span>
+                ) : provisionalScore ? (
+                  <div className="text-center">
+                    <div className="text-blue-600 text-lg font-bold">
+                      Score: {provisionalScore.data?.score || 'N/A'}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-gray-500">Score not available</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 rounded">
+            <p className="font-semibold">
+              Fill in the inputs in 2.4.1 to get the corresponding results.
+            </p>
+          </div>
+
+          {/* Data entry
           <div className="border rounded mb-8">
-            <h2 className="text-xl font-bold bg-blue-100 text-gray-800 px-4 py-2">Add On Programs - {currentYear}</h2>
+            <div className="flex items-center justify-between bg-blue-100 text-gray-800 px-4 py-2">
+              <h2 className="text-xl font-bold">
+                Add On Programs
+              </h2>
+              <div>
+                <label className="text-gray-700 font-medium mr-2">Select Year:</label>
+                <select
+                  value={selectedSession}
+                  onChange={(e) => setSelectedSession(e.target.value)}
+                  className="border border-gray-300 px-3 py-1 rounded text-gray-950"
+                >
+                  {(sessions?.length ? sessions : fallbackYears).map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <table className="w-full border text-sm border-black">
-              <thead className="bg-gray-100  text-gray-950">
+              <thead className="bg-gray-100 text-gray-950">
                 <tr>
-                  <th className="border px-2  py-2">Program Name</th>
+                  <th className="border px-2 py-2">Program Name</th>
                   <th className="border px-2 py-2">Program Code</th>
                   <th className="border px-2 py-2">Year of Offering</th>
                   <th className="border px-2 py-2">Times Offered</th>
@@ -123,18 +251,70 @@ certificate/Add-on programs </li>
               </thead>
               <tbody>
                 <tr>
-                  {Object.keys(formData).map((key) => (
-                    <td key={key} className="border px-2 py-1">
-                      <input
-                        type={key === "students" || key === "totalstudents" ? "number" : "text"}
-                        className="w-full border text-gray-950 border-black rounded px-2 py-1"
-                        placeholder={key.replace(/([A-Z])/g, " $1")}
-                        value={formData[key]}
-                        onChange={(e) => handleChange(key, e.target.value)}
-                      />
-                    </td>
-                  ))}
-                  <td className="border px-2 py-1  text-center">
+                  <td className="border px-2 py-1">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 border-black rounded px-2 py-1"
+                      placeholder="Program Name"
+                      value={formData.program_name}
+                      onChange={(e) => handleChange("program_name", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 border-black rounded px-2 py-1"
+                      placeholder="Program Code"
+                      value={formData.course_code}
+                      onChange={(e) => handleChange("course_code", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 border-black rounded px-2 py-1"
+                      placeholder="Year of Offering"
+                      value={formData.year_of_offering}
+                      onChange={(e) => handleChange("year_of_offering", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 border-black rounded px-2 py-1"
+                      placeholder="Times Offered"
+                      value={formData.no_of_times_offered}
+                      onChange={(e) => handleChange("no_of_times_offered", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 border-black rounded px-2 py-1"
+                      placeholder="Duration"
+                      value={formData.duration}
+                      onChange={(e) => handleChange("duration", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="number"
+                      className="w-full border text-gray-950 border-black rounded px-2 py-1"
+                      placeholder="Students Enrolled"
+                      value={formData.no_of_students_enrolled}
+                      onChange={(e) => handleChange("no_of_students_enrolled", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="number"
+                      className="w-full border text-gray-950 border-black rounded px-2 py-1"
+                      placeholder="Students Completed"
+                      value={formData.no_of_students_completed}
+                      onChange={(e) => handleChange("no_of_students_completed", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1 text-center">
                     <button
                       className="!bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
                       onClick={handleSubmit}
@@ -145,9 +325,10 @@ certificate/Add-on programs </li>
                 </tr>
               </tbody>
             </table>
-          </div>
+          </div> */}
 
-          {years.map((year) => (
+          {/* Submitted rows
+          {(sessions?.length ? sessions : Object.keys(yearData)).map((year) => (
             <div key={year} className="mb-8 border rounded">
               <h3 className="text-lg font-semibold bg-gray-100 text-gray-800 px-4 py-2">Year: {year}</h3>
               {yearData[year] && yearData[year].length > 0 ? (
@@ -168,13 +349,13 @@ certificate/Add-on programs </li>
                     {yearData[year].map((entry, index) => (
                       <tr key={index} className="even:bg-gray-50">
                         <td className="border text-gray-950 px-2 py-1">{index + 1}</td>
-                        <td className="border text-gray-950 px-2 py-1">{entry.names}</td>
-                        <td className="border text-gray-950 px-2 py-1">{entry.code}</td>
-                        <td className="border text-gray-950 px-2 py-1">{entry.yearofoffering}</td>
-                        <td className="border text-gray-950 px-2 py-1">{entry.times}</td>
+                        <td className="border text-gray-950 px-2 py-1">{entry.program_name}</td>
+                        <td className="border text-gray-950 px-2 py-1">{entry.course_code}</td>
+                        <td className="border text-gray-950 px-2 py-1">{entry.year_of_offering}</td>
+                        <td className="border text-gray-950 px-2 py-1">{entry.no_of_times_offered}</td>
                         <td className="border text-gray-950 px-2 py-1">{entry.duration}</td>
-                        <td className="border text-gray-950 px-2 py-1">{entry.students}</td>
-                        <td className="border text-gray-950 px-2 py-1">{entry.totalstudents}</td>
+                        <td className="border text-gray-950 px-2 py-1">{entry.no_of_students_enrolled}</td>
+                        <td className="border text-gray-950 px-2 py-1">{entry.no_of_students_completed}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -183,12 +364,10 @@ certificate/Add-on programs </li>
                 <p className="text-gray-600 px-4 py-2">No data submitted for this year.</p>
               )}
             </div>
-          ))}
+          ))} */}
 
-
-
-
-            <div className="overflow-auto border rounded p-4">
+          {/* Calculation Table */}
+          <div className="overflow-auto border rounded p-4">
             <h2 className="text-lg font-semibold mb-2 text-gray-700">
               Calculation Table (Last 5 Years)
             </h2>
@@ -251,7 +430,7 @@ certificate/Add-on programs </li>
             )}
           </div>
 
-           <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
+          <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
             <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />
           </div>
         </div>

@@ -3,7 +3,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './components/iqac-sidebar';
 import { navItems } from './config/navigation';
-import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaQuestionCircle, FaCog, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaQuestionCircle, FaCog, FaSignOutAlt, FaUser, FaBell } from 'react-icons/fa';
+import { useAuth } from './auth/authProvider';
+import UserDropdown from './components/UserDropdown';
 
 const ExtendedProfileForm = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -11,6 +13,8 @@ const ExtendedProfileForm = () => {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 4 + i);
   const [selectedYear, setSelectedYear] = useState(years[4]); // default latest year
+
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
     courses: Array(5).fill(''),
@@ -91,7 +95,7 @@ const ExtendedProfileForm = () => {
   );
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex min-h-screen w-screen bg-gray-100">
       {/* Sidebar */}
       <Sidebar 
         collapsed={collapsed} 
@@ -101,19 +105,33 @@ const ExtendedProfileForm = () => {
       />
       
       {/* Main Content */}
-      <div className={`flex-1 overflow-auto transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'} w-[calc(100%-4rem)]`}>
-        <div className="min-h-full">
-          {/* Header */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mx-6 my-6">
-            <div className="px-6 py-4">
-              <h1 className="text-xl font-semibold text-gray-800">
-                Extended Profile of the Institution
-              </h1>
+      <div className={`flex-1 transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center h-[50px] w-[350px] shadow border border-black/10 rounded-2xl">
+              <a href="#" className="text-gray-500 hover:text-gray-700 mr-2">
+                <i className="fas fa-arrow-left"></i>
+              </a>
+              <p className="text-2xl font-bold text-gray-800">Extended Profile</p>
             </div>
+            <div className="flex items-center space-x-4">
+              {/* <div className="relative cursor-pointer group">
+                <FaBell className="text-gray-600 text-xl transform transition-transform duration-200 group-hover:scale-110"/>
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center animate-pulse">1</span>
+              </div> */}
+              <UserDropdown user={user} className="ml-2" />
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6">
+          <div className="mb-4">
+            <h4 className="text-lg font-bold text-gray-900 mb-1">Extended Profile of the Institution</h4>
+            <p className="text-sm text-gray-600">Comprehensive academic and institutional information</p>
           </div>
 
           {/* Main Content */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mx-6 mb-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             {/* Academic Information Header */}
             <div className="bg-blue-600 text-white px-6 py-4">
               <h2 className="text-lg font-medium">Academic Information</h2>

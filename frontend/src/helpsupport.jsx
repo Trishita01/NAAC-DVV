@@ -10,8 +10,10 @@ FaUsers,FaEdit, FaSignInAlt,
 FaTachometerAlt, FaFileAlt, FaChartLine, FaPaperPlane, FaSignOutAlt, FaDownload, FaCog, FaQuestionCircle
 } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
+import Sidebar from './components/iqac-sidebar';
 
 const HelpSupport = () => {
+const navigate = useNavigate();
 const [activeTab, setActiveTab] = useState(0);
 const [activeCriteria, setActiveCriteria] = useState(null);
 const [activeFaq, setActiveFaq] = useState(null);
@@ -328,13 +330,14 @@ return (
 
     <div className="flex min-h-screen w-[1520px] bg-gray-50">
           {/* Sidebar */}
-         <div className={`h-screen bg-gray-900 text-white flex flex-col fixed top-0 left-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
-         <div className="flex justify-between items-center p-4 border-b border-gray-800">
-            {!collapsed && <span className="font-bold text-xl">NAAC</span>}
-            <button onClick={() => setCollapsed(!collapsed)} className="focus:outline-none text-gray-300 !bg-gray-800 hover:text-white">
-              {collapsed ? <FaArrowRight className=""/> : <FaArrowLeft className=""/>}
-            </button>
-          </div> 
+         <div className={`flex-shrink-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
+                 <Sidebar 
+                   navItems={navItems} 
+                   collapsed={collapsed} 
+                   setCollapsed={setCollapsed} 
+                   navigate={navigate} 
+                 />
+               </div> 
     
           <div className="flex-1 overflow-auto">
             <nav className="mt-4 space-y-1">
@@ -347,7 +350,7 @@ return (
                 </div>
               ))}
             </nav>
-          </div></div>
+          </div>
 {/* Header */}
 <div className={`${collapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
 <header className="bg-white shadow-sm">

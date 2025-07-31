@@ -1322,6 +1322,9 @@ const score1 = asyncHandler(async (req, res) => {
 //   });
 // });
 
+
+        
+
 //totalscore
 const scoreTotal = asyncHandler(async (req, res) => {
   const session = new Date().getFullYear().toString();

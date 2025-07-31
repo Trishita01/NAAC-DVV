@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Edit, Trash2, Plus, ChevronDown, ChevronRight, BarChart3, Users as UsersIcon, Building2, FileText, Upload, Settings, Shield } from 'lucide-react';
 import { FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaBell, FaUser, FaTachometerAlt } from 'react-icons/fa';
 import Sidebar from './components/iqac-sidebar';
+import UserDropdown from './components/UserDropdown';
+import { useAuth } from './auth/authProvider';
 import { navItems } from './config/navigation';
 
 function UserManagement() {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const { user } = useAuth();
   // const navItems = [
   //   { icon: FaTachometerAlt, text: 'Dashboard', path: '/iqac-dashboard' },
   //   { icon: FaUsers, text: 'User Management', path: '/user-management' },
@@ -312,14 +315,21 @@ function UserManagement() {
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center h-[50px] w-[350px] shadow border  border-black/10 rounded-2xl">
+            <div className="flex items-center h-[50px] w-[350px] shadow border border-black/10 rounded-2xl">
               <a href="#" className="text-gray-500 hover:text-gray-700 mr-2">
                 <i className="fas fa-arrow-left"></i>
               </a>
-              <p className="text-2xl font-bold text-gray-800">IQAC Supervisor Dashboard</p>
+              <p className="text-2xl font-bold text-gray-800">User Management</p>
             </div>
+            <div className="flex items-center space-x-4">
+              {/* <div className="relative cursor-pointer group">
+                <FaBell className="text-gray-600 text-xl transform transition-transform duration-200 group-hover:scale-110"/>
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center animate-pulse">1</span>
+              </div> */}
+              <UserDropdown user={user} className="ml-2" />
             </div>
-           
+          </div>
+          
 
         <div className="p-6">
           {/* Dashboard Overview */}

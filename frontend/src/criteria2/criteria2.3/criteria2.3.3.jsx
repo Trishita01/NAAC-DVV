@@ -6,6 +6,7 @@ import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { SessionContext } from "../../contextprovider/sessioncontext";
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria2_3_3 = () => {
   const { sessions: sessionYears, isLoading: isLoadingSessions, error: sessionError } = useContext(SessionContext);
@@ -133,11 +134,10 @@ const Criteria2_3_3 = () => {
 
   return (
     <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden text-black">
-      <Header />
-      <Navbar />
-      <div className="flex w-full">
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">
         <Sidebar />
-        <div className="flex-1 p-6">
+        <div className="flex-1 mt-6 flex flex-col p-4">
           <h2 className="text-2xl font-bold text-blue-900 mb-6">
             2.3.3.1 Mentor to Student Ratio
           </h2>

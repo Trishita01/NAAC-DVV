@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import * as echarts from 'echarts';
 import { SessionContext } from './contextprovider/sessioncontext';
 import { Search, Users, Building2, Shield, BarChart3, FileText, Upload, Settings, Edit, Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-react';
@@ -6,40 +6,60 @@ import Sidebar from './components/iqac-sidebar';
 import { useNavigate } from 'react-router-dom';
 import { navItems } from './config/navigation';
 import { useAuth } from './auth/authProvider';
-import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaBell, FaUser } from 'react-icons/fa';
+import LandingNavbar from './components/landing-navbar';
+import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaBell, FaUser, FaEnvelope, FaUserCircle } from 'react-icons/fa';
+import UserDropdown from './components/UserDropdown';
 
 const IqacDashboard = () => {
+ 
   const [currentDate] = useState(new Date('2025-06-25'));
   const [collapsed, setCollapsed] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState(null);
   const { desiredGrade } = useContext(SessionContext);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const dropdownRef = useRef(null);
 
   const navigate = useNavigate();
 
-  // const navItems = [
-  //   { icon: FaTachometerAlt, text: 'Dashboard', path: '/iqac-dashboard' },
-  //   { icon: FaUsers, text: 'User Management', path: '/user-management' },
-  //   { icon: FaFileAlt, text: 'Data Entry Forms', path: '/criteria1.1.1' },
-  //   { icon: FaChartLine, text: 'GPA Analysis', path: '/gpa-analysis' },
-  //   { icon: FaPaperPlane, text: 'IIQA form', path: '/iiqa' },
-  //   { icon: FaDownload, text: 'Extended Profile', path: '/extendedprofile' },
-  //   { icon: FaQuestionCircle, text: 'Help and Support', path: '/helpsupport' },
-  //   { icon: FaCog, text: 'Configuration', path: '/configuration' },
-  //   { icon: FaSignOutAlt, text: 'Logout', path: '/logout' }
-  // ];
+  // Handle clicking outside the dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Animation on component mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-    // GPA Visuals Chart
+    // GPA Visuals Chart with animation
     const gpaChart = echarts.init(document.getElementById('gpa-chart'));
     const gpaOption = {
-      animation: false,
+      animation: true,
+      animationDuration: 1500,
+      animationEasing: 'elasticOut',
       radar: {
         indicator: [
           { name: 'Criterion 1', max: 100 },
           { name: 'Criterion 2', max: 100 },
           { name: 'Criterion 3', max: 100 },
           { name: 'Criterion 4', max: 100 },
-          { name: 'Criterion 5', max: 100 }
+          { name: 'Criterion 5', max: 100 },
+          { name: 'Criterion 6', max: 100 },
+          { name: 'Criterion 7', max: 100 },
         ],
         radius: '65%',
         splitNumber: 4,
@@ -51,14 +71,14 @@ const IqacDashboard = () => {
           type: 'radar',
           data: [
             {
-              value: [62, 70, 52, 58, 65],
+              value: [62, 70, 52, 58, 65,43,23],
               name: 'Current Score',
               itemStyle: { color: '#3b82f6' },
               areaStyle: { color: 'rgba(59, 130, 246, 0.2)' },
               lineStyle: { color: '#3b82f6', width: 2 }
             },
             {
-              value: [90, 85, 75, 80, 85],
+              value: [90, 85, 75, 80, 85,23,23],
               name: 'Target Score',
               itemStyle: { color: '#9ca3af' },
               areaStyle: { color: 'rgba(156, 163, 175, 0.2)' },
@@ -70,10 +90,12 @@ const IqacDashboard = () => {
     };
     gpaChart.setOption(gpaOption);
 
-    // Monthly Progress Chart
+    // Monthly Progress Chart with animation
     const progressChart = echarts.init(document.getElementById('progress-chart'));
     const progressOption = {
-      animation: false,
+      animation: true,
+      animationDuration: 2000,
+      animationEasing: 'cubicOut',
       grid: { left: '3%', right: '4%', bottom: '10%', top: '5%', containLabel: true },
       xAxis: {
         type: 'category',
@@ -124,6 +146,16 @@ const IqacDashboard = () => {
     };
   }, []);
 
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   const sidebarItems = [
     { icon: BarChart3, label: 'Dashboard', active: false },
     { icon: Users, label: 'User Management', active: true },
@@ -134,8 +166,67 @@ const IqacDashboard = () => {
     { icon: Settings, label: 'Settings', active: false }
   ];
 
+  const statusCards = [
+    { label: 'Projected Grade', value: 'A', color: 'text-blue-600', sub: 'Based on current progress', bgGradient: 'from-blue-50 to-blue-100' },
+    { label: 'Desired Grade', value: desiredGrade || 'N/A', color: 'text-amber-500', sub: 'Target accreditation level', bgGradient: 'from-amber-50 to-amber-100' },
+    { label: 'Criteria Lacking', value: '4', color: 'text-red-500', sub: 'Need immediate attention', bgGradient: 'from-red-50 to-red-100' },
+    { label: 'Next Deadline', value: 'Jun 15', color: 'text-gray-800', sub: '10 days remaining', bgGradient: 'from-gray-50 to-gray-100' }
+  ];
+
+  const actionItems = [
+    {
+      priority: 'high',
+      icon: 'fas fa-exclamation-circle',
+      title: 'High Priority: Criterion 2.5 missing data',
+      assignee: 'Assigned to Dr. Smith',
+      due: 'Due: Jun 12, 2025',
+      colorScheme: { border: 'border-red-500', bg: 'bg-red-50', text: 'text-red-800', subtext: 'text-red-700', icon: 'text-red-500', meta: 'text-red-600' }
+    },
+    {
+      priority: 'medium',
+      icon: 'fas fa-exclamation-triangle',
+      title: 'Medium Priority: Criterion 3.2 needs review',
+      assignee: 'Assigned to Prof. Williams',
+      due: 'Due: Jun 20, 2025',
+      colorScheme: { border: 'border-amber-500', bg: 'bg-amber-50', text: 'text-amber-800', subtext: 'text-amber-700', icon: 'text-amber-500', meta: 'text-amber-600' }
+    },
+    {
+      priority: 'info',
+      icon: 'fas fa-info-circle',
+      title: 'Informational: Criterion 5.1.2 data updated',
+      assignee: 'Data file awaiting final review',
+      due: 'Updated: Jun 8, 2025',
+      colorScheme: { border: 'border-blue-500', bg: 'bg-blue-50', text: 'text-blue-800', subtext: 'text-blue-700', icon: 'text-blue-500', meta: 'text-blue-600' }
+    },
+    {
+      priority: 'completed',
+      icon: 'fas fa-check-circle',
+      title: 'Completed: Criterion 1.1.1 approved',
+      assignee: 'Approved by Principal',
+      due: 'Completed: Jun 5, 2025',
+      colorScheme: { border: 'border-green-500', bg: 'bg-green-50', text: 'text-green-800', subtext: 'text-green-700', icon: 'text-green-500', meta: 'text-green-600' }
+    },
+    {
+      priority: 'medium',
+      icon: 'fas fa-exclamation-triangle',
+      title: 'Medium Priority: Criterion 7.1.2 data inconsistent',
+      assignee: 'Assigned to Dr. Anthony',
+      due: 'Due: Jun 18, 2025',
+      colorScheme: { border: 'border-amber-500', bg: 'bg-amber-50', text: 'text-amber-800', subtext: 'text-amber-700', icon: 'text-amber-500', meta: 'text-amber-600' }
+    }
+  ];
+
+  const feedbackItems = [
+    { criterion: 'Criterion 2.5: data reliability', status: 'Needs Attention', color: 'bg-red-500', textColor: 'text-red-600' },
+    { criterion: 'Criterion 4.2: needs clarification', status: 'In Progress', color: 'bg-amber-500', textColor: 'text-amber-600' },
+    { criterion: 'Criterion 3.1: requires evidence', status: 'Under Review', color: 'bg-blue-500', textColor: 'text-blue-600' },
+    { criterion: 'Criterion 6.1: data missing', status: 'Needs Attention', color: 'bg-red-500', textColor: 'text-red-600' },
+    { criterion: 'General feedback on data formatting', status: 'Addressed', color: 'bg-green-500', textColor: 'text-green-600' }
+  ];
+
   return (
     <div className="flex min-h-screen bg-gray-50">
+ 
       {/* Sidebar */}
       <Sidebar
         collapsed={collapsed} 
@@ -145,65 +236,66 @@ const IqacDashboard = () => {
       />
       
       {/* Main Content */}
-      <div className={`flex-1 ${collapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+      <div className={`flex-1 ${collapsed ? 'ml-16' : 'ml-64'} transition-all duration-300 relative`}>
         <div className="p-6">
           {/* Header */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center h-[50px] w-[350px] shadow border  border-black/10 rounded-2xl">
-              <a href="#" className="text-gray-500 hover:text-gray-700 mr-2">
+          <div className={`flex justify-between items-center mb-6 transform transition-all duration-700 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`} style={{ position: 'relative', zIndex: 10000 }}>
+            <div className="flex items-center h-[50px] w-[350px] shadow border border-black/10 rounded-2xl hover:shadow-lg transition-shadow duration-300">
+              <a href="#" className="text-gray-500 hover:text-gray-700 mr-2 transition-colors duration-200">
                 <i className="fas fa-arrow-left"></i>
               </a>
               <p className="text-2xl font-bold text-gray-800">IQAC Supervisor Dashboard</p>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="relative cursor-pointer">
-                <FaBell className=" text-gray-600 text-xl"/>
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">1</span>
-              </div>
-              <div className="cursor-pointer">
-                <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700">
-                  <FaUser className=""/>
-                </div>
-              </div>
+              {/* <div className="relative cursor-pointer group">
+                <FaBell className="text-gray-600 text-xl transform transition-transform duration-200 group-hover:scale-110"/>
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center animate-pulse">1</span>
+              </div> */}
+              
+              {/* User Dropdown */}
+              <UserDropdown user={user} className="ml-2" />
             </div>
           </div>
 
           {/* Welcome Message */}
-          <div className="mb-6 ">
+          <div className={`mb-6 transform transition-all duration-700 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
             <h2 className="text-lg font-medium text-gray-800">Welcome, {user?.name || 'User'}</h2>
             <p className="text-sm text-gray-600">Your NAAC accreditation progress is on track, keep up the good work!</p>
           </div>
 
           {/* Status Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {[
-              { label: 'Projected Grade', value: 'A', color: 'text-blue-600', sub: 'Based on current progress' },
-              { label: 'Desired Grade', value: desiredGrade || 'N/A', color: 'text-amber-500', sub: 'Target accreditation level' },
-              { label: 'Criteria Lacking', value: '4', color: 'text-red-500', sub: 'Need immediate attention' },
-              { label: 'Next Deadline', value: 'Jun 15', color: 'text-gray-800', sub: '10 days remaining' }
-            ].map(({ label, value, color, sub }) => (
-              <div key={label} className="bg-white rounded-lg shadow p-5">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">{label}</h3>
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 transform transition-all duration-700 delay-200 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+            {statusCards.map(({ label, value, color, sub, bgGradient }, index) => (
+              <div 
+                key={label} 
+                className={`bg-white rounded-lg shadow p-5 transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer bg-gradient-to-br ${bgGradient}`}
+                style={{ animationDelay: `${index * 100}ms` }}
+                onMouseEnter={() => setHoveredCard(index)}
+                onMouseLeave={() => setHoveredCard(null)}
+              >
+                <h3 className="text-sm font-medium text-gray-500 mb-2 transition-colors duration-200">{label}</h3>
                 <div className="flex items-end">
-                  <div className={`text-4xl font-bold ${color}`}>{value}</div>
-                  <div className="ml-3 text-xs text-gray-500">{sub}</div>
+                  <div className={`text-4xl font-bold ${color} transform transition-all duration-300 ${hoveredCard === index ? 'scale-110' : ''}`}>
+                    {value}
+                  </div>
+                  <div className="ml-3 text-xs text-gray-500 transition-colors duration-200">{sub}</div>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 transform transition-all duration-700 delay-300 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
             {/* GPA Visuals */}
-            <div className="bg-white rounded-lg shadow p-5">
+            <div className="bg-white rounded-lg shadow p-5 hover:shadow-xl transition-shadow duration-300">
               <h3 className="text-sm font-medium text-gray-700 mb-4">GPA Visuals</h3>
               <div id="gpa-chart" className="w-full h-64"></div>
               <div className="flex justify-center mt-4 text-xs text-gray-500 space-x-6">
-                <div className="flex items-center">
+                <div className="flex items-center hover:scale-105 transition-transform duration-200">
                   <div className="w-3 h-3 bg-blue-500 rounded-sm mr-2"></div>
                   <span>Current Score</span>
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center hover:scale-105 transition-transform duration-200">
                   <div className="w-3 h-3 bg-gray-400 rounded-sm mr-2"></div>
                   <span>Target Score</span>
                 </div>
@@ -211,151 +303,90 @@ const IqacDashboard = () => {
             </div>
 
             {/* Monthly Progress */}
-            <div className="bg-white rounded-lg shadow p-5">
+            <div className="bg-white rounded-lg shadow p-5 hover:shadow-xl transition-shadow duration-300">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium text-gray-700">Monthly Progress</h3>
                 <span className="text-xs text-gray-500">Last 30 Days</span>
               </div>
               <div id="progress-chart" className="w-full h-64"></div>
               <div className="flex justify-end mt-2 text-xs">
-                <div className="flex items-center text-blue-600">
+                <div className="flex items-center text-blue-600 hover:scale-105 transition-transform duration-200">
                   <span>Rows Filled:</span>
                   <span className="ml-2 font-semibold">430</span>
                 </div>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-5 mb-8">
+
+          {/* Action Required Section */}
+          <div className={`bg-white rounded-lg shadow p-5 mb-8 hover:shadow-xl transition-shadow duration-300 transform transition-all duration-700 delay-400 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
             <h3 className="text-sm font-medium text-gray-700 mb-4">Action Required Section</h3>
-            {/* High Priority Item */}
-            <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r mb-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mr-3">
-                  <i className="fas fa-exclamation-circle text-red-500"></i>
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-red-800">High Priority: Criterion 2.5 missing data</div>
-                  <div className="text-sm text-red-700">Assigned to Dr. Smith</div>
-                  <div className="text-xs text-red-600 mt-1">Due: Jun 12, 2025</div>
-                </div>
-              </div>
-            </div>
-            {/* Medium Priority Item */}
-            <div className="border-l-4 border-amber-500 bg-amber-50 p-4 rounded-r mb-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mr-3">
-                  <i className="fas fa-exclamation-triangle text-amber-500"></i>
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-amber-800">Medium Priority: Criterion 3.2 needs review</div>
-                  <div className="text-sm text-amber-700">Assigned to Prof. Williams</div>
-                  <div className="text-xs text-amber-600 mt-1">Due: Jun 20, 2025</div>
+            {actionItems.map((item, index) => (
+              <div 
+                key={index}
+                className={`border-l-4 ${item.colorScheme.border} ${item.colorScheme.bg} p-4 rounded-r mb-4 transform transition-all duration-300 hover:scale-[1.02] hover:shadow-md`}
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mr-3">
+                    <i className={`${item.icon} ${item.colorScheme.icon} transform transition-transform duration-200`}></i>
+                  </div>
+                  <div className="flex-1">
+                    <div className={`font-medium ${item.colorScheme.text}`}>{item.title}</div>
+                    <div className={`text-sm ${item.colorScheme.subtext}`}>{item.assignee}</div>
+                    <div className={`text-xs ${item.colorScheme.meta} mt-1`}>{item.due}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-            {/* Informational Item */}
-            <div className="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r mb-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mr-3">
-                  <i className="fas fa-info-circle text-blue-500"></i>
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-blue-800">Informational: Criterion 5.1.2 data updated</div>
-                  <div className="text-sm text-blue-700">Data file awaiting final review</div>
-                  <div className="text-xs text-blue-600 mt-1">Updated: Jun 8, 2025</div>
-                </div>
-              </div>
-            </div>
-            {/* Completed Item */}
-            <div className="border-l-4 border-green-500 bg-green-50 p-4 rounded-r mb-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mr-3">
-                  <i className="fas fa-check-circle text-green-500"></i>
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-green-800">Completed: Criterion 1.1.1 approved</div>
-                  <div className="text-sm text-green-700">Approved by Principal</div>
-                  <div className="text-xs text-green-600 mt-1">Completed: Jun 5, 2025</div>
-                </div>
-              </div>
-            </div>
-            {/* Medium Priority Item 2 */}
-            <div className="border-l-4 border-amber-500 bg-amber-50 p-4 rounded-r">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mr-3">
-                  <i className="fas fa-exclamation-triangle text-amber-500"></i>
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-amber-800">Medium Priority: Criterion 7.1.2 data inconsistent</div>
-                  <div className="text-sm text-amber-700">Assigned to Dr. Anthony</div>
-                  <div className="text-xs text-amber-600 mt-1">Due: Jun 18, 2025</div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          <div className="bg-white rounded-lg shadow p-5 mb-8">
+          {/* Feedback Summary */}
+          <div className={`bg-white rounded-lg shadow p-5 mb-8 hover:shadow-xl transition-shadow duration-300 transform transition-all duration-700 delay-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
             <h3 className="text-sm font-medium text-gray-700 mb-4">Feedback Summary</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="h-3 w-3 rounded-full bg-red-500 mr-3"></span>
-                  <span className="text-gray-700">Criterion 2.5: data reliability</span>
+              {feedbackItems.map((item, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center justify-between p-2 rounded hover:bg-gray-50 transform transition-all duration-200 hover:scale-[1.01]"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <div className="flex items-center">
+                    <span className={`h-3 w-3 rounded-full ${item.color} mr-3 animate-pulse`}></span>
+                    <span className="text-gray-700">{item.criterion}</span>
+                  </div>
+                  <span className={`text-xs font-medium ${item.textColor} px-2 py-1 rounded-full bg-opacity-10 ${item.color.replace('bg-', 'bg-')}`}>
+                    {item.status}
+                  </span>
                 </div>
-                <span className="text-xs font-medium text-red-600">Needs Attention</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="h-3 w-3 rounded-full bg-amber-500 mr-3"></span>
-                  <span className="text-gray-700">Criterion 4.2: needs clarification</span>
-                </div>
-                <span className="text-xs font-medium text-amber-600">In Progress</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="h-3 w-3 rounded-full bg-blue-500 mr-3"></span>
-                  <span className="text-gray-700">Criterion 3.1: requires evidence</span>
-                </div>
-                <span className="text-xs font-medium text-blue-600">Under Review</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="h-3 w-3 rounded-full bg-red-500 mr-3"></span>
-                  <span className="text-gray-700">Criterion 6.1: data missing</span>
-                </div>
-                <span className="text-xs font-medium text-red-600">Needs Attention</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="h-3 w-3 rounded-full bg-green-500 mr-3"></span>
-                  <span className="text-gray-700">General feedback on data formatting</span>
-                </div>
-                <span className="text-xs font-medium text-green-600">Addressed</span>
-              </div>
+              ))}
             </div>
           </div>
+
           {/* SSR Download & Submission Panel */}
-          <div className="bg-white rounded-lg shadow p-5 mb-8">
+          <div className={`bg-white rounded-lg shadow p-5 mb-8 hover:shadow-xl transition-shadow duration-300 transform transition-all duration-700 delay-600 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
             <h3 className="text-sm font-medium text-gray-700 mb-4">SSR Download & Submission Panel</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button className="flex items-center justify-center !bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition duration-150 ease-in-out !rounded-button whitespace-nowrap cursor-pointer">
-                <i className="fas fa-history mr-2"></i>
-                View History
-              </button>
-              <button className="flex items-center justify-center !bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition duration-150 ease-in-out !rounded-button whitespace-nowrap cursor-pointer">
-                <i className="fas fa-cloud-download-alt mr-2"></i>
-                Review/Download Submission
-              </button>
-              <button className="flex items-center justify-center !bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition duration-150 ease-in-out !rounded-button whitespace-nowrap cursor-pointer">
-                <i className="fas fa-check-circle mr-2"></i>
-                Final Grade Submission
-              </button>
+              {[
+                { icon: 'fas fa-history', text: 'View History' },
+                { icon: 'fas fa-cloud-download-alt', text: 'Review/Download Submission' },
+                { icon: 'fas fa-check-circle', text: 'Final Grade Submission' }
+              ].map((button, index) => (
+                <button 
+                  key={index}
+                  className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-all duration-300 hover:shadow-lg hover:-translate-y-1 transform"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <i className={`${button.icon} mr-2 transform transition-transform duration-200`}></i>
+                  {button.text}
+                </button>
+              ))}
             </div>
           </div>
-          {/* Footer */}
-          <div className="text-center text-xs text-gray-500 mt-8 mb-4">
-            <div className="flex justify-end items-center">
 
+          {/* Footer */}
+          <div className={`text-center text-xs text-gray-500 mt-8 mb-4 transform transition-all duration-700 delay-700 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+            <div className="flex justify-end items-center">
             </div>
           </div>
         </div>

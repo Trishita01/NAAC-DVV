@@ -2,6 +2,7 @@ import React from "react";
 import PrivateRoute from "./protectedroute.jsx";
 import './App.css';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { GpaProvider } from "./contextprovider/GpaContext.jsx";
 import { AuthProvider } from "./auth/authProvider.jsx";
 import Dashboard_admin from "./Dashboard_admin.jsx";
 import HelpSupport from "./helpsupport.jsx";
@@ -122,6 +123,7 @@ import Criteria7_3_1 from "./criteria7/criteria7.3/criteria7.3.1.jsx";
 function App() {
   return (
     <AuthProvider>
+      <GpaProvider>
     <SessionProvider>
       <div className="min-h-screen w-screen bg-gray-50">
         <Routes>
@@ -437,8 +439,134 @@ function App() {
               </PrivateRoute>
             }
           />
-
-
+           <Route
+            path='/criteria6.1.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria2_7_1 />
+              </PrivateRoute>
+            }
+          />
+             <Route
+            path='/criteria6.1.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_1_1 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.1.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_1_2 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.1.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_2_1 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.2.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_2_2 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.2.3'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_2_3 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.3.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_3_1 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.3.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_3_2 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.3.3'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_3_3 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.3.4'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_3_4/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.3.5'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_3_5 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.4.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_4_1 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.4.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_4_2 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.4.3'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_4_3/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.5.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_5_1/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria6.5.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria6_5_2/>
+              </PrivateRoute>
+            }
+          />
           {/* Repeat above pattern for all other Criteria routes */}
 
           {/* Catch-all route */}
@@ -447,6 +575,7 @@ function App() {
       </div>
      
     </SessionProvider>
+    </GpaProvider>
     </AuthProvider>
   );
 }
