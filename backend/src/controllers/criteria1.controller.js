@@ -15,6 +15,7 @@ const Criteria142 = db.response_1_4_2;
 const CriteriaMaster = db.criteria_master;
 const Score = db.scores;
 const IIQA = db.iiqa_form;
+const IIQAProgrammeCount = db.iiqa_programme_count;
 const IIQA_Student_Details = db.iiqa_student_details;
 const IIQAStaffDetails = db.iiqa_staff_details;
 const extended_profile = db.extended_profile;
@@ -666,6 +667,11 @@ const score121 = asyncHandler(async (req, res) => {
   );
 });
 
+
+
+
+
+
 const createResponse122_123 = asyncHandler(async (req, res) => {
   const {
     session,
@@ -678,7 +684,7 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
     no_of_students_completed
   } = req.body;
 
-  // Validate required fields
+  // Step 1: Validate required fields
   if (
     !program_name ||
     !course_code ||
@@ -701,7 +707,7 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
     throw new apiError(400, "Session must be between 1990 and current year");
   }
 
-  // Get latest IIQA session range for validation
+  // Step 2: Validate session within latest IIQA range
   const latestIIQA = await IIQA.findOne({
     attributes: ["session_end_year"],
     order: [["created_at", "DESC"]],
@@ -718,38 +724,41 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
+  // Step 3: Fetch criteria, ensuring required are present
+  const expectedCriteriaIds = ['010202', '010203'];
+
+  const criteriaList = await CriteriaMaster.findAll({
+    where: {
+      criterion_id: '01',
+      sub_criterion_id: '0102',
+      sub_sub_criterion_id: { [Sequelize.Op.in]: expectedCriteriaIds }
+    },
+    raw: true
+  });
+
+  // Validate that all expected criteria were found
+  const foundIds = criteriaList.map(c => c.sub_sub_criterion_id);
+  const missing = expectedCriteriaIds.filter(id => !foundIds.includes(id));
+
+  if (missing.length > 0) {
+    throw new apiError(404, `Missing criteria: ${missing.join(', ')}`);
+  }
+
+  const modelMap = {
+    '010202': { model: Criteria122, name: '1.2.2' },
+    '010203': { model: Criteria123, name: '1.2.3' },
+  };
+
   const transaction = await db.sequelize.transaction();
 
   try {
-    // ⚠️ Fetching criteria WITHOUT using the transaction (read op doesn't need transaction)
-    const criteriaList = await CriteriaMaster.findAll({
-      where: {
-        criterion_id: 1,
-        sub_criterion_id: 102,
-        sub_sub_criterion_id: { [Sequelize.Op.in]: [10202, 10203] }
-      }
-    });
-
-    console.log("Fetched criteriaList length:", criteriaList.length);
-    criteriaList.forEach(c => {
-      console.log("sub_sub_criterion_id:", c.sub_sub_criterion_id);
-    });
-
-    if (!criteriaList || criteriaList.length !== 2) {
-      throw new apiError(404, "One or more criteria not found");
-    }
-
-    const modelMap = {
-      10202: { model: Criteria122, name: '1.2.2' },
-      10203: { model: Criteria123, name: '1.2.3' },
-    };
-
     const responses = [];
 
     for (const criteria of criteriaList) {
       const { model: Model, name } = modelMap[criteria.sub_sub_criterion_id];
       if (!Model) continue;
 
+      // Find or create entry
       const [entry, created] = await Model.findOrCreate({
         where: {
           session,
@@ -772,6 +781,7 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
         transaction
       });
 
+      // If entry existed, update fields
       if (!created) {
         await Model.update({
           no_of_times_offered,
@@ -799,7 +809,9 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
     );
 
   } catch (error) {
-    await transaction.rollback();
+    if (transaction.finished !== "rollback") {
+      await transaction.rollback();
+    }
     throw error;
   }
 });
@@ -809,24 +821,12 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
 
 
 
-const score122 = asyncHandler(async (req, res) => {
-  /*
-  1. Get current session (year)
-  2. Get criteria from criteria master with sub-sub-criterion id 1.2.2
-  3. Get latest IIQA session range
-  4. For each year in the last 5 years:
-     a. Get total students enrolled in certificate programs (criteria 1.2.2)
-     b. Get total students across all programs (from iiqa_programme_count)
-     c. Calculate percentage for the year
-  5. Calculate average percentage over 5 years
-  6. Create or update score in the score table
-  7. Return the score
-  */
 
+const score122 = asyncHandler(async (req, res) => {
   const currentYear = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("1.2.2");
-  
-  // Step 1: Get corresponding criteria from master
+
+  // Step 1: Get criteria master entry
   const criteria = await CriteriaMaster.findOne({
     where: { sub_sub_criterion_id: criteria_code }
   });
@@ -835,9 +835,9 @@ const score122 = asyncHandler(async (req, res) => {
     throw new apiError(404, "Criteria 1.2.2 not found in criteria_master");
   }
 
-  // Step 2: Get latest IIQA session range
+  // Step 2: Get latest IIQA form
   const latestIIQA = await IIQA.findOne({
-    attributes: ['session_end_year'],
+    attributes: ['id', 'session_end_year'],
     order: [['created_at', 'DESC']]
   });
 
@@ -845,18 +845,16 @@ const score122 = asyncHandler(async (req, res) => {
     throw new apiError(404, "No IIQA form found");
   }
 
+  const iiqa_form_id = latestIIQA.id;
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5; // Last 5 years data
+  const startYear = endYear - 4; // Last 5 years (inclusive)
 
-  // Step 3: Calculate percentages for each year
   const yearlyPercentages = [];
-  
+
   for (let year = startYear; year <= endYear; year++) {
-    // Get total students in certificate programs (criteria 1.2.2) for the year
-    const certPrograms = await Response122.findAll({
-      attributes: [
-        [Sequelize.fn('SUM', Sequelize.col('no_of_students_enrolled')), 'total_students']
-      ],
+    // a. Certificate students from 1.2.2
+    const certPrograms = await Criteria122.findOne({
+      attributes: [[Sequelize.fn('SUM', Sequelize.col('no_of_students_enrolled')), 'total_students']],
       where: {
         criteria_code: criteria.criteria_code,
         year_of_offering: year
@@ -864,37 +862,42 @@ const score122 = asyncHandler(async (req, res) => {
       raw: true
     });
 
-    // Get total students across all programs from iiqa_programme_count
-    const totalStudents = await IIQAProgrammeCount.findOne({
-      attributes: [
-        [Sequelize.literal('IFNULL(ug, 0) + IFNULL(pg, 0) + IFNULL(post_masters, 0) + IFNULL(pre_doctoral, 0) + IFNULL(doctoral, 0) + IFNULL(post_doctoral, 0) + IFNULL(pg_diploma, 0) + IFNULL(diploma, 0)'), 'total_students']
-      ],
-      where: {
-        session: year
-      },
+    const certStudents = parseInt(certPrograms?.total_students || 0);
+
+    // b. Total students from iiqa_programme_count for that IIQA
+    const programmeCount = await db.iiqa_programme_count.findOne({
+      where: { iiqa_form_id },
       raw: true
     });
 
-    const certStudents = certPrograms[0]?.total_students || 0;
-    const totalStudentsCount = totalStudents?.total_students || 1; // Avoid division by zero
-    
-    // Calculate percentage for the year
-    const percentage = (certStudents / totalStudentsCount) * 100;
-    yearlyPercentages.push(percentage);
+    const totalStudents =
+      (programmeCount?.ug || 0) +
+      (programmeCount?.pg || 0) +
+      (programmeCount?.post_masters || 0) +
+      (programmeCount?.pre_doctoral || 0) +
+      (programmeCount?.doctoral || 0) +
+      (programmeCount?.post_doctoral || 0) +
+      (programmeCount?.pg_diploma || 0) +
+      (programmeCount?.diploma || 0) +
+      (programmeCount?.certificate || 0);
+
+    const percentage = totalStudents === 0 ? 0 : (certStudents / totalStudents) * 100;
+
+    yearlyPercentages.push(+percentage.toFixed(2));
   }
 
-  // Calculate average percentage over 5 years
-  const avgPercentage = yearlyPercentages.length > 0 
-    ? yearlyPercentages.reduce((sum, p) => sum + p, 0) / yearlyPercentages.length 
+  const avgPercentage = yearlyPercentages.length > 0
+    ? +(yearlyPercentages.reduce((sum, p) => sum + p, 0) / yearlyPercentages.length).toFixed(2)
     : 0;
 
-  let grade;
+  // Scoring
+  let grade = 0;
   if (avgPercentage >= 50) grade = 4;
   else if (avgPercentage >= 35) grade = 3;
   else if (avgPercentage >= 20) grade = 2;
   else if (avgPercentage >= 10) grade = 1;
-  else grade = 0;
-  // Step 4: Insert or update score
+
+  // Save to score table
   let [entry, created] = await Score.findOrCreate({
     where: {
       criteria_code: criteria.criteria_code,
@@ -916,8 +919,7 @@ const score122 = asyncHandler(async (req, res) => {
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: avgPercentage,
-      sub_sub_cr_grade: grade,
-      session: currentYear
+      sub_sub_cr_grade: grade
     }, {
       where: {
         criteria_code: criteria.criteria_code,
@@ -944,14 +946,13 @@ const score122 = asyncHandler(async (req, res) => {
   );
 });
 
+
+
 const score123 = asyncHandler(async (req, res) => {
-  /*
-  Similar to score122 but for criteria 1.2.3 (Add-on programs)
-  */
   const currentYear = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("1.2.3");
-  
-  // Step 1: Get corresponding criteria from master
+
+  // Step 1: Get criteria master
   const criteria = await CriteriaMaster.findOne({
     where: { sub_sub_criterion_id: criteria_code }
   });
@@ -960,9 +961,9 @@ const score123 = asyncHandler(async (req, res) => {
     throw new apiError(404, "Criteria 1.2.3 not found in criteria_master");
   }
 
-  // Step 2: Get latest IIQA session range
+  // Step 2: Get latest IIQA form
   const latestIIQA = await IIQA.findOne({
-    attributes: ['session_end_year'],
+    attributes: ['id', 'session_end_year'],
     order: [['created_at', 'DESC']]
   });
 
@@ -970,15 +971,36 @@ const score123 = asyncHandler(async (req, res) => {
     throw new apiError(404, "No IIQA form found");
   }
 
+  const iiqa_form_id = latestIIQA.id;
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5; // Last 5 years data
+  const startYear = endYear - 4; // 5 years
 
-  // Step 3: Calculate percentages for each year
+  // Step 3: Get total students from iiqa_programme_count (latest IIQA)
+  const programmeCount = await IIQAProgrammeCount.findOne({
+    where: { iiqa_form_id },
+    raw: true
+  });
+
+  const totalStudents =
+    (programmeCount?.ug || 0) +
+    (programmeCount?.pg || 0) +
+    (programmeCount?.post_masters || 0) +
+    (programmeCount?.pre_doctoral || 0) +
+    (programmeCount?.doctoral || 0) +
+    (programmeCount?.post_doctoral || 0) +
+    (programmeCount?.pg_diploma || 0) +
+    (programmeCount?.diploma || 0) +
+    (programmeCount?.certificate || 0);
+
+  if (totalStudents === 0) {
+    throw new apiError(400, "Valid total number of students not found or is zero");
+  }
+
+  // Step 4: Calculate yearly percentages
   const yearlyPercentages = [];
-  
+
   for (let year = startYear; year <= endYear; year++) {
-    // Get total students in add-on programs (criteria 1.2.3) for the year
-    const addonPrograms = await Response123.findAll({
+    const addonPrograms = await Criteria123.findOne({
       attributes: [
         [Sequelize.fn('SUM', Sequelize.col('no_of_students_enrolled')), 'total_students']
       ],
@@ -989,37 +1011,23 @@ const score123 = asyncHandler(async (req, res) => {
       raw: true
     });
 
-    // Get total students across all programs from iiqa_programme_count
-    const totalStudents = await IIQAProgrammeCount.findOne({
-      attributes: [
-        [Sequelize.literal('IFNULL(ug, 0) + IFNULL(pg, 0) + IFNULL(post_masters, 0) + IFNULL(pre_doctoral, 0) + IFNULL(doctoral, 0) + IFNULL(post_doctoral, 0) + IFNULL(pg_diploma, 0) + IFNULL(diploma, 0)'), 'total_students']
-      ],
-      where: {
-        session: year
-      },
-      raw: true
-    });
-
-    const addonStudents = addonPrograms[0]?.total_students || 0;
-    const totalStudentsCount = totalStudents?.total_students || 1; // Avoid division by zero
-    
-    // Calculate percentage for the year
-    const percentage = (addonStudents / totalStudentsCount) * 100;
-    yearlyPercentages.push(percentage);
+    const addonStudents = parseInt(addonPrograms?.total_students || 0);
+    const percentage = (addonStudents / totalStudents) * 100;
+    yearlyPercentages.push(+percentage.toFixed(2));
   }
 
-  // Calculate average percentage over 5 years
-  const avgPercentage = yearlyPercentages.length > 0 
-    ? yearlyPercentages.reduce((sum, p) => sum + p, 0) / yearlyPercentages.length 
+  const avgPercentage = yearlyPercentages.length > 0
+    ? +(yearlyPercentages.reduce((sum, p) => sum + p, 0) / yearlyPercentages.length).toFixed(2)
     : 0;
 
-    let grade;
+  // Step 5: Grade based on average percentage
+  let grade = 0;
   if (avgPercentage >= 50) grade = 4;
   else if (avgPercentage >= 35) grade = 3;
   else if (avgPercentage >= 20) grade = 2;
   else if (avgPercentage >= 10) grade = 1;
-  else grade = 0;
-  // Step 4: Insert or update score
+
+  // Step 6: Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
       criteria_code: criteria.criteria_code,
@@ -1041,8 +1049,7 @@ const score123 = asyncHandler(async (req, res) => {
   if (!created) {
     await Score.update({
       score_sub_sub_criteria: avgPercentage,
-      sub_sub_cr_grade: grade,
-      session: currentYear
+      sub_sub_cr_grade: grade
     }, {
       where: {
         criteria_code: criteria.criteria_code,
@@ -1067,7 +1074,8 @@ const score123 = asyncHandler(async (req, res) => {
       session: currentYear
     }, created ? "Score created successfully" : "Score updated successfully")
   );
-})
+});
+
 
 const createResponse132 = asyncHandler(async (req, res) => {
   const {

@@ -29,8 +29,6 @@ router.route('/createResponse121')
 router.route('/createResponse122_123')
     .post(createResponse122_123);
 
-router.route('/createResponse123')
-    .post(createResponse122_123);
 
 router.route('/createResponse132')
     .post(createResponse132);
