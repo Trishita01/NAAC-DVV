@@ -515,7 +515,7 @@ const Criteria1_2_1= () => {
 
           {/* Bottom Buttons */}
           <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
-            <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />
+            <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} onExport={handleExport} onSubmit={handleSubmit} />
           </div>
         </div>
       </div>

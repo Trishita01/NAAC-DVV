@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useMemo } from 'react';
 import * as echarts from 'echarts';
 import { SessionContext } from './contextprovider/sessioncontext';
 import { Search, Users, Building2, Shield, BarChart3, FileText, Upload, Settings, Edit, Trash2, Plus, ChevronDown, ChevronRight } from 'lucide-react';
@@ -10,13 +10,19 @@ import LandingNavbar from './components/landing-navbar';
 import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaBell, FaUser, FaEnvelope, FaUserCircle } from 'react-icons/fa';
 import UserDropdown from './components/UserDropdown';
 import {useGpa} from './contextprovider/GpaContext';
+import { useGpaData } from './contextprovider/gpadata';
 import RadarGraphSection from './Radar';
+
+
 
 const IqacDashboard = () => {
   const {
-      grade,
-      
-    } = useGpa();
+    grade,
+    criteria,
+    isLoading: isGpaLoading,
+    error: gpaError,
+    criteriaLacking
+  } = useGpaData();
  
   const [currentDate] = useState(new Date('2025-06-25'));
   const [collapsed, setCollapsed] = useState(false);
@@ -125,13 +131,38 @@ const IqacDashboard = () => {
     { icon: Settings, label: 'Settings', active: false }
   ];
 
-  const statusCards = [
-    { label: 'Projected Grade', value: grade, color: 'text-blue-600', sub: 'Based on current progress', bgGradient: 'from-blue-50 to-blue-100' },
-    { label: 'Desired Grade', value: desiredGrade || 'N/A', color: 'text-amber-500', sub: 'Target accreditation level', bgGradient: 'from-amber-50 to-amber-100' },
-    { label: 'Criteria Lacking', value: '4', color: 'text-red-500', sub: 'Need immediate attention', bgGradient: 'from-red-50 to-red-100' },
-    { label: 'Next Deadline', value: 'Jun 15', color: 'text-gray-800', sub: '10 days remaining', bgGradient: 'from-gray-50 to-gray-100' }
-  ];
 
+  console.log('Final criteriaLacking value:', criteriaLacking);
+  const statusCards = useMemo(() => [
+    {
+      label: 'Projected Grade',
+      value: isGpaLoading ? '…' : gpaError ? 'Error' : grade,
+      color: 'text-blue-600',
+      sub: isGpaLoading ? 'Loading...' : gpaError ? 'Error loading grade' : 'Based on current progress',
+      bgGradient: 'from-blue-50 to-blue-100'
+    },
+    {
+      label: 'Desired Grade',
+      value: desiredGrade || 'N/A',
+      color: 'text-amber-500',
+      sub: 'Target accreditation level',
+      bgGradient: 'from-amber-50 to-amber-100'
+    },
+    {
+      label: 'Criteria Lacking',
+      value: isGpaLoading ? '…' : gpaError ? 'Error' : criteriaLacking,
+      color: 'text-red-500',
+      sub: isGpaLoading ? 'Loading...' : 'Need immediate attention',
+      bgGradient: 'from-red-50 to-red-100'
+    },
+    {
+      label: 'Next Deadline',
+      value: '16th july',
+      color: 'text-gray-800',
+      sub: 'Upcoming submission',
+      bgGradient: 'from-gray-50 to-gray-100'
+    }
+  ], [isGpaLoading, gpaError, grade, desiredGrade, criteriaLacking]);
   const actionItems = [
     {
       priority: 'high',
@@ -215,6 +246,7 @@ const IqacDashboard = () => {
               <UserDropdown user={user} className="ml-2" />
             </div>
           </div>
+          console.log(desiredGrade)
 
           {/* Welcome Message */}
           <div className={`mb-6 transform transition-all duration-700 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
@@ -290,29 +322,6 @@ const IqacDashboard = () => {
               </div>
             ))}
           </div>
-
-          {/* Feedback Summary */}
-          <div className={`bg-white rounded-lg shadow p-5 mb-8 hover:shadow-xl transition-shadow duration-300 transform transition-all duration-700 delay-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-            <h3 className="text-sm font-medium text-gray-700 mb-4">Feedback Summary</h3>
-            <div className="space-y-4">
-              {feedbackItems.map((item, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center justify-between p-2 rounded hover:bg-gray-50 transform transition-all duration-200 hover:scale-[1.01]"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="flex items-center">
-                    <span className={`h-3 w-3 rounded-full ${item.color} mr-3 animate-pulse`}></span>
-                    <span className="text-gray-700">{item.criterion}</span>
-                  </div>
-                  <span className={`text-xs font-medium ${item.textColor} px-2 py-1 rounded-full bg-opacity-10 ${item.color.replace('bg-', 'bg-')}`}>
-                    {item.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* SSR Download & Submission Panel */}
           <div className={`bg-white rounded-lg shadow p-5 mb-8 hover:shadow-xl transition-shadow duration-300 transform transition-all duration-700 delay-600 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
             <h3 className="text-sm font-medium text-gray-700 mb-4">SSR Download & Submission Panel</h3>
