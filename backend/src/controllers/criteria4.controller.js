@@ -167,11 +167,15 @@ const score413 = asyncHandler(async (req, res) => {
     throw new apiError(400, "Total classroom and seminar hall is 0");
   }
 
-  const noOfRooms = responses.
+  const noOfRooms = responses.length;
 
   //get extended profile
   //divide responses room by total classroom or seminar hall in extended profile
-     
+  const score = (noOfRooms / (totalClassroom + totalSeminarHall)) * 100;
+
+  return res.status(200).json(
+    new apiResponse(200, score, "Score calculated successfully")
+  ); 
 });
 
 
