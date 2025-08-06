@@ -1,8 +1,8 @@
 import express from 'express';
 const router = express.Router();
-import { getAllCriteria3, createResponse313,createResponse321, createResponse322, createResponse332,createResponse333, createResponse341, createResponse342, getResponsesByCriteriaCode } from '../controllers/criteria3.controller.js';
+import { createResponse313,createResponse321, createResponse322, createResponse332,createResponse333, createResponse341, createResponse342, getResponsesByCriteriaCode } from '../controllers/criteria3.controller.js';
 
-router.route('/getAllCriteria3').get(getAllCriteria3);
+
 
 router.route('/createResponse313')
     .post(createResponse313);
