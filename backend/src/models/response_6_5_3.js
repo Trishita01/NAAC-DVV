@@ -36,7 +36,7 @@ export default class response_6_5_3 extends Model {
       primaryKey: true
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     reg_meetings_of_the_IQAC_head: {

@@ -31,7 +31,7 @@ export default class response_5_3_3 extends Model {
       allowNull: true
     },
     event_date: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: false
     },
     event_name: {

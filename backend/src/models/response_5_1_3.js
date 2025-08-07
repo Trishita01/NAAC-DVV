@@ -35,7 +35,7 @@ export default class response_5_1_3 extends Model {
       allowNull: false
     },
     implementation_date: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: false
     },
     students_enrolled: {

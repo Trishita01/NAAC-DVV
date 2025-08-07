@@ -31,7 +31,7 @@ export default class response_4_2_2 extends Model {
       allowNull: true
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     resource_type: {

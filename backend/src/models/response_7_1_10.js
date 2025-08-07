@@ -35,7 +35,7 @@ export default class response_7_1_10 extends Model {
       allowNull: false
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     code_published: {
