@@ -103,6 +103,7 @@ const createResponse712 = asyncHandler(async (req, res) => {
   }
 
   const [record, created] = await Criteria712.upsert({
+    id: criteria.id,
     criteria_code: criteria.criteria_code,
     session,
     facility_type: facilityTypeNum,
@@ -112,6 +113,7 @@ const createResponse712 = asyncHandler(async (req, res) => {
     conflictFields: ['session', 'criteria_code'],
     returning: true
   });
+  
 
   return res.status(created ? 201 : 200).json(
     new apiResponse(
@@ -156,6 +158,7 @@ const score712 = asyncHandler(async (req, res) => {
   const grade = facilityTypeNumber; // Grade directly maps to facility_type
 
   const [entry, created] = await Score.upsert({
+    
     criteria_code: criteria.criteria_code,
     criteria_id: criteria.criterion_id,
     sub_criteria_id: criteria.sub_criterion_id,
@@ -219,6 +222,7 @@ const createResponse714 = asyncHandler(async (req, res) => {
   }
 
   const [record, created] = await Criteria714.upsert({
+    id: criteria.id,
     criteria_code: criteria.criteria_code,
     session,
     facility_type: facilityTypeNum,
@@ -333,6 +337,7 @@ const createResponse715 = asyncHandler(async (req, res) => {
   }
 
   const [record, created] = await Criteria715.upsert({
+    id: criteria.id,
     criteria_code: criteria.criteria_code,
     session,
     initiative: initiativeNum,
@@ -450,6 +455,7 @@ const createResponse716 = asyncHandler(async (req, res) => {
   }
 
   const [record, created] = await Criteria716.upsert({
+    id: criteria.id,
     criteria_code: criteria.criteria_code,
     session,
     audit_type: auditTypeNum,
@@ -567,6 +573,7 @@ const createResponse717 = asyncHandler(async (req, res) => {
   }
 
   const [record, created] = await Criteria717.upsert({
+    id: criteria.id,
     criteria_code: criteria.criteria_code,
     session,
     feature: featureNum,
@@ -695,6 +702,7 @@ const createResponse7110 = asyncHandler(async (req, res) => {
   }
 
   const [record, created] = await Criteria7110.upsert({
+    id: criteria.id,
     criteria_code: criteria.criteria_code,
     session,
     options: optionsNum,
@@ -793,6 +801,7 @@ export {
   score717,
   createResponse7110,
   score7110,
+  getResponsesByCriteriaCode,
 };
 
 

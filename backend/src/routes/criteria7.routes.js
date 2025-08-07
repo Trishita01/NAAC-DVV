@@ -14,7 +14,7 @@ import {
   score716,
   score717,
   score7110
-} from '../controllers/criteria1.controller.js';
+} from '../controllers/criteria7.controller.js';
 
 
 router.route('/createResponse712')
