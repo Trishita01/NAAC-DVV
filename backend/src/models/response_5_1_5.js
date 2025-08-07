@@ -1,7 +1,7 @@
 import _sequelize from 'sequelize';
 const { Model, Sequelize } = _sequelize;
 
-export default class response_4_4_1 extends Model {
+export default class response_5_1_5 extends Model {
   static init(sequelize, DataTypes) {
   return super.init({
     id: {
@@ -19,8 +19,8 @@ export default class response_4_4_1 extends Model {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
+      type: DataTypes.STRING(10),
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -28,40 +28,20 @@ export default class response_4_4_1 extends Model {
     },
     session: {
       type: DataTypes.INTEGER,
-      allowNull: true
-    },
-    year: {
-      type: DataTypes.INTEGER,
       allowNull: false
     },
-    budget_allocated_infra: {
-      type: DataTypes.DECIMAL(10,2),
-      allowNull: false
-    },
-    expenditure_infra_lakhs: {
-      type: DataTypes.DECIMAL(10,2),
-      allowNull: false
-    },
-    total_exp_infra_lakhs: {
-      type: DataTypes.DECIMAL(10,2),
-      allowNull: false
-    },
-    exp_maintainance_acad: {
-      type: DataTypes.DECIMAL(10,2),
-      allowNull: false
-    },
-    exp_maintainance_physical: {
-      type: DataTypes.DECIMAL(10,2),
+    options: {
+      type: DataTypes.ENUM('0','1','2','3','4'),
       allowNull: false
     },
     submitted_at: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
-    tableName: 'response_4_4_1',
+    tableName: 'response_5_1_5',
     timestamps: false,
     indexes: [
       {
@@ -73,7 +53,7 @@ export default class response_4_4_1 extends Model {
         ]
       },
       {
-        name: "idx_r441_criteria",
+        name: "idx_r515_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

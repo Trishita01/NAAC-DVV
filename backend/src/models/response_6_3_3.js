@@ -31,7 +31,7 @@ export default class response_6_3_3 extends Model {
       allowNull: true
     },
     from_to_date: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: false,
       primaryKey: true
     },

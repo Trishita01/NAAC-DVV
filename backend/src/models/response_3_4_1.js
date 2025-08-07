@@ -43,7 +43,7 @@ export default class response_3_4_1 extends Model {
       allowNull: true
     },
     year_of_collaboration: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     duration: {

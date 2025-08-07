@@ -27,11 +27,14 @@ import _response_2_4_2 from  "./response_2_4_2.js";
 import _response_2_4_3 from  "./response_2_4_3.js";
 import _response_2_6_3 from  "./response_2_6_3.js";
 import _response_2_7_1 from  "./response_2_7_1.js";
+import _response_3_1_1 from  "./response_3_1_1.js";
+import _response_3_1_2 from  "./response_3_1_2.js";
 import _response_3_1_3 from  "./response_3_1_3.js";
 import _response_3_2_1 from  "./response_3_2_1.js";
 import _response_3_2_2 from  "./response_3_2_2.js";
 import _response_3_3_2 from  "./response_3_3_2.js";
 import _response_3_3_3 from  "./response_3_3_3.js";
+import _response_3_3_4 from  "./response_3_3_4.js";
 import _response_3_4_1 from  "./response_3_4_1.js";
 import _response_3_4_2 from  "./response_3_4_2.js";
 import _response_4_1_3 from  "./response_4_1_3.js";
@@ -45,11 +48,13 @@ import _response_5_1_1 from  "./response_5_1_1.js";
 import _response_5_1_2 from  "./response_5_1_2.js";
 import _response_5_1_3 from  "./response_5_1_3.js";
 import _response_5_1_4 from  "./response_5_1_4.js";
+import _response_5_1_5 from  "./response_5_1_5.js";
 import _response_5_2_1 from  "./response_5_2_1.js";
 import _response_5_2_2 from  "./response_5_2_2.js";
 import _response_5_2_3 from  "./response_5_2_3.js";
 import _response_5_3_1 from  "./response_5_3_1.js";
 import _response_5_3_3 from  "./response_5_3_3.js";
+import _response_5_4_2 from  "./response_5_4_2.js";
 import _response_6_2_3 from  "./response_6_2_3.js";
 import _response_6_3_2 from  "./response_6_3_2.js";
 import _response_6_3_3 from  "./response_6_3_3.js";
@@ -93,11 +98,14 @@ export default function initModels(sequelize) {
   const response_2_4_3 = _response_2_4_3.init(sequelize, DataTypes);
   const response_2_6_3 = _response_2_6_3.init(sequelize, DataTypes);
   const response_2_7_1 = _response_2_7_1.init(sequelize, DataTypes);
+  const response_3_1_1 = _response_3_1_1.init(sequelize, DataTypes);
+  const response_3_1_2 = _response_3_1_2.init(sequelize, DataTypes);
   const response_3_1_3 = _response_3_1_3.init(sequelize, DataTypes);
   const response_3_2_1 = _response_3_2_1.init(sequelize, DataTypes);
   const response_3_2_2 = _response_3_2_2.init(sequelize, DataTypes);
   const response_3_3_2 = _response_3_3_2.init(sequelize, DataTypes);
   const response_3_3_3 = _response_3_3_3.init(sequelize, DataTypes);
+  const response_3_3_4 = _response_3_3_4.init(sequelize, DataTypes);
   const response_3_4_1 = _response_3_4_1.init(sequelize, DataTypes);
   const response_3_4_2 = _response_3_4_2.init(sequelize, DataTypes);
   const response_4_1_3 = _response_4_1_3.init(sequelize, DataTypes);
@@ -111,11 +119,13 @@ export default function initModels(sequelize) {
   const response_5_1_2 = _response_5_1_2.init(sequelize, DataTypes);
   const response_5_1_3 = _response_5_1_3.init(sequelize, DataTypes);
   const response_5_1_4 = _response_5_1_4.init(sequelize, DataTypes);
+  const response_5_1_5 = _response_5_1_5.init(sequelize, DataTypes);
   const response_5_2_1 = _response_5_2_1.init(sequelize, DataTypes);
   const response_5_2_2 = _response_5_2_2.init(sequelize, DataTypes);
   const response_5_2_3 = _response_5_2_3.init(sequelize, DataTypes);
   const response_5_3_1 = _response_5_3_1.init(sequelize, DataTypes);
   const response_5_3_3 = _response_5_3_3.init(sequelize, DataTypes);
+  const response_5_4_2 = _response_5_4_2.init(sequelize, DataTypes);
   const response_6_2_3 = _response_6_2_3.init(sequelize, DataTypes);
   const response_6_3_2 = _response_6_3_2.init(sequelize, DataTypes);
   const response_6_3_3 = _response_6_3_3.init(sequelize, DataTypes);
@@ -207,6 +217,14 @@ export default function initModels(sequelize) {
   criteria_master.hasMany(response_2_7_1, { as: "response_2_7_1s", foreignKey: "criteria_code"});
   response_2_7_1.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
   criteria_master.hasMany(response_2_7_1, { as: "id_response_2_7_1s", foreignKey: "id"});
+  response_3_1_1.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
+  criteria_master.hasMany(response_3_1_1, { as: "response_3_1_1s", foreignKey: "criteria_code"});
+  response_3_1_1.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
+  criteria_master.hasMany(response_3_1_1, { as: "id_response_3_1_1s", foreignKey: "id"});
+  response_3_1_2.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
+  criteria_master.hasMany(response_3_1_2, { as: "response_3_1_2s", foreignKey: "criteria_code"});
+  response_3_1_2.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
+  criteria_master.hasMany(response_3_1_2, { as: "id_response_3_1_2s", foreignKey: "id"});
   response_3_1_3.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(response_3_1_3, { as: "response_3_1_3s", foreignKey: "criteria_code"});
   response_3_1_3.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
@@ -227,6 +245,10 @@ export default function initModels(sequelize) {
   criteria_master.hasMany(response_3_3_3, { as: "response_3_3_3s", foreignKey: "criteria_code"});
   response_3_3_3.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
   criteria_master.hasMany(response_3_3_3, { as: "id_response_3_3_3s", foreignKey: "id"});
+  response_3_3_4.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
+  criteria_master.hasMany(response_3_3_4, { as: "response_3_3_4s", foreignKey: "criteria_code"});
+  response_3_3_4.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
+  criteria_master.hasMany(response_3_3_4, { as: "id_response_3_3_4s", foreignKey: "id"});
   response_3_4_1.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(response_3_4_1, { as: "response_3_4_1s", foreignKey: "criteria_code"});
   response_3_4_1.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
@@ -279,6 +301,10 @@ export default function initModels(sequelize) {
   criteria_master.hasMany(response_5_1_4, { as: "response_5_1_4s", foreignKey: "criteria_code"});
   response_5_1_4.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
   criteria_master.hasMany(response_5_1_4, { as: "id_response_5_1_4s", foreignKey: "id"});
+  response_5_1_5.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
+  criteria_master.hasMany(response_5_1_5, { as: "response_5_1_5s", foreignKey: "criteria_code"});
+  response_5_1_5.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
+  criteria_master.hasMany(response_5_1_5, { as: "id_response_5_1_5s", foreignKey: "id"});
   response_5_2_1.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(response_5_2_1, { as: "response_5_2_1s", foreignKey: "criteria_code"});
   response_5_2_1.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
@@ -299,6 +325,10 @@ export default function initModels(sequelize) {
   criteria_master.hasMany(response_5_3_3, { as: "response_5_3_3s", foreignKey: "criteria_code"});
   response_5_3_3.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
   criteria_master.hasMany(response_5_3_3, { as: "id_response_5_3_3s", foreignKey: "id"});
+  response_5_4_2.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
+  criteria_master.hasMany(response_5_4_2, { as: "response_5_4_2s", foreignKey: "criteria_code"});
+  response_5_4_2.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
+  criteria_master.hasMany(response_5_4_2, { as: "id_response_5_4_2s", foreignKey: "id"});
   response_6_2_3.belongsTo(criteria_master, { as: "criteria_code_criteria_master", foreignKey: "criteria_code"});
   criteria_master.hasMany(response_6_2_3, { as: "response_6_2_3s", foreignKey: "criteria_code"});
   response_6_2_3.belongsTo(criteria_master, { as: "id_criteria_master", foreignKey: "id"});
@@ -388,11 +418,14 @@ export default function initModels(sequelize) {
     response_2_4_3,
     response_2_6_3,
     response_2_7_1,
+    response_3_1_1,
+    response_3_1_2,
     response_3_1_3,
     response_3_2_1,
     response_3_2_2,
     response_3_3_2,
     response_3_3_3,
+    response_3_3_4,
     response_3_4_1,
     response_3_4_2,
     response_4_1_3,
@@ -406,11 +439,13 @@ export default function initModels(sequelize) {
     response_5_1_2,
     response_5_1_3,
     response_5_1_4,
+    response_5_1_5,
     response_5_2_1,
     response_5_2_2,
     response_5_2_3,
     response_5_3_1,
     response_5_3_3,
+    response_5_4_2,
     response_6_2_3,
     response_6_3_2,
     response_6_3_3,

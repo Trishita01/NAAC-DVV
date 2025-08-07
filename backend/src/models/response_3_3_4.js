@@ -1,7 +1,7 @@
 import _sequelize from 'sequelize';
 const { Model, Sequelize } = _sequelize;
 
-export default class response_4_4_1 extends Model {
+export default class response_3_3_4 extends Model {
   static init(sequelize, DataTypes) {
   return super.init({
     id: {
@@ -20,7 +20,7 @@ export default class response_4_4_1 extends Model {
     },
     criteria_code: {
       type: DataTypes.STRING(20),
-      allowNull: true,
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
@@ -30,29 +30,25 @@ export default class response_4_4_1 extends Model {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    year: {
+    activity_name: {
+      type: DataTypes.STRING(255),
+      allowNull: false
+    },
+    activity_year: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
-    budget_allocated_infra: {
-      type: DataTypes.DECIMAL(10,2),
-      allowNull: false
+    no_of_teacher: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     },
-    expenditure_infra_lakhs: {
-      type: DataTypes.DECIMAL(10,2),
-      allowNull: false
+    no_of_student: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     },
-    total_exp_infra_lakhs: {
-      type: DataTypes.DECIMAL(10,2),
-      allowNull: false
-    },
-    exp_maintainance_acad: {
-      type: DataTypes.DECIMAL(10,2),
-      allowNull: false
-    },
-    exp_maintainance_physical: {
-      type: DataTypes.DECIMAL(10,2),
-      allowNull: false
+    scheme_name: {
+      type: DataTypes.STRING(255),
+      allowNull: true
     },
     submitted_at: {
       type: DataTypes.DATE,
@@ -61,7 +57,7 @@ export default class response_4_4_1 extends Model {
     }
   }, {
     sequelize,
-    tableName: 'response_4_4_1',
+    tableName: 'response_3_3_4',
     timestamps: false,
     indexes: [
       {
@@ -73,7 +69,7 @@ export default class response_4_4_1 extends Model {
         ]
       },
       {
-        name: "idx_r441_criteria",
+        name: "idx_r334_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

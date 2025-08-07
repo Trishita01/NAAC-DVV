@@ -31,7 +31,7 @@ export default class response_5_2_3 extends Model {
       allowNull: true
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     registeration_number: {
