@@ -7,14 +7,14 @@ import {
   createResponse716,
   createResponse717,
   createResponse7110,
-  getResponsesByCriteriaCode,
+//   getResponsesByCriteriaCode,
   score712,
   score714,
   score715,
   score716,
   score717,
   score7110
-} from '../controllers/criteria1.controller.js';
+} from '../controllers/criteria7.controller.js';
 
 
 router.route('/createResponse712')
@@ -36,8 +36,8 @@ router.route('/createResponse717')
 router.route('/createResponse7110')
     .post(createResponse7110);
 
-router.route('/getResponsesByCriteriaCode/:criteriaCode')
-    .get(getResponsesByCriteriaCode);
+// router.route('/getResponsesByCriteriaCode/:criteriaCode')
+//     .get(getResponsesByCriteriaCode);
 
 router.route('/score712')
     .get(score712);
