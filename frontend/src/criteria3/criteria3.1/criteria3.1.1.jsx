@@ -5,11 +5,16 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
-import Criteria7_2_1 from "../../criteria7/criteria7.2/criteria7.2.1";
+import axios from "axios";
+import { useEffect } from "react";
+import { SessionContext } from "../../contextprovider/sessioncontext";
+import { useContext } from "react";
+
 
 const Criteria3_1_1 = () => {
   const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`);
   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
+  const [availableSessions, setAvailableSessions] = useState([]);
 
   const [yearData, setYearData] = useState({});
   const [formData, setFormData] = useState({

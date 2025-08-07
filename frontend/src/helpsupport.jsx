@@ -11,6 +11,7 @@ FaTachometerAlt, FaFileAlt, FaChartLine, FaPaperPlane, FaSignOutAlt, FaDownload,
 } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './components/iqac-sidebar';
+import { navItems } from './config/navigation';
 
 const HelpSupport = () => {
 const navigate = useNavigate();
@@ -316,43 +317,21 @@ title: 'Begin Data Entry',
 description: 'Select a criteria to start working on. Follow the guided process to enter data and upload documents.'
 }
 ];
-const navItems = [
-    { icon: 'FaTachometerAlt', text: 'Dashboard', path: '/dashboard' },
-    
-    { icon: 'FaFileAlt', text: 'Data Entry Forms', path: '/criteria1.1.1' },
-   
-    { icon: 'FaQuestionCircle', text: 'Help and Support' , path: '/helpsupport'},
-  
-    { icon: 'FaSignOutAlt', text: 'Logout', path: '/logout' },
-  ];
+
 
 return (
-
-    <div className="flex min-h-screen w-[1520px] bg-gray-50">
-          {/* Sidebar */}
-         <div className={`flex-shrink-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
-                 <Sidebar 
-                   navItems={navItems} 
-                   collapsed={collapsed} 
-                   setCollapsed={setCollapsed} 
-                   navigate={navigate} 
-                 />
-               </div> 
-    
-          <div className="flex-1 overflow-auto">
-            <nav className="mt-4 space-y-1">
-              {navItems.map(({ icon, text,path }) => (
-                <div key={text} 
-                onClick={() => navigate(path)}
-                className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white">
-                  
-                  {!collapsed && <span className="ml-2">{text}</span>}
-                </div>
-              ))}
-            </nav>
-          </div>
-{/* Header */}
-<div className={`${collapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <Sidebar 
+        navItems={navItems} 
+        collapsed={collapsed} 
+        setCollapsed={setCollapsed} 
+        navigate={navigate} 
+      />
+      
+      {/* Main Content */}
+      <div className={`flex-1 transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
+        <div className="overflow-auto h-screen">
 <header className="bg-white shadow-sm">
 <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -820,6 +799,7 @@ A comprehensive platform for faculty members to submit and manage data for NAAC 
 </div>
 </div>
 </footer>
+</div>
 </div>
 </div>
 

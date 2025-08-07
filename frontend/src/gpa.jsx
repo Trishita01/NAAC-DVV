@@ -10,6 +10,7 @@ import { useAuth } from './auth/authProvider';
 import { navItems } from './config/navigation';
 import {useGpa} from './contextprovider/GpaContext';
 import RadarGraphSection from './Radar';
+import {GpaDataProvider, useGpaData} from './contextprovider/gpadata';
 import { FaArrowLeft, FaChartLine, FaBullseye, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 const Header = () => {
@@ -183,7 +184,7 @@ const GPAAnalysis = () => {
     isLoading,
     error,
     refetch
-  } = useGpa();
+  } = useGpaData();
   
 
   const [expandedCriteria, setExpandedCriteria] = useState({});
@@ -214,6 +215,7 @@ const GPAAnalysis = () => {
       <div className={`flex-shrink-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
         <Sidebar 
           collapsed={collapsed} 
+          navItems={navItems}
           setCollapsed={setCollapsed} 
           navigate={navigate} 
         />

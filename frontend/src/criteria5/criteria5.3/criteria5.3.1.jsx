@@ -4,14 +4,27 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import axios from "axios";
+import { useEffect } from "react";
+import { SessionContext } from "../../contextprovider/sessioncontext";
 
 const Criteria5_3_1 = () => {
-  const currentYear = new Date().getFullYear();
+ const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`);
+   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
+   const [yearData, setYearData] = useState({});
+   const [provisionalScore, setProvisionalScore] = useState(null);
+   const [loading, setLoading] = useState(false);
+   const [error, setError] = useState(null);
+   const [currentYear, setCurrentYear] = useState(pastFiveYears[0]);
+   const { sessions: availableSessions } = useContext(SessionContext);
+   useEffect(() => {
+     if (availableSessions && availableSessions.length > 0) {
+       setCurrentYear(availableSessions[0]);
+       setSelectedYear(availableSessions[0]);
+     }
+   }, [availableSessions]);
 
-  const pastFiveYears=Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`)
-  {/*const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${currentYear - i}-${(currentYear - i + 1).toString().slice(-2)}`);*/}
-
-  const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
   const [formData, setFormData] = useState({
     year: "",
     name: "",
@@ -26,6 +39,25 @@ const Criteria5_3_1 = () => {
 
   const navigate = useNavigate();
 
+  const fetchScore = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get("http://localhost:3000/api/v1/criteria5/score511");
+      setProvisionalScore(response.data);
+    } catch (error) {
+      console.error("Error fetching score:", error);
+      setError(error.message || "Failed to fetch score");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchScore();
+  }, []);
+
+
   const handleChange = (field, value, index = null) => {
   if (field === "supportLinks") {
     const updatedLinks = [...formData.supportLinks];
@@ -35,30 +67,79 @@ const Criteria5_3_1 = () => {
     setFormData({ ...formData, [field]: value });
   }
 };
-  const handleSubmit = () => {
-    if (
-      formData.year &&
-      formData.name &&
-      formData.team &&
-      formData.uni &&
-      formData.sports &&
-      formData.studentname 
-    ) {
-      const entryWithYear = { ...formData, year: selectedYear };
-      setSubmittedData([...submittedData, entryWithYear]);
-      setFormData({
-        year: "",
-        name: "",
-        team: "",
-        uni: "",
-        sports: "",
-        studentname: "",
-        supportLinks: [""],
-      });
-    } else {
-      alert("Please fill in all required fields.");
-    }
-  };
+const handleSubmit = async (e) => {
+  e?.preventDefault();
+  
+  const {
+    year: award_name,
+    name: student_name,
+    team: team_or_individual,
+    uni: level,
+    sports: activity_type
+  } = formData;
+
+  const year = currentYear;
+  const session = year.split("-")[0];
+
+  if (!award_name || !student_name || !team_or_individual || !level || !activity_type) {
+    alert("Please fill in all required fields (Award Name, Student Name, Team/Individual, Level, and Activity Type).");
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      "http://localhost:3000/api/v1/criteria5/createResponse531",
+      {
+        session: parseInt(session, 10),
+        year,
+        award_name,
+        team_or_individual,
+        level,
+        activity_type,
+        student_name
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true
+      }
+    );
+
+    // Update local state with the new entry
+    const newEntry = {
+      year,
+      studentname: student_name_contact,
+      programme: program_graduated_from,
+      employer: employer_details,
+      paypackage: pay_package_inr
+    };
+
+    setSubmittedData(prev => [...prev, newEntry]);
+    
+    // Update yearData
+    setYearData(prev => ({
+      ...prev,
+      [year]: [...(prev[year] || []), newEntry]
+    }));
+    
+    // Reset form
+    setFormData({
+      studentname: "",
+      programme: "",
+      employer: "",
+      paypackage: "",
+      supportLinks: [""],
+    });
+
+    // Refresh the score
+    fetchScore();
+    alert("Data submitted successfully!");
+  } catch (error) {
+    console.error("Error submitting:", error);
+    alert(error.response?.data?.message || error.message || "Submission failed due to server error");
+  }
+};
 
   const goToNextPage = () => {
     navigate("/criteria5.3.2");
@@ -86,13 +167,13 @@ const Criteria5_3_1 = () => {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex justify-center mb-4">
+            {/* <div className="flex justify-center mb-4">
               <div className="text-center">
                 <div className="text-lg font-medium text-green-500 bg-[#bee7c7] !w-[1000px] h-[50px] pt-[10px] rounded-lg">
                   Provisional Score: 18.75
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div className="mb-6">
               <h3 className="text-blue-600 font-medium mb-2">5.3.1 Metric Information</h3>
@@ -115,18 +196,31 @@ level</li>
 
           <h2 className="text-xl font-bold text-gray-500 mb-4">Number of awards/medals for outstanding performance in sports/cultural activities at university/state/national / international level</h2>
 
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+              {loading ? (
+                <p className="text-gray-600">Loading provisional score...</p>
+              ) : provisionalScore?.data ? (
+                <div>
+                  <p className="text-lg font-semibold text-green-800">
+                    Provisional Score (5.1.1): {provisionalScore.data.score}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-gray-600">No score data available.</p>
+              )}
+            </div>
+
+
           {/* Year Dropdown */}
           <div className="mb-4">
-            <label className="text-gray-700 font-medium mr-2 ">Select Year:</label>
+            <label className="font-medium text-gray-700 mr-2">Select Year:</label>
             <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="border border-gray-300 px-3 py-1 rounded text-gray-950"
+              className="border px-3 py-1 rounded text-black"
+              value={currentYear}
+              onChange={(e) => setCurrentYear(e.target.value)}
             >
-              {pastFiveYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
+              {availableSessions && availableSessions.map((year) => (
+                <option key={year} value={year}>{year}</option>
               ))}
             </select>
           </div>

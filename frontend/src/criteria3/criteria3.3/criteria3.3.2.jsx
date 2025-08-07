@@ -4,63 +4,135 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useEffect } from "react";
+import { SessionContext } from "../../contextprovider/sessioncontext";
+import { useContext } from "react";
 
 const Criteria3_3_2 = () => {
   const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`);
   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
   const [yearData, setYearData] = useState({});
+  const [currentYear, setCurrentYear] = useState("");
   const [formData, setFormData] = useState({
+    session: "",
     names: "",
     name_award: "",
     name_gov: "",
     year: "",
     supportLinks: []
   });
+  const [availableSessions, setAvailableSessions] = useState([]);
   const [yearScores, setYearScores] = useState(
     pastFiveYears.reduce((acc, year) => ({ ...acc, [year]: 0 }), {})
   );
   const [yearCount, setYearCount] = useState(5);
   const [averageScore, setAverageScore] = useState(null);
+    useEffect(() => {
+      if (availableSessions && availableSessions.length > 0) {
+        setCurrentYear(availableSessions[0]); // Default to most recent session
+      }
+    }, [availableSessions]);
 
   const navigate = useNavigate();
+  const { sessions, isLoading: sessionLoading } = useContext(SessionContext);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    if (!sessionLoading && sessions?.length > 0) {
+      setAvailableSessions(sessions);
+      setSelectedYear(sessions[0]);
+    }
+  }, [sessionLoading, sessions]);  
+  const [provisionalScore, setProvisionalScore] = useState(null);
 
-  const handleChange = (field, value, index = null) => {
-    if (field === "supportLinks") {
-      const updatedLinks = [...formData.supportLinks];
-      updatedLinks[index] = value;
-      setFormData({ ...formData, supportLinks: updatedLinks });
-    } else {
-      setFormData({ ...formData, [field]: value });
+  const fetchScore = async () => {
+    console.log('Fetching score...');
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get("http://localhost:3000/api/v1/criteria3/score332");
+      console.log('API Response:', response);
+      console.log('Response data:', response.data);
+      setProvisionalScore(response.data);
+      console.log('provisionalScore after set:', provisionalScore);
+    } catch (error) {
+      console.error("Error fetching provisional score:", error);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
+      }
+      setError(error.message || "Failed to fetch score");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSubmit = () => {
-    const { names, name_award, name_gov, year, supportLinks } = formData;
+  useEffect(() => {
+    fetchScore();
+  }, []);
 
-    if (names && name_award && name_gov && year) {
-      const dataToSubmit = {
-        year: selectedYear,
-        names,
-        name_award,
-        name_gov,
-        supportLinks
+
+ 
+  const handleChange = (field, value) =>
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+  const handleSubmit = async () => {
+    const activity_name = formData.names.trim();
+    const award_name = formData.name_award.trim();
+    const awarding_body = formData.name_gov.trim();
+    const year_of_award = formData.year.trim();
+    const inputYear = formData.year.trim();
+    const sessionFull = currentYear;
+    const session = sessionFull.split("-")[0];
+    const year = inputYear || sessionFull;
+
+    if (!activity_name || !award_name || !awarding_body || !year_of_award) {
+      alert("Please fill in all required fields: Activity Name, Award Name, Awarding Body, and Year of Award");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:3000/api/v1/criteria3/createResponse332", {
+        session: parseInt(session),
+        year,
+        activity_name,
+        award_name,
+        awarding_body,
+        year_of_award
+      });
+
+      const resp = response?.data?.data || {};
+      const newEntry = {
+        year: resp.year || year,
+        activity_name: resp.activity_name || activity_name,
+        award_name: resp.award_name || award_name,
+        awarding_body: resp.awarding_body || awarding_body,
+        year_of_award: resp.year_of_award || year_of_award
       };
 
-      const updatedYearData = {
-        ...yearData,
-        [selectedYear]: [...(yearData[selectedYear] || []), dataToSubmit]
-      };
+      setSubmittedData((prev) => [...prev, newEntry]);
+      setYearData((prev) => ({
+        ...prev,
+        [newEntry.year]: [...(prev[newEntry.year] || []), {
+          activity_name: newEntry.activity_name,
+          award_name: newEntry.award_name,
+          awarding_body: newEntry.awarding_body,
+          year_of_award: newEntry.year_of_award
+        }],
+      }));
 
-      setYearData(updatedYearData);
-      setFormData({
-        year: "",
+      setFormData({ 
         names: "",
         name_award: "",
         name_gov: "",
-        supportLinks: []
+        year: ""
       });
-    } else {
-      alert("Please fill in all fields.");
+      fetchScore();
+      alert("Award data submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting award data:", error);
+      alert(error.response?.data?.message || error.message || "Failed to submit award data");
     }
   };
 
@@ -97,24 +169,38 @@ const Criteria3_3_2 = () => {
               </ul>
             </div>
           </div>
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+            {loading ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : provisionalScore?.data ? (
+              <div>
+                <p className="text-lg font-semibold text-green-800">
+                  Provisional Score (1.3.3): {provisionalScore.data.score}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600">No score data available.</p>
+            )}
+          </div>
 
           <div className="border rounded mb-8">
             <div className="flex justify-between items-center bg-blue-100 text-gray-800 px-4 py-2">
               <h2 className="text-xl font-bold">Awards and Recognitions Received</h2>
-              <div className="flex items-center gap-2">
-                <label className="text-gray-700 font-medium">Select Year:</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="border border-gray-300 px-3 py-1 rounded text-gray-950"
-                >
-                  {pastFiveYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <div className="mb-4">
+            <label className="font-medium text-gray-700 mr-2">Select Year:</label>
+            <select
+              className="border px-3 py-1 rounded text-black"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+            >
+              {pastFiveYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+              
             </div>
 
             <table className="w-full border text-sm border-black">
@@ -274,4 +360,3 @@ const Criteria3_3_2 = () => {
 };
 
 export default Criteria3_3_2;
-

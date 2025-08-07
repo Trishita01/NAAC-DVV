@@ -4,18 +4,35 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useEffect } from "react";
+import { SessionContext } from "../../contextprovider/sessioncontext";
+import { useContext } from "react";
 
 const Criteria3_2_1 = () => {
+
   const pastFiveYears = Array.from(
     { length: 5 },
     (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`
   );
   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
   const [yearData, setYearData] = useState({});
+  const { sessions, isLoading: sessionLoading, error: sessionError } = useContext(SessionContext);
+  const [availableSessions, setAvailableSessions] = useState([]);
+  const [currentYear, setCurrentYear] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
-    proj: "", name: "", princ: "", dept: "", amt: "", duration: "", agency: "", type: "",
-    supportLinks: ["", "", ""],
+    proj: '',           // paper_title
+    name: '',           // author_names
+    dept: '',           // department
+    journal: '',        // journal_name
+    year: '',           // year_of_publication
+    issn: '',           // issn_number
+    indexation: '',     // indexation_status
+    supportLinks: ["", "", ""]  // Add this line
   });
+  const [provisionalScore, setProvisionalScore] = useState(null);
   const [yearScores, setYearScores] = useState(
     pastFiveYears.reduce((acc, y) => ({ ...acc, [y]: 0 }), {})
   );
@@ -23,26 +40,132 @@ const Criteria3_2_1 = () => {
   const [averageScore, setAverageScore] = useState(null);
 
   const navigate = useNavigate();
-  const handleChange = (f, v, idx = null) => {
-    if (f === "supportLinks") {
-      const tmp = [...formData.supportLinks];
-      tmp[idx] = v;
-      setFormData({ ...formData, supportLinks: tmp });
-    } else setFormData({ ...formData, [f]: v });
-  };
-  const handleSubmit = () => {
-    const { proj, name, princ, dept, amt, duration, agency, type } = formData;
-    if (proj && name && princ && dept && amt && duration && agency && type) {
-      const entry = { ...formData, year: selectedYear };
-      setYearData(p => ({
-        ...p,
-        [selectedYear]: [...(p[selectedYear] || []), entry],
-      }));
-      setFormData({
-        proj: "", name: "", princ: "", dept: "", amt: "", duration: "", agency: "", type: "",
-        supportLinks: ["", "", ""],
+
+  useEffect(() => {
+    if (sessions && sessions.length > 0) {
+      setAvailableSessions(sessions);
+      if (!currentYear && sessions.length > 0) {
+        setCurrentYear(sessions[0]);
+      }
+    } else {
+      setAvailableSessions(pastFiveYears);
+      if (!currentYear) {
+        setCurrentYear(pastFiveYears[0]);
+      }
+    }
+  }, [sessions, currentYear, pastFiveYears]);
+
+
+  const handleChange = (field, value, index = null) => {
+    if (field === "supportLinks" && index !== null) {
+      setFormData(prev => {
+        const newLinks = [...prev.supportLinks];
+        newLinks[index] = value;
+        return { ...prev, supportLinks: newLinks };
       });
-    } else alert("Please fill in all fields.");
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const fetchScore = async () => {
+    console.log('Fetching score...');
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get("http://localhost:3000/api/v1/criteria3/score321");
+      console.log('API Response:', response);
+      console.log('Response data:', response.data);
+      setProvisionalScore(response.data);
+      console.log('provisionalScore after set:', provisionalScore);
+    } catch (error) {
+      console.error("Error fetching provisional score:", error);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
+      }
+      setError(error.message || "Failed to fetch score");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchScore();
+  }, []);
+
+
+  const handleSubmit = async () => {
+    const paper_title = formData.proj.trim();
+    const author_names = formData.name.trim();
+    const department = formData.dept.trim();
+    const journal_name = formData.journal.trim();
+    const year_of_publication = formData.year.trim();
+    const issn_number = formData.issn.trim();
+    const inputYear = formData.year.trim();
+    const sessionFull = currentYear;
+    const session = sessionFull.split("-")[0];
+    const year = inputYear || sessionFull;
+
+    if (!paper_title || !author_names || !department || !journal_name || !year_of_publication || !issn_number ) {
+      alert("Please fill in all required fields: Paper Title, Author Names, Department, Journal Name, Year of Publication, ISSN Number");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:3000/api/v1/criteria3/createResponse321", {
+        session: parseInt(session),
+        year,
+        paper_title,
+        author_names,
+        department,
+        journal_name,
+        year_of_publication,
+        issn_number,
+
+      });
+
+      const resp = response?.data?.data || {};
+      const newEntry = {
+        year: resp.year || year,
+        paper_title: resp.paper_title || paper_title,
+        author_names: resp.author_names || author_names,
+        department: resp.department || department,
+        journal_name: resp.journal_name || journal_name,
+        year_of_publication: resp.year_of_publication || year_of_publication,
+        issn_number: resp.issn_number || issn_number,
+       
+      };
+
+      setSubmittedData((prev) => [...prev, newEntry]);
+      setYearData((prev) => ({
+        ...prev,
+        [newEntry.year]: [...(prev[newEntry.year] || []), {
+          paper_title: newEntry.paper_title,
+          author_names: newEntry.author_names,
+          department: newEntry.department,
+          journal_name: newEntry.journal_name,
+          year_of_publication: newEntry.year_of_publication,
+          issn_number: newEntry.issn_number,
+         
+        }],
+      }));
+
+      setFormData({ 
+        proj: "",
+        name: "",
+        dept: "",
+        journal: "",
+        year: "",
+        issn: "",
+      
+      });
+      fetchScore();
+      alert("Paper data submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting paper data:", error);
+      alert(error.response?.data?.message || error.message || "Failed to submit paper data");
+    }
   };
 
   const goPrev = () => navigate("/criteria3.1.1");
@@ -56,14 +179,20 @@ const Criteria3_2_1 = () => {
         <main className="flex-1 min-w-0 p-6 overflow-y-auto">
           {/* Metric Info */}
           <section className="bg-white rounded-lg shadow p-6 mb-6">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex justify-center mb-4">
               <div className="text-center">
-                <div className="text-lg font-medium text-green-500 bg-[#bee7c7] !w-[1000px] h-[50px] pt-[10px] rounded-lg">
-                  Provisional Score: 18.75
-                </div>
+                <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
+                {loading ? (
+                  <span className="text-gray-500">Loading...</span>
+                ) : error ? (
+                  <span className="text-red-500">Error: {error}</span>
+                ) : (
+                  <span className="text-gray-500">Score not available</span>
+                )}
               </div>
-              </div></div>
+            </div>
+          </div>
             <h3 className="text-blue-600 font-medium mb-2">3.2.1 Metric Information</h3>
             <p className="text-gray-700 mb-2">
              3.2.1.1. Number of research papers in the Journals notified on UGC
@@ -80,59 +209,104 @@ year of publication (Data Template) </li>
 
           {/* Input Table */}
           <section className="bg-white rounded-lg shadow mb-6">
-            <div className="text-black flex justify-between items-center bg-blue-50 p-4 rounded-t-lg">
-              <h4 className="font-semibold">Year-wise Funded Research Projects</h4>
-              <select
-                value={selectedYear}
-                onChange={e => setSelectedYear(e.target.value)}
-                className="border rounded px-2 py-1"
-              >
-                {pastFiveYears.map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-            <div className="overflow-x-auto relative">
-              <table className="min-w-full table-auto border text-sm">
-                <thead className="text-black bg-gray-100 sticky top-0 ">
-                  <tr>
-                    {[
-                      "Title of paper",
-                      "Name of the author/s", "Department of the teacher", "Name of journal",
-                      "Year of publication", "ISSN number",
-                      
-                    ].map(h => (
-                      <th key={h} className="text-black border px-2 py-2 text-left font-medium">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    {["proj", "name", "dept", "year", "amt", "duration"].map(key => (
-                      <td key={key} className="text-black border px-2 py-1">
-                        <input
-                          className="text-black w-full border rounded px-2 py-1"
-                          placeholder={key}
-                          value={formData[key]}
-                          onChange={e => handleChange(key, e.target.value)}
-                        />
-                      </td>
-                    ))}
-                    <td className="text-black border px-2 py-1 text-center">
-                      <button
-                        className="text-black bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
-                        onClick={handleSubmit}
-                      >
-                        Add
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
+  <div className="mb-4">
+    <label className="font-medium text-gray-700 mr-2">Select Year:</label>
+    <select
+      className="border px-3 py-1 rounded text-black"
+      value={currentYear}
+      onChange={(e) => setCurrentYear(e.target.value)}
+    >
+      {availableSessions?.map((year) => (
+        <option key={year} value={year}>{year}</option>
+      ))}
+    </select>
+  </div>
+  <div className="overflow-x-auto relative">
+    <table className="min-w-full table-auto border text-sm">
+      <thead className="text-black bg-gray-100 sticky top-0">
+        <tr>
+          {[
+            "Title of paper",
+            "Name of the author/s",
+            "Department",
+            "Journal name",
+            "Year of publication",
+            "ISSN number",
+          ].map((header) => (
+            <th key={header} className="text-black border px-2 py-2 text-left font-medium">
+              {header}
+            </th>
+          ))}
+          <th className="text-black border px-2 py-2 text-left font-medium">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td className="text-black border px-2 py-1">
+            <input
+              className="text-black w-full border rounded px-2 py-1"
+              placeholder="Paper Title"
+              value={formData.proj}
+              onChange={e => handleChange("proj", e.target.value)}
+            />
+          </td>
+          <td className="text-black border px-2 py-1">
+            <input
+              className="text-black w-full border rounded px-2 py-1"
+              placeholder="Author Names"
+              value={formData.name}
+              onChange={e => handleChange("name", e.target.value)}
+            />
+          </td>
+          <td className="text-black border px-2 py-1">
+            <input
+              className="text-black w-full border rounded px-2 py-1"
+              placeholder="Department"
+              value={formData.dept}
+              onChange={e => handleChange("dept", e.target.value)}
+            />
+          </td>
+          <td className="text-black border px-2 py-1">
+            <input
+              className="text-black w-full border rounded px-2 py-1"
+              placeholder="Journal Name"
+              value={formData.journal}
+              onChange={e => handleChange("journal", e.target.value)}
+            />
+          </td>
+          <td className="text-black border px-2 py-1">
+            <input
+              type="number"
+              min="1900"
+              max={new Date().getFullYear()}
+              className="text-black w-full border rounded px-2 py-1"
+              placeholder="Year"
+              value={formData.year}
+              onChange={e => handleChange("year", e.target.value)}
+            />
+          </td>
+          <td className="text-black border px-2 py-1">
+            <input
+              className="text-black w-full border rounded px-2 py-1"
+              placeholder="ISSN Number"
+              value={formData.issn}
+              onChange={e => handleChange("issn", e.target.value)}
+            />
+          </td>
+        
+          <td className="text-black border px-2 py-1 text-center">
+            <button
+              className="text-white bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
+              onClick={handleSubmit}
+            >
+              Add
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 
           {/* Support Links */}
           <section className=" text-black bg-white rounded-lg shadow p-4 mb-6">

@@ -6,74 +6,99 @@ import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
 import { SessionContext } from "../../contextprovider/sessioncontext";
-
-// Generate an array of the past 5 academic years e.g., ["2025", "2024", ...]
-const pastFiveYears = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
+import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria6_2_3 = () => {
   const navigate = useNavigate();
-  const { sessions, isLoading: sessionLoading, error: sessionError } = useContext(SessionContext);
-  const [currentYear, setCurrentYear] = useState(pastFiveYears[0]);
-  const [selectedOption, setSelectedOption] = useState("");
-  const [rows, setRows] = useState([]);
-  const [nextId, setNextId] = useState(1);
-  const [yearOfImplementation, setYearOfImplementation] = useState("");
-  const [session, setSession] = useState("2023");
-  const [score, setScore] = useState(null);
+  const { sessions: availableSessions, isLoading: isLoadingSessions, error: sessionError } = useContext(SessionContext);
+  
+  const [currentYear, setCurrentYear] = useState("");
+  const [governanceData, setGovernanceData] = useState([
+    { area: "Administration", year: "" },
+    { area: "Finance and Accounts", year: "" },
+    { area: "Student Admission and Support", year: "" },
+    { area: "Examination", year: "" },
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [provisionalScore, setProvisionalScore] = useState(null);
 
-  const handleRadioChange = (option) => {
-    setSelectedOption(option);
-  };
+  // Set default year when sessions are loaded
+  useEffect(() => {
+    if (availableSessions && availableSessions.length > 0) {
+      setCurrentYear(availableSessions[0]);
+    }
+  }, [availableSessions]);
 
-  const addRow = () => {
-    setRows([...rows, { id: nextId, name: "" }]);
-    setNextId(nextId + 1);
-  };
-
-  const handleRowNameChange = (id, name) => {
-    setRows(rows.map((row) => (row.id === id ? { ...row, name } : row)));
+  const handleYearChange = (index, value) => {
+    const updatedData = [...governanceData];
+    updatedData[index].year = value;
+    setGovernanceData(updatedData);
   };
 
   const handleSubmit = async () => {
     try {
-      const implimentationValue = {
-        option1: 4, // All of the above
-        option2: 3, // Any 3 of the above
-        option3: 2, // Any 2 of the above
-        option4: 1, // Any 1 of the above
-        option5: 0  // None of the above
-      }[selectedOption] ?? 0;
-
-      const requestBody = {
-        session,
-        implimentation: implimentationValue,
-        area_of_e_governance: [
-          "Administration",
-          "Finance and Accounts",
-          "Student Admission and Support",
-          "Examination",
-        ],
-        year_of_implementation: yearOfImplementation,
-      };
-
-      const response = await axios.post("http://localhost:3000/api/v1/criteria6/createResponse623", requestBody);
-      console.log("Submission successful:", response.data);
-      alert("Data submitted successfully!");
+      // Filter out items with empty years
+      const filledData = governanceData.filter(item => item.year.trim() !== '');
+      
+      if (filledData.length === 0) {
+        alert("Please enter at least one year of implementation");
+        return;
+      }
+      
+      // Calculate implementation count based on number of areas with years
+      const implementationCount = filledData.length > 4 ? 4 : filledData.length; // Cap at 4
+      
+      // Send each filled item as a separate request
+      const requests = filledData.map(item => {
+        const requestBody = {
+          session: parseInt(currentYear, 10), // Convert session to number
+          implimentation: implementationCount, // Send the total count of implementations
+          area_of_e_governance: item.area,
+          year_of_implementation: item.year.trim() // Pass only the year value
+        };
+        console.log("Request body:", requestBody);
+        
+        console.log("Sending request for:", requestBody);
+        
+        return axios.post(
+          "http://localhost:3000/api/v1/criteria6/createResponse623", 
+          requestBody,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            withCredentials: true
+          }
+        );
+      });
+      
+      // Wait for all requests to complete
+      await Promise.all(requests);
+      
+      const successMessage = `Successfully submitted data for ${filledData.length} area(s)`;
+      console.log(successMessage);
+      alert(successMessage);
+      
+      // Reset form
+      setGovernanceData(governanceData.map(item => ({ ...item, year: '' })));
+      
     } catch (error) {
       console.error("Submission failed:", error);
-      alert("Submission failed!");
+      let errorMessage = "Submission failed!";
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        console.error("Error status:", error.response.status);
+        errorMessage = error.response.data.message || errorMessage;
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+        errorMessage = "No response from server. Please check your connection.";
+      } else {
+        console.error('Error:', error.message);
+      }
+      alert(errorMessage);
     }
   };
-
-  useEffect(() => {
-    if (sessions && sessions.length > 0) {
-      const firstYear = sessions[0].split("-")[0];
-      setSession(firstYear);
-    }
-  }, [sessions]);
 
   const fetchScore = async () => {
     console.log("Fetching score...");
@@ -101,139 +126,122 @@ const Criteria6_2_3 = () => {
 
   return (
     <div className="min-h-screen w-screen bg-gray-50 flex flex-col">
-      <Header />
-      <Navbar />
-
-      <div className="flex flex-1">
+      <LandingNavbar />
+      <div className="flex mt-6 flex-1">
         <Sidebar />
+        <div className="flex-1 mt-6 flex flex-col p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-medium text-gray-800">Criteria 6: Governance, Leadership and Management</h2>
+            <div className="text-sm text-gray-600">6.2 - Strategy Development and Deployment</div>
+          </div>
 
-        <div className="flex-1 flex flex-col p-2 mt-[20px]">
-          {/* Page Title and Score */}
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-xl font-medium text-gray-800">
-              Criteria 6: Governance, Leadership and Management
-            </h2>
-            <div className="text-sm">
-              <span className="text-gray-600">6.2-Strategy Development and Deployment</span>
-              <i className="fas fa-chevron-down ml-2 text-gray-500"></i>
-            </div>
+          {/* Session Selection Dropdown */}
+          <div className="mb-4">
+            <label className="font-medium text-gray-700 mr-2">Select Session:</label>
+            <select
+              className="border px-3 py-1 rounded text-black"
+              value={currentYear}
+              onChange={(e) => setCurrentYear(e.target.value)}
+              disabled={isLoadingSessions}
+            >
+              {isLoadingSessions ? (
+                <option>Loading sessions...</option>
+              ) : availableSessions ? (
+                availableSessions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))
+              ) : (
+                <option>No sessions available</option>
+              )}
+            </select>
+            {sessionError && <p className="text-red-500 text-sm mt-1">{sessionError}</p>}
           </div>
 
           {/* Provisional Score Section */}
-          <div className="flex justify-center mb-4">
-            <div className="text-center">
-              <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
-              {loading ? (
-                <span className="text-gray-500">Loading...</span>
-              ) : error ? (
-                <span className="text-red-500">Error: {error}</span>
-              ) : provisionalScore ? (
-                <div className="text-blue-600 text-lg font-bold">
-                  Score: {provisionalScore.data?.score || "N/A"}
-                </div>
-              ) : (
-                <span className="text-gray-500">Score not available</span>
-              )}
-            </div>
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+            {loading ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : provisionalScore?.data ? (
+              <div>
+                <p className="text-lg font-semibold text-green-800">
+                  Provisional Score (6.2.3): {provisionalScore.data.score}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600">No score data available.</p>
+            )}
           </div>
 
-          {/* Information Box */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-blue-600 font-medium mb-2">6.2.3 Metric Information</h3>
-            <p className="text-sm text-gray-700">
-              Implementation of e-governance in areas of operation <br />
-              1. Administration <br />
-              2. Finance and Accounts <br />
-              3. Student Admission and Support <br />
-              4. Examination
-            </p>
-            <h3 className="text-blue-600 font-medium mt-6 mb-2">Data Requirements:</h3>
-            <ul className="list-disc pl-5 text-sm text-gray-700">
-              <li>Areas of e-governance</li>
-              <li>Name of the Vendor with contact details</li>
-              <li>Year of implementation</li>
-            </ul>
-          </div>
-
-          {/* Radio Buttons */}
-          <div className="!bg-white rounded-lg shadow-md p-6 mb-6">
-            <h3 className="text-blue-600 font-medium mb-4">
-              Select the Options <br />
-              1. Administration <br />
-              2. Finance and Accounts <br />
-              3. Student Admission and Support <br />
-              4. Examination
-            </h3>
-            <div className="space-y-3">
-              {[
-                "All of the above",
-                "Any 3 of the above",
-                "Any 2 of the above",
-                "Any 1 of the above",
-                "None of the above",
-              ].map((label, index) => {
-                const optionKey = `option${index + 1}`;
-                return (
-                  <div key={optionKey} className="flex items-center">
-                    <input
-                      type="radio"
-                      id={optionKey}
-                      name="participation"
-                      className="mr-3 h-4 w-4 text-blue-600"
-                      checked={selectedOption === optionKey}
-                      onChange={() => handleRadioChange(optionKey)}
-                    />
-                    <label htmlFor={optionKey} className="text-sm text-gray-800">
-                      {label}
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* File Upload */}
+          {/* Data Entry Table */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="bg-blue-50 p-4 rounded-md mb-6">
+            <h3 className="text-blue-600 font-medium mb-4">E-Governance Implementation Details</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-200">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="py-2 px-4 border-b text-left">Area of Governance</th>
+                    <th className="py-2 px-4 border-b text-left">Year of Implementation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {governanceData.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="py-3 text-black px-4 border-b">{item.area}</td>
+                      <td className="py-3 text-black px-4 border-b">
+                        <input
+                          type="text"
+                          className="w-full px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Enter year"
+                          value={item.year}
+                          onChange={(e) => handleYearChange(index, e.target.value)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="mt-6">
+              <button
+                onClick={handleSubmit}
+                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+
+          {/* File Upload Section */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 className="text-blue-600 font-medium mb-4">Supporting Documents</h3>
+            <div className="bg-blue-50 p-4 rounded-md mb-4">
               <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
                 <li>ERP (Enterprise Resource Planning) Document</li>
                 <li>Screen shots of user interfaces</li>
-                <li>Any additional information</li>
-                <li>
-                  Details of implementation of e-governance in areas of operation, Administration,
-                  etc (Data Template)
-                </li>
+                <li>Any other relevant document</li>
               </ul>
             </div>
-
-            <label className="block text-sm font-medium text-gray-700 mb-2">Upload Documents</label>
-            <div className="flex items-center mb-4">
-              <label className="bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer">
-                <i className="fas fa-upload mr-2"></i> Choose Files
-                <input type="file" className="hidden" multiple />
+            <div className="flex items-center justify-center w-full">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <svg className="w-8 h-8 mb-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                  </svg>
+                  <p className="mb-2 text-sm text-gray-500">
+                    <span className="font-semibold">Click to upload</span> or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500">PDF, DOCX, or JPG (MAX. 10MB)</p>
+                </div>
+                <input id="dropzone-file" type="file" className="hidden" multiple />
               </label>
-              <span className="ml-3 text-gray-600">No file chosen</span>
             </div>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-4 mr-10">
-            <button
-              onClick={handleSubmit}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            >
-              Submit
-            </button>
-            <Bottom />
-            <button
-              onClick={() => navigate("/criteria1.2.1")}
-              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-            >
-              Next
-            </button>
           </div>
         </div>
       </div>
+      <Bottom />
     </div>
   );
 };

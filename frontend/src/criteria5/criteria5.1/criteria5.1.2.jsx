@@ -4,12 +4,26 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useEffect } from "react";
+import { SessionContext } from "../../contextprovider/sessioncontext";
+import { useContext } from "react";
+
 
 const Criteria5_1_2= () => {
   const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`);
   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
   const [yearData, setYearData] = useState({});
+  const [currentYear, setCurrentYear] = useState(pastFiveYears[0]);
+  const { sessions: availableSessions } = useContext(SessionContext);
+  useEffect(() => {
+    if (availableSessions && availableSessions.length > 0) {
+      setCurrentYear(availableSessions[0]);
+      setSelectedYear(availableSessions[0]);
+    }
+  }, [availableSessions]);
 
+  
   const [formData, setFormData] = useState({
     year: "",
     schemename: "",
@@ -22,6 +36,29 @@ const Criteria5_1_2= () => {
     supportLinks: [""],
   });
 
+  useEffect(() => {
+    async function fetchScore() {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get("http://localhost:3000/api/v1/criteria2/score222");
+        console.log("Fetched score222:", response.data);
+        setScore(response.data.data);
+      } catch (error) {
+        console.error("Error fetching score222:", error);
+        setError("Failed to load ratio. Please ensure data in 2.4.1 is filled.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchScore();
+  }, []);
+
+
+
+  const [score, setScore] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [yearScores, setYearScores] = useState(
     pastFiveYears.reduce((acc, year) => ({ ...acc, [year]: 0 }), {})
   );
@@ -40,6 +77,19 @@ const Criteria5_1_2= () => {
       setFormData({ ...formData, [field]: value });
     }
   };
+  const getValidScore = (scoreObj) => {
+    if (!scoreObj) return null;
+    return (
+      scoreObj.weighted_cr_score ||
+      scoreObj.score_sub_sub_criteria ||
+      scoreObj.score_sub_criteria ||
+      scoreObj.score_criteria ||
+      null
+    );
+  };
+
+  const validScore = getValidScore(score);
+
 
   const handleSubmit = () => {
   const { year,schemename, govtstudents, govtamount, inststudents, instamount } = formData;
@@ -109,68 +159,54 @@ institution / non- government agencies </li>
                 </ul>
             </div>
           </div>
+          <div className="bg-white text-black p-4 border border-green-300 rounded shadow">
+            
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+              {loading ? (
+                <p className="text-gray-600">Loading provisional score...</p>
+              ) : validScore !== null ? (
+                <p className="text-lg font-semibold text-green-800">
+                  Provisional Score (5.1.2): {parseFloat(validScore).toFixed(2)} 
+                </p>
+              ) : (
+                <p className="text-gray-600">No score data available.</p>
+              )}
+            </div>
+          </div>
 
           <div className="border rounded mb-8">
             <div className=" items-center bg-blue-100 text-gray-800 px-4 py-2">
               <h2 className="text-xl font-bold">Students benefitted by scholarships, freeships
 etc. provided by the institution / non- government agencies </h2>
-              <div className=" mb-1">
-                <label className="text-gray-700 font-medium mr-2 ml-[70px]">Select Year:</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="border border-gray-300 px-3 py-1 rounded text-gray-950 "
-                >
-                  {pastFiveYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+<div className="mb-1">
+  <label className="text-gray-700 font-medium mr-2 ml-[70px]">Select Year:</label>
+  <select
+    value={currentYear}
+    onChange={(e) => setCurrentYear(e.target.value)}
+    className="border border-gray-300 px-3 py-1 rounded text-gray-950"
+  >
+    {availableSessions && availableSessions.length > 0 ? (
+      availableSessions.map((year) => (
+        <option key={year} value={year}>
+          {year}
+        </option>
+      ))
+    ) : (
+      pastFiveYears.map((year) => (
+        <option key={year} value={year}>
+          {year}
+        </option>
+      ))
+    )}
+  </select>
+</div>
+</div>
+</div>
 
-            <table className="w-full border text-sm border-black">
-              <thead className="bg-gray-100 text-gray-950">
-                <tr>
-                  <th rowSpan="2" className="border px-2 py-2"> Year</th>
-                  <th rowSpan="2" className="border px-2 py-2">Name of the scheme</th>
-                  <th colSpan="2" className="border px-2 py-2">Number of students benefited by government scheme and amount </th>
-                  <th  colSpan="2" className="border px-2 py-2">Number of students benefited by  the institution's schemes and 
-amount </th>
-                <th rowSpan="2" className="border px-2 py-2">Action</th>
-                </tr>
-                  <tr>
-        <th className="border px-2 py-2">Number of students</th>
-        <th className="border px-2 py-2">Amount</th>
-        <th className="border px-2 py-2">Number of students</th>
-        <th className="border px-2 py-2">Amount</th>
-      </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  {["year", "schemename", "govtstudents", "govtamount", "inststudents", "instamount"].map((key) => (
-                    <td key={key} className="border px-2 py-1">
-                      <input
-                        
-                        className="w-full border text-gray-950 border-black rounded px-2 py-1"
-                        placeholder={key.replace(/([A-Z])/g, " $1")}
-                        value={formData[key]}
-                        onChange={(e) => handleChange(key, e.target.value)}
-                      />
-                    </td>
-                  ))}
-                  <td className="border px-2 py-1 text-center">
-                    <button
-                      className="!bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-                      onClick={handleSubmit}
-                    >
-                      Add
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 rounded">
+            <p className="font-semibold">
+              Fill in the inputs in 2.4.1 to get the corresponding results.
+            </p>
           </div>
 
           <div className="mb-6">

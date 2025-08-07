@@ -4,11 +4,26 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import axios from "axios";
+import { useEffect } from "react";
+import { SessionContext } from "../../contextprovider/sessioncontext";
 
 const Criteria5_2_3= () => {
-  const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`);
-  const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
-  const [yearData, setYearData] = useState({});
+   const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`);
+   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
+   const [yearData, setYearData] = useState({});
+   const [provisionalScore, setProvisionalScore] = useState(null);
+   const [loading, setLoading] = useState(false);
+   const [error, setError] = useState(null);
+   const [currentYear, setCurrentYear] = useState(pastFiveYears[0]);
+   const { sessions: availableSessions } = useContext(SessionContext);
+   useEffect(() => {
+     if (availableSessions && availableSessions.length > 0) {
+       setCurrentYear(availableSessions[0]);
+       setSelectedYear(availableSessions[0]);
+     }
+   }, [availableSessions]);
 
   const [formData, setFormData] = useState({
     year: "",
@@ -21,6 +36,24 @@ Other :"",
     
     supportLinks: [""],
   });
+
+  const fetchScore = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get("http://localhost:3000/api/v1/criteria5/score511");
+      setProvisionalScore(response.data);
+    } catch (error) {
+      console.error("Error fetching score:", error);
+      setError(error.message || "Failed to fetch score");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchScore();
+  }, []);
 
   const [yearScores, setYearScores] = useState(
     pastFiveYears.reduce((acc, year) => ({ ...acc, [year]: 0 }), {})
@@ -41,24 +74,109 @@ Other :"",
     }
   };
 
-  const handleSubmit = () => {
-  const { year,registration, NET, SLET, GATE, GMAT, CAT, GRE, JAM, IELTS, TOEFL, Civil, State, Other } = formData;
-  if (year && registration && NET && SLET && GATE && GMAT && CAT && GRE && JAM && IELTS && TOEFL && Civil && State && Other) {
-    const updatedYearData = {
-      ...yearData,
-      [selectedYear]: [...(yearData[selectedYear] || []), formData],
-    };
-    setYearData(updatedYearData);
-    setFormData({
-      year: "",
-      registration: "", 
-      NET: "", SLET: "", GATE: "", GMAT: "", CAT: "", GRE: "", JAM: "", IELTS: "", TOEFL: "", Civil: "", State: "", Other: "",
-      supportLinks: [""],
-    });
-  } else {
-    alert("Please fill in all fields.");
-  }
-};
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    
+    const {
+      year: registeration_number,
+      registration: year,
+      NET: exam_net,
+      SLET: exam_slet,
+      GATE: exam_gate,
+      GMAT: exam_gmat,
+      CAT: exam_cat,
+      GRE: exam_gre,
+      JAM: exam_jam,
+      IELTS: exam_ielts,
+      TOEFL: exam_toefl,
+      Civil: exam_civil_services,
+      State: exam_state_services,
+      Other: exam_other
+    } = formData;
+  
+    const session = year.split("-")[0];
+  
+    if (!year || !registeration_number || !exam_net || !exam_slet || !exam_gate || !exam_gmat || !exam_cat || !exam_gre || !exam_jam || !exam_ielts || !exam_toefl || !exam_civil_services || !exam_state_services || !exam_other) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/v1/criteria5/createResponse523",
+        {
+          session: parseInt(session, 10),
+          year,
+          registeration_number,
+          exam_net: parseInt(exam_net) || 0,
+          exam_slet: parseInt(exam_slet) || 0,
+          exam_gate: parseInt(exam_gate) || 0,
+          exam_gmat: parseInt(exam_gmat) || 0,
+          exam_cat: parseInt(exam_cat) || 0,
+          exam_gre: parseInt(exam_gre) || 0,
+          exam_jam: parseInt(exam_jam) || 0,
+          exam_ielts: parseInt(exam_ielts) || 0,
+          exam_toefl: parseInt(exam_toefl) || 0,
+          exam_civil_services: parseInt(exam_civil_services) || 0,
+          exam_state_services: parseInt(exam_state_services) || 0,
+          exam_other: parseInt(exam_other) || 0,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true
+        }
+      );
+  
+      // Update local state with the new entry
+      const newEntry = {
+        year,
+        registeration_number,
+        exam_net,
+        exam_slet,
+        exam_gate,
+        exam_gmat,
+        exam_cat,
+        exam_gre,
+        exam_jam,
+        exam_ielts,
+        exam_toefl,
+        exam_civil_services,
+        exam_state_services,
+        exam_other,
+        studentname: student_name_contact,
+        programme: program_graduated_from,
+        employer: employer_details,
+        paypackage: pay_package_inr
+      };
+  
+      setSubmittedData(prev => [...prev, newEntry]);
+      
+      // Update yearData
+      setYearData(prev => ({
+        ...prev,
+        [year]: [...(prev[year] || []), newEntry]
+      }));
+      
+      // Reset form
+      setFormData({
+        studentname: "",
+        programme: "",
+        employer: "",
+        paypackage: "",
+        supportLinks: [""],
+      });
+  
+      // Refresh the score
+      fetchScore();
+      alert("Data submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting:", error);
+      alert(error.response?.data?.message || error.message || "Submission failed due to server error");
+    }
+  };
+
 const goToNextPage = () => {
     navigate("/criteria5.3.1");
   };
@@ -107,24 +225,37 @@ level examinations</li>
             </div>
           </div>
 
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+              {loading ? (
+                <p className="text-gray-600">Loading provisional score...</p>
+              ) : provisionalScore?.data ? (
+                <div>
+                  <p className="text-lg font-semibold text-green-800">
+                    Provisional Score (5.1.1): {provisionalScore.data.score}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-gray-600">No score data available.</p>
+              )}
+            </div>
+
+
           <div className="border rounded mb-8">
             <div className="flex justify-between items-center bg-blue-100 text-gray-800 px-4 py-2">
               <h2 className="text-xl font-bold">  Students qualifying in state/national/
 international level examinations</h2>
-              <div className="size-7 mb-1">
-                <label className="text-gray-700 font-medium mr-2 -ml-[470px]">Select Year:</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="border border-gray-300 px-3 py-1 rounded text-gray-950 mb-[200px] "
-                >
-                  {pastFiveYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
+<div>
+                  <label className="font-medium text-gray-700 mr-2">Select Year:</label>
+                  <select
+                    className="border px-3 py-1 rounded text-black"
+                    value={currentYear}
+                    onChange={(e) => setCurrentYear(e.target.value)}
+                  >
+                    {availableSessions && availableSessions.map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
             </div>
 
             <table className="w-full border text-sm border-black">

@@ -6,18 +6,27 @@ import Navbar from "../../components/navbar";
 import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { SessionContext } from "../../contextprovider/sessioncontext";
+import axios from "axios";
+import { useEffect } from "react";
 
 const Criteria4_1_3 = () => {
-  const pastFiveYears = Array.from({ length: 5 }, (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`);
-  const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
+  const { sessions: availableSessions } = useContext(SessionContext);
+  const pastFiveYears = availableSessions || [];
+  const [selectedYear, setSelectedYear] = useState(availableSessions?.[0] || "");
+  const [currentYear, setCurrentYear] = useState(availableSessions?.[0] || "");
 
   const [yearData, setYearData] = useState({});
   const [formData, setFormData] = useState({
-    roomno: "",
-    type: "",
-    link: "",
-    supportLinks: [""],
+    room_identifier: "",
+    typeict_facility: ""
   });
+  const [submittedData, setSubmittedData] = useState([]);
+  const [provisionalScore, setProvisionalScore] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
 
   const [yearScores, setYearScores] = useState(
     pastFiveYears.reduce((acc, year) => ({ ...acc, [year]: 0 }), {})
@@ -27,6 +36,39 @@ const Criteria4_1_3 = () => {
 
   const navigate = useNavigate();
   const years = pastFiveYears;
+
+  useEffect(() => {
+    if (availableSessions && availableSessions.length > 0) {
+      setCurrentYear(availableSessions[0]);
+      setSelectedYear(availableSessions[0]);
+    }
+  }, [availableSessions]);
+
+    const fetchScore = async () => {
+      console.log('Fetching score...');
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get("http://localhost:3000/api/v1/criteria4/score413");
+        console.log('API Response:', response);
+        console.log('Response data:', response.data);
+        setProvisionalScore(response.data);
+        console.log('provisionalScore after set:', provisionalScore);
+      } catch (error) {
+        console.error("Error fetching provisional score:", error);
+        if (error.response) {
+          console.error('Error response data:', error.response.data);
+          console.error('Error status:', error.response.status);
+        }
+        setError(error.message || "Failed to fetch score");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    useEffect(() => {
+      fetchScore();
+    }, []);
 
   const handleChange = (field, value, index = null) => {
     if (field === "supportLinks") {
@@ -38,26 +80,56 @@ const Criteria4_1_3 = () => {
     }
   };
 
-  const handleSubmit = () => {
-    const { proj, name, princ, dept, amt, duration, agency, type } = formData;
+  const handleSubmit = async () => {
+    const { room_identifier, typeict_facility } = formData;
+    const session = currentYear.split("-")[0];
 
-    if (proj && name && princ && dept && amt && duration && agency && type) {
-      const updatedForm = { ...formData, year: selectedYear };
+    if (!room_identifier || !typeict_facility) {
+      alert("Please fill in all required fields.");
+      return;
+    }
 
-      const updatedYearData = {
-        ...yearData,
-        [selectedYear]: [...(yearData[selectedYear] || []), updatedForm],
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/v1/criteria4/createResponse413",
+        {
+          session: parseInt(session, 10),
+          room_identifier: room_identifier.trim(),
+          typeict_facility: typeict_facility.trim(),
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true
+        }
+      );
+
+      const newEntry = {
+        year: currentYear,
+        room_identifier: room_identifier.trim(),
+        typeict_facility: typeict_facility.trim(),
       };
 
-      setYearData(updatedYearData);
+      setSubmittedData((prev) => [...prev, newEntry]);
+      setYearData((prev) => ({
+        ...prev,
+        [currentYear]: [...(prev[currentYear] || []), newEntry],
+      }));
+
+      // Reset form
       setFormData({
-         roomno: "",
-    type: "",
-    link: "",
+        room_identifier: "",
+        typeict_facility: "",
+        link: "",
         supportLinks: [""],
       });
-    } else {
-      alert("Please fill in all fields.");
+      
+      fetchScore();
+      alert("Data submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting:", error);
+      alert(error.response?.data?.message || error.message || "Submission failed due to server error");
     }
   };
 
@@ -68,7 +140,7 @@ const Criteria4_1_3 = () => {
   const averagePrograms = (totalPrograms / years.length).toFixed(2);
 
   return (
-    <div className="w-[1690px] min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden">
       <Header />
       <Navbar />
       <div className="flex w-full">
@@ -81,14 +153,6 @@ const Criteria4_1_3 = () => {
             <div className="text-sm text-gray-600">– 4.1 Physical Facilities </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex justify-center mb-4">
-              <div className="text-center">
-                <div className="text-lg font-medium text-green-500 bg-[#bee7c7] !w-[1000px] h-[50px] pt-[10px] rounded-lg">
-                  Provisional Score: 18.75
-                </div>
-              </div>
-              </div></div>
 
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h3 className="text-blue-600 font-medium mb-2">4.1.3 Metric Information</h3>
@@ -106,37 +170,54 @@ facilities such as smart class, LMS, etc.
             </ul>
           </div>
 
+
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+            {loading ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : provisionalScore?.data ? (
+              <div>
+                <p className="text-lg font-semibold text-green-800">
+                  Provisional Score (1.1.3): {provisionalScore.data.score}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600">No score data available.</p>
+            )}
+          </div>
+
           <div className="border rounded mb-8">
             <div className="flex justify-between items-center bg-blue-100 text-gray-800 px-4 py-2">
               <h2 className="text-xl font-bold">
                 Percentage of classrooms and seminar halls with ICT- enabled
 facilities such as smart class, LMS, etc. 
               </h2>
-              <div>
-                <label className="mr-2 font-medium">Select Year:</label>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className="border px-3 py-1 rounded text-gray-950"
-                >
-                  {years.map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
+              <div className="mb-4">
+            <label className="font-medium text-gray-700 mr-2">Select Year:</label>
+            <select
+              className="border px-3 py-1 rounded text-black"
+              value={currentYear}
+              onChange={(e) => setCurrentYear(e.target.value)}
+            >
+              {availableSessions && availableSessions.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
             </div>
+          </div>
+
+
+
 
             <table className="w-full border text-sm">
               <thead className="bg-gray-100 text-gray-950">
                 <tr>
-                  <th className="border px-2 py-2">Room number or Name  of Classrooms and Seminar halls with ICT-enabled facilities</th>
+                  <th className="border px-2 py-2">Room number or Name of Classrooms and Seminar halls with ICT-enabled facilities</th>
                   <th className="border px-2 py-2">Type of ICT facility</th>
-                  <th className="border px-2 py-2">Link to geo tagged photos </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  {["roomno", "type", "link", ].map((key) => (
+                  {["room_identifier", "typeict_facility"].map((key) => (
                     <td key={key} className="border px-2 py-1">
                       <input
                         className="w-full border text-gray-950 border-black rounded px-2 py-1"
@@ -157,31 +238,6 @@ facilities such as smart class, LMS, etc.
                 </tr>
               </tbody>
             </table>
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-2">
-              Links to relevant documents:
-            </label>
-            <div className="flex flex-col gap-2">
-              {formData.supportLinks.map((link, index) => (
-                <input
-                  key={index}
-                  type="url"
-                  placeholder={`Enter support link ${index + 1}`}
-                  className="px-3 py-1 border border-gray-300 rounded text-gray-950"
-                  value={link}
-                  onChange={(e) => handleChange("supportLinks", e.target.value, index)}
-                />
-              ))}
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, supportLinks: [...formData.supportLinks, ""] })}
-                className="mt-2 px-3 py-1 !bg-blue-600 text-white rounded hover:!bg-blue-700 w-fit"
-              >
-                + Add Another Link
-              </button>
-            </div>
           </div>
 
           {years.map((year) => (
