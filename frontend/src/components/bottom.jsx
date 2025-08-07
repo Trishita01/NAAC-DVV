@@ -3,7 +3,7 @@ import React from "react";
 
 
 
-const Bottom = ({ onNext, onPrevious }) => {
+const Bottom = ({ onNext, onPrevious, onExport, onSubmit }) => {
   return (
     <div className="flex justify-between mt-6">
       <button
@@ -15,13 +15,13 @@ const Bottom = ({ onNext, onPrevious }) => {
 
       <div className="flex space-x-4">
         <button
-          onClick={() => alert("Draft saved!")}
+          onClick={onExport}
           className="!bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-gray-800 transition duration-200"
         >
           Export data
         </button>
         <button
-          onClick={() => alert("Entry submitted!")}
+          onClick={onSubmit}
           className="!bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-gray-800 transition duration-200"
         >
           Submit entry

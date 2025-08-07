@@ -9,6 +9,7 @@ import UserDropdown from './components/UserDropdown';
 import { useAuth } from './auth/authProvider';
 import { navItems } from './config/navigation';
 import {useGpa} from './contextprovider/GpaContext';
+import {useGpaData} from './contextprovider/gpadata';
 import RadarGraphSection from './Radar';
 import {GpaDataProvider, useGpaData} from './contextprovider/gpadata';
 import { FaArrowLeft, FaChartLine, FaBullseye, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
@@ -210,128 +211,191 @@ const GPAAnalysis = () => {
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Sidebar */}
       <div className={`flex-shrink-0 transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
         <Sidebar 
+          navItems={navItems}
           collapsed={collapsed} 
           navItems={navItems}
           setCollapsed={setCollapsed} 
           navigate={navigate} 
         />
       </div>
-
+  
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-7xl mx-auto w-full">
-            {/* Title */}
-            <div className="mb-4">
-              <h4 className="text-lg font-bold text-gray-900 mb-1">GPA Analysis Dashboard</h4>
-              <p className="text-sm text-gray-600">Comprehensive analysis of NAAC criteria performance</p>
-            </div>
-
-            {/* Metric Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <MetricCard
-                title="Current GPA"
-                value={currentGPA?.toFixed(2)}
-                grade={grade || "Grade"}
-                trend={5.2}
-                icon={Award}
-                color="text-blue-600"
-              />
-              <MetricCard
-                title="Target GPA"
-                value={targetGPA?.toFixed(2)}
-                grade={desiredGrade || "Grade"}
-                icon={Target}
-                color="text-green-600"
-              />
-            </div>
-
-            {/* Overview Radar Chart */}
-            <RadarGraphSection />
-            {/* <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 mb-8">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Criteria Overview</h3>
-                <p className="text-gray-600">Visual representation of NAAC criteria performance</p>
-              </div>
-              <div className="flex justify-center">
-                <div style={{ width: '600px', height: '400px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={radarData}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="criteria" tick={{ fontSize: 14 }} />
-                      <PolarRadiusAxis domain={[0, 4]} />
-                      <Radar
-                        name="Current"
-                        dataKey="current"
-                        stroke="#3B82F6"
-                        fill="#3B82F6"
-                        fillOpacity={0.3}
-                        strokeWidth={2}
-                      />
-                      <Radar
-                        name="Target"
-                        dataKey="target"
-                        stroke="#10B981"
-                        fill="#10B981"
-                        fillOpacity={0.1}
-                        strokeWidth={2}
-                      />
-                      <Tooltip />
-                    </RadarChart>
-                  </ResponsiveContainer>
+            {/* Enhanced Title Section */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <Award className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                    GPA Analysis Dashboard
+                  </h1>
+                  <p className="text-gray-600 mt-1">Comprehensive analysis of NAAC criteria performance</p>
                 </div>
               </div>
-            </div> */}
-
-            {/* Criteria Breakdown */}
-            <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Criteria Summary</h3>
-                <p className="text-gray-600">Detailed performance for each criterion and sub-criterion</p>
+            </div>
+  
+            {/* Enhanced Metric Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                      <Award className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Current GPA</h3>
+                      <p className="text-sm text-gray-500">Your present performance</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
+                    +5.2%
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <span className="text-4xl font-bold text-gray-900">{currentGPA?.toFixed(2)}</span>
+                  <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">
+                    {grade || "Grade"}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${(currentGPA / 4) * 100}%` }}
+                  ></div>
+                </div>
               </div>
-
+  
+              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
+                      <Target className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Target GPA</h3>
+                      <p className="text-sm text-gray-500">Your desired goal</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <span className="text-4xl font-bold text-gray-900">{targetGPA?.toFixed(2)}</span>
+                  <span className="ml-3 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
+                    {desiredGrade || "Grade"}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${(targetGPA / 4) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+  
+            {/* Enhanced Overview Radar Chart */}
+            <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-100 mb-10">
+              {/* <div className="text-center mb-8">
+                {/* <h2 className="text-3xl font-bold text-gray-900 mb-3">Criteria Overview</h2>
+                <p className="text-gray-600 text-lg">Visual representation of NAAC criteria performance</p> */}
+              {/* </div> */} */
+              <RadarGraphSection />
+            </div>
+  
+            {/* Enhanced Criteria Breakdown */}
+            <div className="bg-white p-10 rounded-2xl shadow-lg border border-gray-100">
+              <div className="text-center mb-10">
+                <h2 className="text-3xl font-bold text-gray-900 mb-3">Criteria Summary</h2>
+                <p className="text-gray-600 text-lg">Detailed performance for each criterion and sub-criterion</p>
+              </div>
+  
               <div className="space-y-6">
                 {criteria?.map(c => (
-                  <div key={c.id} className="border rounded-lg shadow-sm">
+                  <div key={c.id} className="border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
                     <div
-                      className="flex justify-between items-center bg-gray-100 px-4 py-3 cursor-pointer"
+                      className="flex justify-between items-center bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-5 cursor-pointer hover:from-blue-50 hover:to-indigo-50 transition-all duration-300"
                       onClick={() => toggleCriteria(c.id)}
                     >
-                      <div>
-                        <h4 className="text-lg font-semibold">{c.title}</h4>
-                        <p className="text-sm text-gray-500">{c.status}</p>
+                      <div className="flex items-center gap-4">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <div>
+                          <h4 className="text-xl font-semibold text-gray-900">{c.title}</h4>
+                          <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${
+                              c.status === 'Completed' ? 'bg-green-500' : 
+                              c.status === 'In Progress' ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}></span>
+                            {c.status}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-700">
-                        Score: {c.score} | Target: {c.target}
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="text-sm text-gray-500">Current / Target</div>
+                          <div className="text-lg font-bold text-gray-900">
+                            {c.score} / {c.target}
+                          </div>
+                        </div>
+                        <div className={`transform transition-transform duration-200 ${
+                          expandedCriteria[c.id] ? 'rotate-180' : ''
+                        }`}>
+                          <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </div>
                       </div>
                     </div>
-
+  
                     {expandedCriteria[c.id] && (
-                      <div className="p-4">
-                        <ul className="space-y-2">
+                      <div className="p-6 bg-gray-50 border-t border-gray-100">
+                        <div className="grid gap-4">
                           {c.subcriteria?.map((sub) => (
-                            <li key={sub.code} className="flex justify-between border-b pb-2">
-                              <div>
-                                <p className="font-medium">{sub.code} - {sub.title}</p>
-                                <p className="text-sm text-gray-500">Score: {sub.score} | Grade: {sub.grade}</p>
+                            <div key={sub.code} className="bg-white p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors duration-200">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                      {sub.code}
+                                    </span>
+                                    <h5 className="font-semibold text-gray-900">{sub.title}</h5>
+                                  </div>
+                                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                                    <span className="flex items-center gap-1">
+                                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                      Score: <span className="font-medium text-gray-900">{sub.score}</span>
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                      Grade: <span className="font-medium text-gray-900">{sub.grade}</span>
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-sm text-gray-500 mb-1">Target</div>
+                                  <div className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
+                                    {sub.targetPercentage}%
+                                  </div>
+                                </div>
                               </div>
-                              <div className="text-sm text-gray-600">
-                                Target: {sub.targetPercentage}%
-                              </div>
-                            </li>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-
             </div>
           </div>
         </main>

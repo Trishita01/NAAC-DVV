@@ -1,8 +1,8 @@
 import express from 'express';
 const router = express.Router();
-import { getAllCriteria3, createResponse313,createResponse321, createResponse322, createResponse332,createResponse333, createResponse341, createResponse342, getResponsesByCriteriaCode } from '../controllers/criteria3.controller.js';
+import { createResponse313,createResponse321, createResponse322, createResponse332,createResponse333, createResponse341, createResponse342, getResponsesByCriteriaCode, score313, score321, score322, score332, score333, score341, score342 } from '../controllers/criteria3.controller.js';
 
-router.route('/getAllCriteria3').get(getAllCriteria3);
+
 
 router.route('/createResponse313')
     .post(createResponse313);
@@ -27,6 +27,27 @@ router.route('/createResponse342')
 
 router.route('/getResponsesByCriteriaCode/:criteriaCode')
     .get(getResponsesByCriteriaCode);
+
+router.route('/score313')
+    .get(score313);
+
+router.route('/score321')
+    .get(score321);
+
+router.route('/score322')
+    .get(score322);
+
+router.route('/score332')
+    .get(score332);
+
+router.route('/score333')
+    .get(score333);
+
+router.route('/score341')
+    .get(score341);
+
+router.route('/score342')
+    .get(score342);
 
 export default router;
 

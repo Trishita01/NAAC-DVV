@@ -9,9 +9,15 @@ import { useAuth } from './auth/authProvider';
 import LandingNavbar from './components/landing-navbar';
 import { FaTachometerAlt, FaUsers, FaFileAlt, FaChartLine, FaPaperPlane, FaDownload, FaQuestionCircle, FaCog, FaSignOutAlt, FaBell, FaUser, FaEnvelope, FaUserCircle } from 'react-icons/fa';
 import UserDropdown from './components/UserDropdown';
+<<<<<<< HEAD
+=======
+import {useGpa} from './contextprovider/GpaContext';
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
 import { useGpaData } from './contextprovider/gpadata';
 import RadarGraphSection from './Radar';
 import {GpaDataProvider} from './contextprovider/gpadata';
+
+
 
 const IqacDashboard = () => {
   const {
@@ -128,6 +134,7 @@ const IqacDashboard = () => {
     { icon: BarChart3, label: 'Reports', active: false },
     { icon: Settings, label: 'Settings', active: false }
   ];
+<<<<<<< HEAD
   console.log('Final criteriaLacking value:', criteriaLacking);
   const statusCards = useMemo(() => [
     {
@@ -159,7 +166,41 @@ const IqacDashboard = () => {
       bgGradient: 'from-gray-50 to-gray-100'
     }
   ], [isGpaLoading, gpaError, grade, desiredGrade, criteriaLacking]);
+=======
 
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
+
+  console.log('Final criteriaLacking value:', criteriaLacking);
+  const statusCards = useMemo(() => [
+    {
+      label: 'Projected Grade',
+      value: isGpaLoading ? '…' : gpaError ? 'Error' : grade,
+      color: 'text-blue-600',
+      sub: isGpaLoading ? 'Loading...' : gpaError ? 'Error loading grade' : 'Based on current progress',
+      bgGradient: 'from-blue-50 to-blue-100'
+    },
+    {
+      label: 'Desired Grade',
+      value: desiredGrade || 'N/A',
+      color: 'text-amber-500',
+      sub: 'Target accreditation level',
+      bgGradient: 'from-amber-50 to-amber-100'
+    },
+    {
+      label: 'Criteria Lacking',
+      value: isGpaLoading ? '…' : gpaError ? 'Error' : criteriaLacking,
+      color: 'text-red-500',
+      sub: isGpaLoading ? 'Loading...' : 'Need immediate attention',
+      bgGradient: 'from-red-50 to-red-100'
+    },
+    {
+      label: 'Next Deadline',
+      value: '16th july',
+      color: 'text-gray-800',
+      sub: 'Upcoming submission',
+      bgGradient: 'from-gray-50 to-gray-100'
+    }
+  ], [isGpaLoading, gpaError, grade, desiredGrade, criteriaLacking]);
   const actionItems = [
     {
       priority: 'high',
@@ -243,6 +284,7 @@ const IqacDashboard = () => {
               <UserDropdown user={user} className="ml-2" />
             </div>
           </div>
+          console.log(desiredGrade)
 
           {/* Welcome Message */}
           <div className={`mb-6 transform transition-all duration-700 delay-100 ${isLoaded ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'}`}>
@@ -318,6 +360,7 @@ const IqacDashboard = () => {
               </div>
             ))}
           </div>
+<<<<<<< HEAD
 
           {/* Feedback Summary
           <div className={`bg-white rounded-lg shadow p-5 mb-8 hover:shadow-xl transition-shadow duration-300 transform transition-all duration-700 delay-500 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
@@ -341,6 +384,8 @@ const IqacDashboard = () => {
             </div>
           </div> */}
 
+=======
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
           {/* SSR Download & Submission Panel */}
           <div className={`bg-white rounded-lg shadow p-5 mb-8 hover:shadow-xl transition-shadow duration-300 transform transition-all duration-700 delay-600 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
             <h3 className="text-sm font-medium text-gray-700 mb-4">SSR Download & Submission Panel</h3>

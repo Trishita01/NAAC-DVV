@@ -117,6 +117,7 @@ import Criteria7_1_10 from "./criteria7/criteria7.1/criteria7.1.10.jsx";
 import Criteria7_1_11 from "./criteria7/criteria7.1/criteria7.1.11.jsx";
 import Criteria7_2_1 from "./criteria7/criteria7.2/criteria7.2.1.jsx";
 import Criteria7_3_1 from "./criteria7/criteria7.3/criteria7.3.1.jsx";
+import { GpaDataProvider } from "./contextprovider/gpadata.jsx";
 
 
 
@@ -570,10 +571,113 @@ function App() {
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria6.5.3'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria6_5_3/>
+=======
+            path='/criteria3.1.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_1_1/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.1.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_1_2/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.1.3'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_1_3/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.2.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_2_1/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.2.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_2_2/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.3.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_3_1/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.3.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_3_2/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.3.3'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_3_3/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.3.4'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_3_4/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.4.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_4_1/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria3.4.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria3_4_2/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria4.1.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria4_1_1/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria4.1.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria4_1_2/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -593,11 +697,27 @@ function App() {
               </PrivateRoute>
             }
           />
+<<<<<<< HEAD
+=======
+    
+    <Route
+            path='/criteria4.2.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria4_2_1/>
+              </PrivateRoute>
+            }
+          />
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
           <Route
             path='/criteria4.2.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria4_2_2 />
+=======
+                <Criteria4_2_2/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -605,7 +725,11 @@ function App() {
             path='/criteria4.2.3'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria4_2_3 />
+=======
+                <Criteria4_2_3/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -613,7 +737,11 @@ function App() {
             path='/criteria4.2.4'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria4_2_4 />
+=======
+                <Criteria4_2_4/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -621,7 +749,11 @@ function App() {
             path='/criteria4.3.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria4_3_1 />
+=======
+                <Criteria4_3_1/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -629,7 +761,11 @@ function App() {
             path='/criteria4.3.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria4_3_2 />
+=======
+                <Criteria4_3_2/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -637,7 +773,11 @@ function App() {
             path='/criteria4.3.3'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria4_3_3 />
+=======
+                <Criteria4_3_3/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -645,7 +785,11 @@ function App() {
             path='/criteria4.4.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria4_4_1 />
+=======
+                <Criteria4_4_1/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -653,7 +797,11 @@ function App() {
             path='/criteria4.4.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria4_4_2 />
+=======
+                <Criteria4_4_2/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -661,7 +809,11 @@ function App() {
             path='/criteria5.1.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_1_1 />
+=======
+                <Criteria5_1_1/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -669,7 +821,11 @@ function App() {
             path='/criteria5.1.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_1_2 />
+=======
+                <Criteria5_1_2/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -677,7 +833,11 @@ function App() {
             path='/criteria5.1.3'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_1_3 />
+=======
+                <Criteria5_1_3/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -685,7 +845,11 @@ function App() {
             path='/criteria5.1.4'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_1_4 />
+=======
+                <Criteria5_1_4/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -693,7 +857,11 @@ function App() {
             path='/criteria5.1.5'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_1_5 />
+=======
+                <Criteria5_1_5/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -701,7 +869,11 @@ function App() {
             path='/criteria5.2.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_2_1 />
+=======
+                <Criteria5_2_1/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -709,7 +881,11 @@ function App() {
             path='/criteria5.2.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_2_2 />
+=======
+                <Criteria5_2_2/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -717,7 +893,11 @@ function App() {
             path='/criteria5.2.3'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_2_3 />
+=======
+                <Criteria5_2_3/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -725,16 +905,27 @@ function App() {
             path='/criteria5.3.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_3_1 />
               </PrivateRoute>
             }
           />
 
+=======
+                <Criteria5_3_1/>
+              </PrivateRoute>
+            }
+          />
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
           <Route
             path='/criteria5.3.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_3_2 />
+=======
+                <Criteria5_3_2/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -742,7 +933,11 @@ function App() {
             path='/criteria5.3.3'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_3_3 />
+=======
+                <Criteria5_3_3/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -750,7 +945,11 @@ function App() {
             path='/criteria5.4.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_4_1 />
+=======
+                <Criteria5_4_1/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
@@ -758,95 +957,192 @@ function App() {
             path='/criteria5.4.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
+<<<<<<< HEAD
                 <Criteria5_4_2 />
+=======
+                <Criteria5_4_2/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.1.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_1_1 />
+=======
+            path='/criteria7.1.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_1/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.1.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_1_2 />
+=======
+            path='/criteria7.1.2'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_2/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.1.3'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_1_3 />
+=======
+            path='/criteria7.1.3'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_3/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.2.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_2_1 />
+=======
+            path='/criteria7.1.4'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_4/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.2.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_2_2 />
+=======
+            path='/criteria7.1.5'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_5/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.3.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_3_1 />
+=======
+            path='/criteria7.1.6'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_6/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.3.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_3_2 />
+=======
+            path='/criteria7.1.7'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_7/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.3.3'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_3_3 />
+=======
+            path='/criteria7.1.8'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_8/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.3.4'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_4_1 />
+=======
+            path='/criteria7.1.9'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_9/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.4.1'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_4_1 />
+=======
+            path='/criteria7.1.10'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_10/>
+>>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />
           <Route
+<<<<<<< HEAD
             path='/criteria3.4.2'
             element={
               <PrivateRoute allowedRoles={['iqac', 'admin']}>
                 <Criteria3_4_2 />
+=======
+            path='/criteria7.1.11'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_1_11/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria7.2.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_2_1/>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path='/criteria7.3.1'
+            element={
+              <PrivateRoute allowedRoles={['iqac', 'admin']}>
+                <Criteria7_3_1/>
+  >>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
               </PrivateRoute>
             }
           />

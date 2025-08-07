@@ -307,7 +307,7 @@ const createResponse113 = asyncHandler(async (req, res) => {
 const score113 = asyncHandler(async (req, res) => {
   const criteria_code = convertToPaddedFormat("1.1.3");
   const currentYear = new Date().getFullYear();
-  const sessionYear = currentYear; // just the year as an integer
+  const sessionYear = currentYear;
 
   // Step 1: Get criteria details
   const criteria = await CriteriaMaster.findOne({
@@ -331,7 +331,7 @@ const score113 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5; // Last 5 years
+  const startYear = endYear - 5;
 
   // Step 3: Count unique teachers from Criteria113
   const teacherCounts = await Criteria113.findAll({
@@ -346,8 +346,9 @@ const score113 = asyncHandler(async (req, res) => {
   });
 
   const totalUniqueTeachers = teacherCounts[0]?.unique_teachers || 0;
+  console.log("Total unique teachers:", totalUniqueTeachers);
 
-  // Step 4: Score logic based on total teachers only (you can customize this logic)
+  // Step 4: Score and grade logic
   let score, grade;
 
   if (totalUniqueTeachers >= 30) {
@@ -367,33 +368,58 @@ const score113 = asyncHandler(async (req, res) => {
     grade = 0;
   }
 
-  // Step 5: Create or update the score
-  const [entry, created] = await Score.upsert({
-    criteria_code: criteria.criteria_code,
-    criteria_id: criteria.criterion_id,
-    sub_criteria_id: criteria.sub_criterion_id,
-    sub_sub_criteria_id: criteria.sub_sub_criterion_id,
-    score_criteria: 0,
-    score_sub_criteria: 0,
-    score_sub_sub_criteria: score,
-    sub_sub_cr_grade: grade,
-    session: sessionYear,
-    year: currentYear,
-    cycle_year: 1
-  }, {
-    conflictFields: ['criteria_code', 'session', 'year']
+  // Step 5: Insert or update score (like score211)
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: sessionYear
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
+      session: sessionYear,
+      year: currentYear,
+      cycle_year: 1
+    }
   });
 
-  // Step 6: Response
+  if (!created) {
+    await Score.update({
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
+      session: sessionYear,
+      year: currentYear,
+      cycle_year: 1
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: sessionYear
+      }
+    });
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: sessionYear
+      }
+    });
+  }
+
   return res.status(200).json(
     new apiResponse(200, {
       score,
       totalUniqueTeachers,
-      grade,
-      message: `Grade is ${grade}`
+      grade
     }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
+
 
 
 const createResponse121 = asyncHandler(async (req, res) => {
@@ -668,10 +694,6 @@ const score121 = asyncHandler(async (req, res) => {
 });
 
 
-
-
-
-
 const createResponse122_123 = asyncHandler(async (req, res) => {
   const {
     session,
@@ -817,11 +839,6 @@ const createResponse122_123 = asyncHandler(async (req, res) => {
 });
 
 
-
-
-
-
-
 const score122 = asyncHandler(async (req, res) => {
   const currentYear = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("1.2.2");
@@ -945,8 +962,6 @@ const score122 = asyncHandler(async (req, res) => {
     }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
-
-
 
 const score123 = asyncHandler(async (req, res) => {
   const currentYear = new Date().getFullYear();
@@ -1076,7 +1091,6 @@ const score123 = asyncHandler(async (req, res) => {
   );
 });
 
-
 const createResponse132 = asyncHandler(async (req, res) => {
   const {
     session,
@@ -1174,8 +1188,6 @@ const createResponse132 = asyncHandler(async (req, res) => {
     new apiResponse(201, newEntry, "Response created successfully")
   );
 });
-
-
 
 const score132 = asyncHandler(async (req, res) => {
   /*
@@ -1297,7 +1309,6 @@ const score132 = asyncHandler(async (req, res) => {
     }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
-
 
 const createResponse133 = asyncHandler(async (req, res) => {
   /*
@@ -1604,8 +1615,6 @@ const createResponse141 = asyncHandler(async (req, res) => {
   );
 });
 
-
-
 const score141 = asyncHandler(async (req, res) => {
   const criteria_code = convertToPaddedFormat("1.4.1");
   const currentYear = new Date().getFullYear();
@@ -1690,7 +1699,6 @@ const score141 = asyncHandler(async (req, res) => {
     }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
-
 
 const createResponse142 = asyncHandler(async (req, res) => {
   const {
@@ -1778,7 +1786,6 @@ const createResponse142 = asyncHandler(async (req, res) => {
     );
   }
 });
-
 
 const score142 = asyncHandler(async (req, res) => {
   const criteria_code = convertToPaddedFormat("1.4.2");

@@ -340,6 +340,10 @@ const Criteria2_1_1 = () => {
 
   const goToNextPage = () => navigate("/criteria2.1.2");
   const goToPreviousPage = () => navigate("/criteria2.1.1");
+  const handleExport = () => {
+    window.open("http://localhost:8000/download-excel", "_blank");
+  };
+
 
   return (
     <div className="w-screen min-h-screen bg-gray-50 overflow-x-hidden">
@@ -643,7 +647,7 @@ const Criteria2_1_1 = () => {
 
           {/* Navigation */}
           <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
-            <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />
+            <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} onExport={handleExport} onSubmit={handleSubmit} />
           </div>
         </div>
       </div>
