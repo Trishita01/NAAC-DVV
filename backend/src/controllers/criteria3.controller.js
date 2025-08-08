@@ -5,6 +5,8 @@ import apiError from "../utils/apiError.js";
 import Sequelize from "sequelize";
 
 const Criteria313 = db.response_3_1_3;
+const Criteria312 = db.response_3_1_2;
+const Criteria311 = db.response_3_1_1;
 const Criteria321 = db.response_3_2_1;
 const Criteria322 = db.response_3_2_2;
 const Criteria332 = db.response_3_3_2;
