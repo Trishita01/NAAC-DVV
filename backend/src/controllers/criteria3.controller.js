@@ -452,9 +452,6 @@ const createResponse321 = asyncHandler(async (req, res) => {
     if(existingRecord.issn_number === issn_number) {
       throw new apiError(400, "ISSN number already exists for this paper_title")
     }
-    if(existingRecord.indexation_status === indexation_status) {
-      throw new apiError(400, "Indexation status already exists for this paper_title")
-    }
     else{
       throw new apiError(400, "Paper title already exists for this session and year")
     }
