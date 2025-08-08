@@ -2905,6 +2905,21 @@ const score71 = asyncHandler(async (req, res) => {
 
     await Score.findOrCreate({
       where: {
+        criteria_code: criterion.criteria_code,
+        session,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id
+      },
+      defaults: {
+        criteria_code: criterion.criteria_code,
+        criteria_id: criterion.criterion_id,
+        sub_criteria_id: criterion.sub_criteria_id,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: sub_score,
+        score_sub_sub_criteria: 0,
+        sub_sub_cr_grade: 0,
+        session
+      }
     });
   }
 // Update all entries under sub_criteria_id = '0701'
@@ -2922,7 +2937,11 @@ const score71 = asyncHandler(async (req, res) => {
    const finalScores = await Score.findAll({
     where: {
       session,
-    });
+      sub_sub_criteria_id: {
+        [Sequelize.Op.in]: subSubCriteriaIds
+      }
+    }
+  });
 
     return res.status(200).json(
       new apiResponse(200, finalScores, "Score sub_criteria updated for 7.1")
