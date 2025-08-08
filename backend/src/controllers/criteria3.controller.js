@@ -1876,7 +1876,7 @@ const createResponse311_312 = asyncHandler(async (req, res) => {
       where: {
         [Sequelize.Op.or]: [
           { criterion_id: "03", sub_criterion_id: "0301", sub_sub_criterion_id: "030101" },
-          { criterion_id: "03", sub_criterion_id: "01", sub_sub_criterion_id: "0102" }
+          { criterion_id: "03", sub_criterion_id: "0301", sub_sub_criterion_id: "030102" }
         ]
       },
       raw: true
@@ -1884,7 +1884,7 @@ const createResponse311_312 = asyncHandler(async (req, res) => {
   
     const modelMap = {
       '030101': Criteria311,
-      '0102': Criteria312
+      '030102': Criteria312
     };
   
     const responses = [];
@@ -1892,7 +1892,7 @@ const createResponse311_312 = asyncHandler(async (req, res) => {
     const transaction = await db.sequelize.transaction();
     try {
       for (const criteria of criteriaList) {
-        const Model = modelMap[criteria.sub_sub_criterion_id] || modelMap[criteria.sub_sub_criterion_id.slice(-4)];
+        const Model = modelMap[criteria.sub_sub_criterion_id] || modelMap[criteria.sub_sub_criterion_id.slice(-2)];
         if (!Model) continue;
   
         const [entry, created] = await Model.findOrCreate({
