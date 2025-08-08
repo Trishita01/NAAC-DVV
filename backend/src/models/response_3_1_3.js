@@ -27,11 +27,11 @@ export default class response_3_1_3 extends Model {
       }
     },
     session: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     workshop_name: {

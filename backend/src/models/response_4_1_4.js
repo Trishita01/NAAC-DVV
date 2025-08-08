@@ -31,7 +31,7 @@ export default class response_4_1_4 extends Model {
       allowNull: true
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     budget_allocated_infra_aug: {

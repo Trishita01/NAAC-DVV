@@ -27,11 +27,11 @@ export default class response_3_1_1 extends Model {
       }
     },
     session: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     name_of_principal_investigator: {

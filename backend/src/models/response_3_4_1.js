@@ -27,7 +27,7 @@ export default class response_3_4_1 extends Model {
       }
     },
     session: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     title_of_activity: {
@@ -43,7 +43,7 @@ export default class response_3_4_1 extends Model {
       allowNull: true
     },
     year_of_collaboration: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     duration: {
