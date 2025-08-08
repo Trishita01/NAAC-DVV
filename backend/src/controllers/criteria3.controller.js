@@ -1810,95 +1810,109 @@ const score342 = asyncHandler(async (req, res) => {
 });
 
 const createResponse311_312 = asyncHandler(async (req, res) => {
-    const {
-      session,
-      year,
-      name_of_principal_investigator,
-      department_of_principal_investigator,
-      duration_of_project,
-      type,
-      name_of_project,
-      year_of_award,
-      amount_sanctioned,
-      name_of_funding_agency
-    } = req.body;
-  
-    // Step 1: Basic field validation
-    const currentYear = new Date().getFullYear();
-  
-    if (
-      !session ||
-      !year ||
-      !name_of_principal_investigator ||
-      !duration_of_project ||
-      !name_of_project ||
-      !amount_sanctioned ||
-      !name_of_funding_agency
-    ) {
-      throw new apiError(400, "Missing required fields");
-    }
-  
-    if (session < 1990 || session > currentYear) {
-      throw new apiError(400, "Session must be between 1990 and current year");
-    }
-  
-    if (year < 1990 || year > currentYear) {
-      throw new apiError(400, "Year must be between 1990 and current year");
-    }
-  
-    if (year_of_award && (year_of_award < 1990 || year_of_award > currentYear)) {
-      throw new apiError(400, "Year of award must be between 1990 and current year");
-    }
-  
-    if (duration_of_project < 0 || amount_sanctioned < 0) {
-      throw new apiError(400, "Duration and amount must be positive");
-    }
-  
-    // Step 2: Validate session against IIQA
-    const latestIIQA = await IIQA.findOne({
-      attributes: ['session_end_year'],
-      order: [['created_at', 'DESC']]
-    });
-  
-    if (!latestIIQA) {
-      throw new apiError(404, "No IIQA form found");
-    }
-  
-    const endYear = latestIIQA.session_end_year;
-    const startYear = endYear - 5;
-  
-    if (session < startYear || session > endYear) {
-      throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
-    }
-  
-    // Step 3: Fetch criteria info for both
+  const {
+    session,
+    year,
+    name_of_principal_investigator,
+    department_of_principal_investigator,
+    duration_of_project,
+    type,
+    name_of_project,
+    year_of_award,
+    amount_sanctioned,
+    name_of_funding_agency
+  } = req.body;
+
+  // Step 1: Validate required fields
+  if (
+    !session ||
+    !year ||
+    !name_of_principal_investigator ||
+    !duration_of_project ||
+    !name_of_project ||
+    !amount_sanctioned ||
+    !name_of_funding_agency
+  ) {
+    throw new apiError(400, "Missing required fields");
+  }
+
+  const currentYear = new Date().getFullYear();
+
+  if (session < 1990 || session > currentYear) {
+    throw new apiError(400, "Session must be between 1990 and current year");
+  }
+
+  if (year < 1990 || year > currentYear) {
+    throw new apiError(400, "Year must be between 1990 and current year");
+  }
+
+  if (year_of_award && (year_of_award < 1990 || year_of_award > currentYear)) {
+    throw new apiError(400, "Year of award must be between 1990 and current year");
+  }
+
+  if (duration_of_project < 0 || amount_sanctioned < 0) {
+    throw new apiError(400, "Duration and amount must be positive");
+  }
+
+  // Step 2: Validate session against IIQA
+  const latestIIQA = await IIQA.findOne({
+    attributes: ["session_end_year"],
+    order: [["created_at", "DESC"]],
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5;
+
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+  }
+
+  // Step 3: Start transaction
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    // Fetch criteria for both 3.1.1 and 3.1.2
     const criteriaList = await CriteriaMaster.findAll({
       where: {
-        [Sequelize.Op.or]: [
-          { criterion_id: "03", sub_criterion_id: "0301", sub_sub_criterion_id: "030101" },
-          { criterion_id: "03", sub_criterion_id: "0301", sub_sub_criterion_id: "030102" }
-        ]
+        sub_sub_criterion_id: { [Sequelize.Op.in]: ["030101", "030102"] },
+        sub_criterion_id: "0301",
+        criterion_id: "03"
       },
-      raw: true
+      transaction
     });
-  
+
+    if (!criteriaList || criteriaList.length !== 2) {
+      await transaction.rollback();
+      throw new apiError(404, "One or more criteria not found");
+    }
+
+    // Map criteria to models
     const modelMap = {
-      '030101': Criteria311,
-      '030102': Criteria312
+      "030101": { model: Criteria311, name: "3.1.1" },
+      "030102": { model: Criteria312, name: "3.1.2" }
     };
-  
+
     const responses = [];
-  
-    const transaction = await db.sequelize.transaction();
-    try {
-      for (const criteria of criteriaList) {
-        const Model = modelMap[criteria.sub_sub_criterion_id];
-        if (!Model) continue;
-      
+
+    // Insert or update in both tables
+    for (const criteria of criteriaList) {
+      const { model: Model, name } = modelMap[criteria.sub_sub_criterion_id];
+      if (!Model) continue;
+
+      try {
         const [entry, created] = await Model.findOrCreate({
-          where: { session, year, name_of_principal_investigator, name_of_project },
+          where: {
+            session,
+            year,
+            name_of_principal_investigator,
+            name_of_project
+          },
           defaults: {
-            criteria_id: criteria.id, // safer than overwriting table's PK
+            id: criteria.id,
             criteria_code: criteria.criteria_code,
             session,
             year,
@@ -1913,37 +1927,28 @@ const createResponse311_312 = asyncHandler(async (req, res) => {
           },
           transaction
         });
-      
-        if (!created) {
-          await Model.update({
-            department_of_principal_investigator,
-            duration_of_project,
-            type,
-            year_of_award,
-            amount_sanctioned,
-            name_of_funding_agency
-          }, {
-            where: { sl_no: entry.sl_no }, // or your actual PK
-            transaction
-          });
-        }
-      
+
         responses.push({
-          criteria: criteria.criteria_code,
+          criteria: name,
           created,
-          message: created ? "Entry created successfully" : "Entry updated successfully"
+          message: created ? "Entry created successfully" : "Entry already exists"
         });
+
+      } catch (error) {
+        await transaction.rollback();
+        throw new apiError(400, `Error creating entry for criteria ${name}: ${error.message}`);
       }
-  
-      await transaction.commit();
-  
-      return res.status(200).json(
-        new apiResponse(200, { responses }, "Stored in both 3.1.1 and 3.1.2 successfully")
-      );
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
     }
+
+    await transaction.commit();
+
+    return res.status(200).json(
+      new apiResponse(200, { responses }, "Stored in both 3.1.1 and 3.1.2 successfully")
+    );
+
+  } catch (error) {
+    throw error; // Let global error handler handle it
+  }
 });
 
 const score311 = asyncHandler(async (req, res) => {
