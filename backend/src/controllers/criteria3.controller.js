@@ -1892,18 +1892,13 @@ const createResponse311_312 = asyncHandler(async (req, res) => {
     const transaction = await db.sequelize.transaction();
     try {
       for (const criteria of criteriaList) {
-        const Model = modelMap[criteria.sub_sub_criterion_id] || modelMap[criteria.sub_sub_criterion_id.slice(-2)];
+        const Model = modelMap[criteria.sub_sub_criterion_id];
         if (!Model) continue;
-  
+      
         const [entry, created] = await Model.findOrCreate({
-          where: {
-            session,
-            year,
-            name_of_principal_investigator,
-            name_of_project
-          },
+          where: { session, year, name_of_principal_investigator, name_of_project },
           defaults: {
-            id: criteria.id,
+            criteria_id: criteria.id, // safer than overwriting table's PK
             criteria_code: criteria.criteria_code,
             session,
             year,
@@ -1918,7 +1913,7 @@ const createResponse311_312 = asyncHandler(async (req, res) => {
           },
           transaction
         });
-  
+      
         if (!created) {
           await Model.update({
             department_of_principal_investigator,
@@ -1928,17 +1923,15 @@ const createResponse311_312 = asyncHandler(async (req, res) => {
             amount_sanctioned,
             name_of_funding_agency
           }, {
-            where: {
-              id: entry.id
-            },
+            where: { sl_no: entry.sl_no }, // or your actual PK
             transaction
           });
         }
-  
+      
         responses.push({
           criteria: criteria.criteria_code,
           created,
-          entry
+          message: created ? "Entry created successfully" : "Entry updated successfully"
         });
       }
   
