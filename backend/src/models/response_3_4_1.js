@@ -20,15 +20,15 @@ export default class response_3_4_1 extends Model {
     },
     criteria_code: {
       type: DataTypes.STRING(20),
-      allowNull: true,
+      allowNull: false,
       references: {
         model: 'criteria_master',
         key: 'criteria_code'
       }
     },
     session: {
-      type: DataTypes.INTEGER,
-      allowNull: true
+      type: DataTypes.DATE,
+      allowNull: false
     },
     title_of_activity: {
       type: DataTypes.STRING(255),
@@ -48,10 +48,6 @@ export default class response_3_4_1 extends Model {
     },
     duration: {
       type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    document_link: {
-      type: DataTypes.STRING(500),
       allowNull: true
     },
     submitted_at: {

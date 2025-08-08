@@ -53,16 +53,11 @@ export default class iqac_supervision extends Model {
     phone_number: {
       type: DataTypes.STRING(15),
       allowNull: false
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
     tableName: 'iqac_supervision',
-    timestamps: false,
+    timestamps: true,
     indexes: [
       {
         name: "PRIMARY",

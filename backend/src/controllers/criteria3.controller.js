@@ -389,7 +389,7 @@ const createResponse321 = asyncHandler(async (req, res) => {
 
    // Step 1: Field Validation
    if(
-    !session || !paper_title || ! author_names || ! department || ! journal_name || ! year_of_publication || ! issn_number || ! indexation_status
+    !session || !paper_title || ! author_names || ! department || ! journal_name || ! year_of_publication || ! issn_number
    ) {
     throw new apiError(400, "Missing required fields");
    }
@@ -407,14 +407,6 @@ const createResponse321 = asyncHandler(async (req, res) => {
 
    if(issn_number.length !== 13) {
     throw new apiError(400, "ISSN number must be 13 digits");
-   }
-
-   if(indexation_status !== 'YES' && indexation_status !== 'NO') {
-    throw new apiError(400, "Indexation status must be 'YES' or 'NO'");
-   }
-
-   if(year_of_publication < session) {
-    throw new apiError(400, "Year of publication must be after session");
    }
 
    //Create proper Date objects for session
@@ -495,8 +487,7 @@ const createResponse321 = asyncHandler(async (req, res) => {
       department,
       journal_name,
       year_of_publication,
-      issn_number,
-      indexation_status   
+      issn_number
     },
     defaults: {
       id: criteria.id,
@@ -507,8 +498,7 @@ const createResponse321 = asyncHandler(async (req, res) => {
       department,
       journal_name,
       year_of_publication,
-      issn_number,
-      indexation_status   
+      issn_number   
     }
   });
 
@@ -523,8 +513,7 @@ const createResponse321 = asyncHandler(async (req, res) => {
         department,
         journal_name,
         year_of_publication,
-        issn_number,
-        indexation_status   
+        issn_number   
       }
     });
 
@@ -536,8 +525,7 @@ const createResponse321 = asyncHandler(async (req, res) => {
         department,
         journal_name,
         year_of_publication,
-        issn_number,
-        indexation_status   
+        issn_number   
       }
     });
   }
@@ -557,21 +545,62 @@ const score321 = asyncHandler(async (req, res) => {
   const endYear = latestIIQA.session_end_year;
   const startYear = endYear - 5;
 
-  const publicationCount = await Criteria321.count({
-    where: {
-      year_of_publication: { [Sequelize.Op.between]: [startYear, endYear] },
-      indexation_status: 'YES'
-    }
-  });
+  console.log(startYear, endYear);
 
-  const teacherData = await extendedProfile.findAll({
-    attributes: [[Sequelize.fn('AVG', Sequelize.col('full_time_teachers')), 'avg_teachers']],
-    where: { year: { [Sequelize.Op.between]: [startYear, endYear] } },
+  const publicationCount = await Criteria321.findAll({
+    attributes: [
+      [Sequelize.fn('COUNT', Sequelize.col('paper_title')), 'count']
+    ],
+    where: {
+      session: { [Sequelize.Op.between]: [startYear, endYear] }
+    },
     raw: true
   });
 
-  const avgTeachers = parseFloat(teacherData[0]?.avg_teachers || 0);
-  const score = avgTeachers > 0 ? (publicationCount / avgTeachers).toFixed(2) : 0;
+  console.log(publicationCount);
+
+  const teacherData = await extendedProfile.findAll({
+    attributes: ['year', 'full_time_teachers'],
+    where: {
+      year: {
+        [Sequelize.Op.between]: [startYear, endYear]
+      }
+    },
+    order: [['year', 'DESC']]
+  });
+  
+  if (!teacherData) {
+    throw new apiError(404, "No full-time teacher data found in the session range");
+  }
+  
+  // Step 1: Group by session/year
+  const groupedBySession = {};
+  teacherData.forEach(record => {
+    const year = record.year;
+    if (!groupedBySession[year]) {
+      groupedBySession[year] = 0;
+    }
+    groupedBySession[year] += record.full_time_teachers || 0;
+  });
+  
+  // Step 2: Calculate average from latest 5 years
+  const recentSessions = Object.keys(groupedBySession)
+    .sort((a, b) => b - a) // Sort DESC
+    .slice(0, 5); // Take latest 5 sessions
+  
+  const teacherCounts = recentSessions.map(session => groupedBySession[session]);
+  const totalTeachers = teacherCounts.reduce((sum, value) => sum + value, 0);
+  const average = (teacherCounts.length > 0 ? totalTeachers / teacherCounts.length : 0).toFixed(3);
+  
+  console.log("Grouped By Session:", groupedBySession);
+  console.log("Recent Sessions:", recentSessions);
+  console.log("Average Full-Time Teachers (last 5 years):", average);
+  
+
+  const avgTeachers = parseFloat(average || 0);
+  console.log(avgTeachers);
+  const score = avgTeachers > 0 ? (publicationCount[0].count / avgTeachers).toFixed(2) : 0;
+  console.log(score);
 
   // Grading
   let grade = 0;

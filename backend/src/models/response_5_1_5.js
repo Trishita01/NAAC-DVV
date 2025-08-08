@@ -1,7 +1,7 @@
 import _sequelize from 'sequelize';
 const { Model, Sequelize } = _sequelize;
 
-export default class response_4_2_4 extends Model {
+export default class response_5_1_5 extends Model {
   static init(sequelize, DataTypes) {
   return super.init({
     id: {
@@ -19,7 +19,7 @@ export default class response_4_2_4 extends Model {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(20),
+      type: DataTypes.STRING(10),
       allowNull: false,
       references: {
         model: 'criteria_master',
@@ -30,18 +30,18 @@ export default class response_4_2_4 extends Model {
       type: DataTypes.DATE,
       allowNull: false
     },
-    no_of_teachers_stds: {
-      type: DataTypes.INTEGER,
+    options: {
+      type: DataTypes.ENUM('0','1','2','3','4'),
       allowNull: false
     },
     submitted_at: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
-    tableName: 'response_4_2_4',
+    tableName: 'response_5_1_5',
     timestamps: false,
     indexes: [
       {
@@ -53,7 +53,7 @@ export default class response_4_2_4 extends Model {
         ]
       },
       {
-        name: "idx_r424_criteria",
+        name: "idx_r515_criteria",
         using: "BTREE",
         fields: [
           { name: "criteria_code" },

@@ -12,6 +12,7 @@ import authRoutes from "./routes/auth.routes.js";
 import iiqaRoutes from "./routes/iiqa.routes.js";
 import extendedprofileRoutes from "./routes/extendedprofile.routes.js";
 import scoresRoutes from "./routes/scores.routes.js";
+import criteria3Routes from "./routes/criteria3.routes.js";
 dotenv.config();          // Load .env vars
 
 const app = express();    // Create Express app
@@ -37,6 +38,7 @@ app.use(cookieParser());
 app.use('/api/v1/criteria', criteriaMasterRoutes);
 app.use('/api/v1/criteria1', criteria1Routes);
 app.use('/api/v1/criteria2', criteria2Routes);
+app.use('/api/v1/criteria3', criteria3Routes);
 app.use('/api/v1/criteria6', criteria6Routes);
 app.use('/api/v1/criteria5', criteria5Routes);
 app.use('/api/v1/criteria7', criteria7Routes);
