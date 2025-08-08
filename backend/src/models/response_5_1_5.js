@@ -19,7 +19,7 @@ export default class response_5_1_5 extends Model {
       primaryKey: true
     },
     criteria_code: {
-      type: DataTypes.STRING(10),
+      type: DataTypes.STRING(20),
       allowNull: false,
       references: {
         model: 'criteria_master',
