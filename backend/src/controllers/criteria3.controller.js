@@ -118,7 +118,6 @@ try {
 }
 });
 
-
 const createResponse313 = asyncHandler(async (req, res) => {
   /*
     1. Extract input from req.body
@@ -131,6 +130,7 @@ const createResponse313 = asyncHandler(async (req, res) => {
 
   const {
     session,
+    year,
     workshop_name,
     participants,
     date_from,
@@ -138,12 +138,16 @@ const createResponse313 = asyncHandler(async (req, res) => {
     } = req.body;
 
   // Step 1: Field validation
-if (!session || !workshop_name || !participants || !date_from || !date_to) {
+if (!session || !workshop_name || !participants || !date_from || !date_to || !year) {
   throw new apiError(400, "Missing required fields");
 }
 const currentYear = new Date().getFullYear();
 if (session < 1990 || session > currentYear) {
   throw new apiError(400, "Session must be between 1990 and current year");
+}
+
+if (year < 1990 || year > currentYear) {
+  throw new apiError(400, "Year must be between 1990 and current year");
 }
 
 if (date_from  < 1990 || date_from > currentYear) {
@@ -218,12 +222,16 @@ if (session < startYear || session > endYear) {
 let [entry, created] = await Criteria313.findOrCreate({
   where: {
     session,
-    workshop_name
+    year,
+    workshop_name,
+    date_from,
+    date_to
   },
   defaults: {
     id: criteria.id,
     criteria_code: criteria.criteria_code,
     session,
+    year,
     workshop_name,
     participants,
     date_from,
@@ -234,12 +242,17 @@ let [entry, created] = await Criteria313.findOrCreate({
 if(!created){
   await Criteria313.update({
     participants,
+    year,
+    workshop_name,
     date_from,
     date_to
   }, {
     where: {
       session,
-      workshop_name
+      workshop_name,
+      date_from,
+      date_to,
+      year
     }
   });
 
@@ -247,7 +260,10 @@ if(!created){
   entry = await Criteria313.findOne({
     where: {
       session,
-      workshop_name
+      year,
+      workshop_name,
+      date_from,
+      date_to
     }
   });
 }
@@ -363,8 +379,6 @@ const score313 = asyncHandler(async (req, res) => {
     }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
-
-
 
 const createResponse321 = asyncHandler(async (req, res) => {
   /*
@@ -619,9 +633,6 @@ const score321 = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true, score, grade });
 });
 
-
-
-
 const createResponse322 = asyncHandler(async (req, res) => {
   /*
     1. Extract input from req.body
@@ -875,8 +886,6 @@ const score322 = asyncHandler(async (req, res) => {
   );
 });
 
-
-
 const createResponse332 = asyncHandler(async (req, res) => {
   /*
     1. Extract input from req.body
@@ -1071,8 +1080,6 @@ const score332 = asyncHandler(async (req, res) => {
   );
 });
 
-
-
 const  createResponse333 = asyncHandler(async (req, res) => {
   /*
     1. Extract input from req.body
@@ -1088,13 +1095,12 @@ const  createResponse333 = asyncHandler(async (req, res) => {
       activity_name,
       collaborating_agency,
       scheme_name,
-      activity_type,
       student_count,
       year
     } = req.body;
 
     //Step 1: Field validation
-    if(!session || !activity_name || !collaborating_agency || !scheme_name || !activity_type || !student_count || !year) {
+    if(!session || !activity_name || !collaborating_agency || !scheme_name || !student_count || !year) {
       throw new apiError(400, "Missing required fields");
     }
 
@@ -1146,14 +1152,6 @@ const  createResponse333 = asyncHandler(async (req, res) => {
   if (existingRecord) {
     if (existingRecord.scheme_name === scheme_name) {
       throw new apiError(400, "Scheme name already exists for this session and year");
-    } else {
-      throw new apiError(400, "Activity type already exists for this session and year");
-    }
-  }
-
-  if (existingRecord) {
-    if (existingRecord.activity_type === activity_type) {
-      throw new apiError(400, "Activity type already exists for this session and year");
     } else {
       throw new apiError(400, "Student count already exists for this session and year");
     }
@@ -1214,7 +1212,6 @@ const  createResponse333 = asyncHandler(async (req, res) => {
       activity_name,
       collaborating_agency,
       scheme_name,
-      activity_type,
       student_count,
       year
    
@@ -1226,7 +1223,6 @@ const  createResponse333 = asyncHandler(async (req, res) => {
       activity_name,
       collaborating_agency,
       scheme_name,
-      activity_type,
       student_count,
       year
     }
@@ -1237,7 +1233,6 @@ const  createResponse333 = asyncHandler(async (req, res) => {
       activity_name,
       collaborating_agency,
       scheme_name,
-      activity_type,
       student_count,
       year
     }, {
@@ -1246,7 +1241,6 @@ const  createResponse333 = asyncHandler(async (req, res) => {
         activity_name,
         collaborating_agency,
         scheme_name,
-        activity_type,
         student_count,
         year
       }
@@ -1258,7 +1252,6 @@ const  createResponse333 = asyncHandler(async (req, res) => {
         activity_name,
         collaborating_agency,
         scheme_name,
-        activity_type,
         student_count,
         year
       }
@@ -1354,7 +1347,6 @@ const score333 = asyncHandler(async (req, res) => {
     }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
-
 
 const createResponse341 = asyncHandler(async (req, res) => {
   /*
@@ -1551,6 +1543,7 @@ const createResponse341 = asyncHandler(async (req, res) => {
     new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
   );
 });
+
 const score341 = asyncHandler(async (req, res) => {
   // Step 1: Get the latest IIQA session
   const latestIIQA = await IIQA.findOne({
@@ -1608,7 +1601,6 @@ const score341 = asyncHandler(async (req, res) => {
     }, "Linkages calculated successfully")
   );
 });
-
 
 const createResponse342 = asyncHandler(async (req, res) => {
   /*
@@ -1777,8 +1769,9 @@ const createResponse342 = asyncHandler(async (req, res) => {
     return res.status(201).json(
       new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
     );
-  });
-  const score342 = asyncHandler(async (req, res) => {
+});
+
+const score342 = asyncHandler(async (req, res) => {
     // Step 1: Get latest IIQA session end year
     const latestIIQA = await IIQA.findOne({
       attributes: ['session_end_year'],
@@ -1815,26 +1808,524 @@ const createResponse342 = asyncHandler(async (req, res) => {
       totalMoUs,
       grade
     });
+});
+
+const createResponse311_312 = asyncHandler(async (req, res) => {
+    const {
+      session,
+      year,
+      name_of_principal_investigator,
+      department_of_principal_investigator,
+      duration_of_project,
+      type,
+      name_of_project,
+      year_of_award,
+      amount_sanctioned,
+      name_of_funding_agency
+    } = req.body;
+  
+    // Step 1: Basic field validation
+    const currentYear = new Date().getFullYear();
+  
+    if (
+      !session ||
+      !year ||
+      !name_of_principal_investigator ||
+      !duration_of_project ||
+      !name_of_project ||
+      !amount_sanctioned ||
+      !name_of_funding_agency
+    ) {
+      throw new apiError(400, "Missing required fields");
+    }
+  
+    if (session < 1990 || session > currentYear) {
+      throw new apiError(400, "Session must be between 1990 and current year");
+    }
+  
+    if (year < 1990 || year > currentYear) {
+      throw new apiError(400, "Year must be between 1990 and current year");
+    }
+  
+    if (year_of_award && (year_of_award < 1990 || year_of_award > currentYear)) {
+      throw new apiError(400, "Year of award must be between 1990 and current year");
+    }
+  
+    if (duration_of_project < 0 || amount_sanctioned < 0) {
+      throw new apiError(400, "Duration and amount must be positive");
+    }
+  
+    // Step 2: Validate session against IIQA
+    const latestIIQA = await IIQA.findOne({
+      attributes: ['session_end_year'],
+      order: [['created_at', 'DESC']]
+    });
+  
+    if (!latestIIQA) {
+      throw new apiError(404, "No IIQA form found");
+    }
+  
+    const endYear = latestIIQA.session_end_year;
+    const startYear = endYear - 5;
+  
+    if (session < startYear || session > endYear) {
+      throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
+    }
+  
+    // Step 3: Fetch criteria info for both
+    const criteriaList = await CriteriaMaster.findAll({
+      where: {
+        [Sequelize.Op.or]: [
+          { criterion_id: "03", sub_criterion_id: "0301", sub_sub_criterion_id: "030101" },
+          { criterion_id: "03", sub_criterion_id: "01", sub_sub_criterion_id: "0102" }
+        ]
+      },
+      raw: true
+    });
+  
+    const modelMap = {
+      '030101': Criteria311,
+      '0102': Criteria312
+    };
+  
+    const responses = [];
+  
+    const transaction = await db.sequelize.transaction();
+    try {
+      for (const criteria of criteriaList) {
+        const Model = modelMap[criteria.sub_sub_criterion_id] || modelMap[criteria.sub_sub_criterion_id.slice(-4)];
+        if (!Model) continue;
+  
+        const [entry, created] = await Model.findOrCreate({
+          where: {
+            session,
+            year,
+            name_of_principal_investigator,
+            name_of_project
+          },
+          defaults: {
+            id: criteria.id,
+            criteria_code: criteria.criteria_code,
+            session,
+            year,
+            name_of_principal_investigator,
+            department_of_principal_investigator,
+            duration_of_project,
+            type,
+            name_of_project,
+            year_of_award,
+            amount_sanctioned,
+            name_of_funding_agency
+          },
+          transaction
+        });
+  
+        if (!created) {
+          await Model.update({
+            department_of_principal_investigator,
+            duration_of_project,
+            type,
+            year_of_award,
+            amount_sanctioned,
+            name_of_funding_agency
+          }, {
+            where: {
+              id: entry.id
+            },
+            transaction
+          });
+        }
+  
+        responses.push({
+          criteria: criteria.criteria_code,
+          created,
+          entry
+        });
+      }
+  
+      await transaction.commit();
+  
+      return res.status(200).json(
+        new apiResponse(200, { responses }, "Stored in both 3.1.1 and 3.1.2 successfully")
+      );
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
+});
+
+const score311 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+
+  // Step 1: Fetch latest IIQA session
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['session_end_year', 'DESC']],
   });
-  
 
-  
-
-
-  export {
-    getResponsesByCriteriaCode,
-    createResponse313,
-    createResponse321,
-    createResponse322,
-    createResponse332,
-    createResponse333,
-    createResponse342,
-    createResponse341,
-    score313,
-    score321,
-    score322,
-    score332,
-    score333,
-    score341,
-    score342,
+  if (!latestIIQA) {
+    throw new apiError(404, "IIQA session not found");
   }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 4;
+
+  // Step 2: Fetch all records in session window
+  const grants = await Criteria311.findAll({
+    attributes: ['amount_sanctioned', 'year_of_award'],
+    where: {
+      year_of_award: {
+        [Sequelize.Op.between]: [startYear, endYear]
+      }
+    }
+  });
+
+  // Step 3: Calculate total grant in lakhs
+  const totalGrant = grants.reduce((sum, grant) => sum + parseFloat(grant.amount_sanctioned || 0), 0);
+
+  // Step 4: Determine grade
+  let grade = 0;
+  if (totalGrant >= 15) {
+    grade = 4;
+  } else if (totalGrant >= 10) {
+    grade = 3;
+  } else if (totalGrant >= 5) {
+    grade = 2;
+  } else if (totalGrant >= 1) {
+    grade = 1;
+  } else {
+    grade = 0;
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      total_grants_lakhs: totalGrant.toFixed(2),
+      grade: grade
+    }, "Score calculated successfully")
+  );
+});
+
+const score312 = asyncHandler(async (req, res) => {
+  // Get latest IIQA session
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['session_end_year', 'DESC']],
+  });
+
+  if (!latestIIQA) throw new apiError(404, "No IIQA session found");
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5;
+
+  // Step 1: Count unique departments with funded projects within valid session window
+  const fundedDepartments = await Criteria312.findAll({
+    attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('name_of_principal_investigator')), 'department']],
+    where: {
+      session: { [Sequelize.Op.between]: [startYear, endYear] },
+    },
+    raw: true
+  });
+
+  const fundedDepartmentCount = fundedDepartments.length;
+
+  // Step 2: Get total number of departments from extended profile
+  const departmentCountResult = await extendedProfile.findOne({
+    attributes: ['number_of_departments'],
+    order: [['year', 'DESC']],
+    raw: true
+  });
+
+  const totalDepartments = parseInt(departmentCountResult?.number_of_departments || 0);
+
+  if (totalDepartments === 0) {
+    return res.status(200).json({
+      success: true,
+      score: 0,
+      grade: 0,
+      message: "No departments found in extended profile"
+    });
+  }
+
+  // Step 3: Calculate percentage
+  const percentage = ((fundedDepartmentCount / totalDepartments) * 100).toFixed(2);
+
+  // Step 4: Grade mapping
+  let grade = 0;
+  const percent = parseFloat(percentage);
+  if (percent >= 75) grade = 4;
+  else if (percent >= 60) grade = 3;
+  else if (percent >= 40) grade = 2;
+  else if (percent >= 10) grade = 1;
+
+  return res.status(200).json({
+    success: true,
+    score: percentage,
+    grade
+  });
+});
+
+const createResponse334 = asyncHandler(async (req, res) => {
+  /*
+   1. Extract input from req.body
+   2. Validate required fields and logical constraints
+   3. Check if programme_name or programme_code already exists for the same year and session
+   4. Get criteria_code from criteria_master
+   5. Get latest IIQA session and validate session window
+   6. Create or update response in response_3_3_4 table
+ */
+
+   const{
+     session,
+     activity_name,
+     activity_year,
+     no_of_teacher,
+     no_of_student,
+     scheme_name
+   }= req.body;
+
+   //Step 1: Field validation
+   if(!session || !activity_name || !activity_year || !no_of_teacher || !no_of_student || !scheme_name) {
+     throw new apiError(400, "Missing required fields");
+   }
+
+   const currentYear = new Date().getFullYear();
+   if (
+     session < 1990 || session > currentYear
+   )  {
+       throw new apiError(400, "Session must be between 1990 and current year");
+   }
+
+   if (
+     activity_year < 1990 || activity_year > currentYear
+   )  {
+     throw new apiError(400, "Activity year must be between 1990 and current year");
+   }
+
+   if (
+     no_of_teacher < 0 
+   )  {
+     throw new apiError(400, "Number of teachers must be a positive number");
+   }
+
+   if (
+     no_of_student < 0 
+   )  {
+     throw new apiError(400, "Number of students must be a positive number");
+   }
+
+   //Step 2: Check for existing activity_name or activity_year or no_of_teacher or no_of_student or scheme_name in same session and year
+   const existingRecord = await Criteria334.findOne({
+     where: {
+       session,
+       [Sequelize.Op.or]: [
+         { activity_name },
+         { activity_year },
+         { no_of_teacher },
+         { no_of_student },
+         { scheme_name }
+       ]
+     }
+   });
+   if (existingRecord) {
+     if (existingRecord.scheme_name === scheme_name) {
+       throw new apiError(400, "Scheme name already exists for this session and year");
+     } else if (existingRecord.activity_name === activity_name) {
+       throw new apiError(400, "Activity name already exists for this session and year");
+     } else if (existingRecord.activity_year === activity_year) {
+       throw new apiError(400, "Activity year already exists for this session and year");
+     } else {
+       throw new apiError(400, "Record already exists for this session and year");
+     }
+   }
+   
+
+   
+
+   //Step 3: Fetch criteria details
+   const criteria = await CriteriaMaster.findOne({
+     where: {
+       criterion_id: '03',
+       sub_criterion_id: '0304',
+       sub_sub_criterion_id: '030401'
+     }
+   });
+   if (!criteria) throw new apiError(404, "Criteria not found");
+
+   //Step 4: Validate session window against IIQA 
+   const latestIIQA = await IIQA.findOne({
+     attributes: ['session_end_year'],
+     order: [['created_at', 'DESC']]
+   });
+   if (!latestIIQA) throw new apiError(404, "No IIQA form found");
+
+   const endYear = latestIIQA.session_end_year;
+   const startYear = endYear - 5;
+
+   if (session < startYear || session > endYear) {
+     throw new apiError(400, "Session must be between ${startYear} and ${endYear}");
+   }
+
+   //Step 5: Create or update response
+   let [entry,created] = await Criteria334.findOrCreate({
+     where: {
+       session,
+       activity_name,
+       activity_year,
+       no_of_teacher,
+       no_of_student,
+       scheme_name
+     },
+     defaults: {
+       id: criteria.id,
+       criteria_code: criteria.criteria_code,
+       session,
+       activity_name,
+       activity_year,
+       no_of_teacher,
+       no_of_student,
+       scheme_name
+     }
+   });
+
+   if(!created) {
+     await Criteria334.update({
+       activity_name,
+       activity_year,
+       no_of_teacher,
+       no_of_student,
+       scheme_name
+     }, {
+       where: {
+         session,
+         activity_name,
+         activity_year,
+         no_of_teacher,
+         no_of_student,
+         scheme_name
+       }
+     });
+
+     entry = await Criteria334.findOne({
+       where: {
+         session,
+         activity_name,
+         activity_year,
+         no_of_teacher,
+         no_of_student,
+         scheme_name
+       }
+     });
+   }
+
+   return res.status(201).json(
+     new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
+   );
+});
+
+const score334 = asyncHandler(async (req, res) => {
+ const session = new Date().getFullYear();
+
+ // Step 1: Get latest IIQA session window
+ const latestIIQA = await IIQA.findOne({
+   attributes: ['session_end_year'],
+   order: [['created_at', 'DESC']],
+ });
+
+ if (!latestIIQA) {
+   throw new apiError(404, "IIQA session not found");
+ }
+
+ const endYear = latestIIQA.session_end_year;
+ const startYear = endYear - 4;
+
+ // Step 2: Get all entries in the 5-year window
+ const records = await Criteria334.findAll({
+   attributes: ['activity_year', 'no_of_student'],
+   where: {
+     activity_year: {
+       [Sequelize.Op.between]: [startYear, endYear],
+     },
+   },
+ });
+
+ if (!records.length) {
+   throw new apiError(404, "No data found for the last 5 years");
+ }
+
+ // Step 3: Calculate average percentage
+ const yearlyData = {};
+
+ // Group student count per year
+ for (const record of records) {
+   const year = record.activity_year;
+   if (!yearlyData[year]) {
+     yearlyData[year] = {
+       total_participated: 0,
+       total_students: 0,
+     };
+   }
+
+   yearlyData[year].total_participated += parseFloat(record.no_of_student || 0);
+   yearlyData[year].total_students += parseFloat(record.no_of_student || 0); // Assuming same value (may change if total student is separate field)
+ }
+
+ let totalPercentage = 0;
+ let validYears = 0;
+
+ for (const year in yearlyData) {
+   const data = yearlyData[year];
+   if (data.total_students > 0) {
+     const percentage = (data.total_participated / data.total_students) * 100;
+     totalPercentage += percentage;
+     validYears++;
+   }
+ }
+
+ if (validYears === 0) {
+   throw new apiError(400, "No valid records with student data found");
+ }
+
+ const averagePercentage = totalPercentage / validYears;
+
+ // Step 4: Apply grading
+ let grade = 0;
+ if (averagePercentage > 75) {
+   grade = 4;
+ } else if (averagePercentage >= 60) {
+   grade = 3;
+ } else if (averagePercentage >= 40) {
+   grade = 2;
+ } else if (averagePercentage >= 10) {
+   grade = 1;
+ }
+
+ return res.status(200).json(
+   new apiResponse(200, {
+     average_percentage: averagePercentage.toFixed(2),
+     grade: grade
+   }, "Score calculated successfully")
+ );
+});
+
+export {
+  getResponsesByCriteriaCode,
+  createResponse313,
+  createResponse321,
+  createResponse322,
+  createResponse332,
+  createResponse333,
+  createResponse342,
+  createResponse341,
+  createResponse311_312,
+  createResponse334,
+  score313,
+  score321,
+  score322,
+  score332,
+  score333,
+  score341,
+  score342,
+  score311,
+  score312,
+  score334,
+}

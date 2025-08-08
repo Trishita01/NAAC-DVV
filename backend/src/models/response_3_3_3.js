@@ -47,7 +47,7 @@ export default class response_3_3_3 extends Model {
       allowNull: true
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     submitted_at: {
