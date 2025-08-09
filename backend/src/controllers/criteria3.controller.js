@@ -330,6 +330,9 @@ const score313 = asyncHandler(async (req, res) => {
     grade = 0;
   }
 
+  console.log("Score 3.1.3:", score);
+  console.log("Grade 3.1.3:", grade);
+
   // Step 5: Insert or update score
   let [entry, created] = await Score.findOrCreate({
     where: {
@@ -629,6 +632,9 @@ const score321 = asyncHandler(async (req, res) => {
     grade = 0;
   }
 
+  console.log("Score 3.2.1:", score);
+  console.log("Grade 3.2.1:", grade);
+
   return res.status(200).json({ success: true, score, grade });
 });
 
@@ -862,6 +868,9 @@ const score322 = asyncHandler(async (req, res) => {
   } else {
     grade = 0;
   }
+
+  console.log("Score 3.2.2:", score);
+  console.log("Grade 3.2.2:", grade);
 
   // Optional: fetch criteria code for response
   const criteria = await CriteriaMaster.findOne({
@@ -1591,6 +1600,9 @@ const score341 = asyncHandler(async (req, res) => {
     grade = 0;
   }
 
+  console.log("Score 3.4.1:", score);
+  console.log("Grade 3.4.1:", grade);
+
   return res.status(200).json(
     new apiResponse(200, {
       startYear,
@@ -1953,26 +1965,38 @@ const createResponse311_312 = asyncHandler(async (req, res) => {
 
 const score311 = asyncHandler(async (req, res) => {
   const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("3.1.1");
 
-  // Step 1: Fetch latest IIQA session
-  const latestIIQA = await IIQA.findOne({
-    attributes: ['session_end_year'],
-    order: [['session_end_year', 'DESC']],
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
   });
 
-  if (!latestIIQA) {
-    throw new apiError(404, "IIQA session not found");
-  }
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+}
+// 5 Years should be calculated form IIQA session DB
+const currentIIQA = await IIQA.findOne({
+  attributes: ['session_end_year'],
+  order: [['created_at', 'DESC']] // Get the most recent IIQA form
+});
 
-  const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4;
+if (!currentIIQA) {
+  throw new apiError(404, "No IIQA form found");
+}
+
+const startDate = currentIIQA.session_end_year - 5;
+const endDate = currentIIQA.session_end_year;
+
+if (session < startDate || session > endDate) {
+  throw new apiError(400, "Session must be between the latest IIQA session and the current year");
+}
 
   // Step 2: Fetch all records in session window
   const grants = await Criteria311.findAll({
     attributes: ['amount_sanctioned', 'year_of_award'],
     where: {
       year_of_award: {
-        [Sequelize.Op.between]: [startYear, endYear]
+        [Sequelize.Op.between]: [startDate, endDate]
       }
     }
   });
@@ -1994,11 +2018,49 @@ const score311 = asyncHandler(async (req, res) => {
     grade = 0;
   }
 
+  console.log("Score 3.1.1:", totalGrant);
+  console.log("Grade 3.1.1:", grade);
+  // Step 5: Insert or update score
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: totalGrant,
+      sub_sub_cr_grade: grade,
+      session
+    }
+  });
+
+  if (!created) {
+    await Score.update({
+      score_sub_sub_criteria: totalGrant,
+      sub_sub_cr_grade: grade,
+      session
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+  }
+
   return res.status(200).json(
-    new apiResponse(200, {
-      total_grants_lakhs: totalGrant.toFixed(2),
-      grade: grade
-    }, "Score calculated successfully")
+    new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
   );
 });
 
