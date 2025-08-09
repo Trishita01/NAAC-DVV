@@ -1134,7 +1134,6 @@ const  createResponse333 = asyncHandler(async (req, res) => {
         { activity_name },
         { collaborating_agency },
         { scheme_name },
-        { activity_type },
         { student_count },
         { year }
       ]
