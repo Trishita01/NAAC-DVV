@@ -112,10 +112,10 @@ const Criteria5_1_1 = () => {
   
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/v1/criteria5/createResponse511512",
+        "http://localhost:3000/api/v1/criteria5/createResponse511_512",
         {
           session: parseInt(session, 10),
-          year,
+          year: parseInt(session, 10),
           scheme_name,
           gov_students_count: parseInt(gov_students_count) || 0,
           gov_amount: parseFloat(gov_amount) || 0,

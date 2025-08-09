@@ -26,11 +26,12 @@ const Criteria3_3_3 = () => {
 
   const [formData, setFormData] = useState({
     year: currentYear ? currentYear.split('-')[0] : "",
-    activity: "",
-    agency: "",
-    scheme: "",
-    participants: "",
+    activity_name: "",
+    collaborating_agency: "",
+    scheme_name: "",
+    student_count: "",
     supportLinks: []
+
   });
 
   useEffect(() => {
@@ -72,10 +73,10 @@ const Criteria3_3_3 = () => {
   };
 
   const handleSubmit = async () => {
-    const { activity, agency, scheme, participants, year, supportLinks } = formData;
+    const { activity_name, collaborating_agency, scheme_name, student_count, year } = formData;
     const session = currentYear.split("-")[0];
 
-    if (!activity || !agency || !scheme || !participants || !year) {
+    if (!activity_name || !collaborating_agency || !scheme_name || !student_count || !year) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -83,22 +84,22 @@ const Criteria3_3_3 = () => {
     try {
       const response = await axios.post("http://localhost:3000/api/v1/criteria3/createResponse333", {
         session: parseInt(session),
-        activity,
-        agency,
-        scheme,
+        activity_name,
+        collaborating_agency,
+        scheme_name,
         year,
-        participants: parseInt(participants),
-        supportLinks
+        student_count: parseInt(student_count),
+    
       });
 
       const resp = response?.data?.data || {};
       const newEntry = {
-        activity: resp.activity || activity,
-        agency: resp.agency || agency,
-        scheme: resp.scheme || scheme,
+        activity_name: resp.activity_name || activity_name,
+        collaborating_agency: resp.collaborating_agency || collaborating_agency,
+        scheme_name: resp.scheme_name || scheme_name,
         year: resp.year || year,
-        participants: resp.participants || participants,
-        supportLinks: resp.supportLinks || supportLinks,
+        student_count: resp.student_count || student_count,
+ 
       };
 
       setYearData(prev => ({
@@ -108,11 +109,11 @@ const Criteria3_3_3 = () => {
 
       setFormData(prev => ({
         ...prev,
-        activity: "",
-        agency: "",
-        scheme: "",
-        participants: "",
-        supportLinks: []
+        activity_name: "",
+        collaborating_agency: "",
+        scheme_name: "",
+        student_count: "",
+      
       }));
 
       await fetchScore();
@@ -204,10 +205,10 @@ const Criteria3_3_3 = () => {
               </thead>
               <tbody>
                 <tr>
-                  {["activity", "agency", "scheme", "year", "participants"].map((key) => (
+                 { ["activity_name", "collaborating_agency", "scheme_name", "year", "student_count"].map((key) => (
                     <td key={key} className="border px-2">
                       <input
-                        type={key === "participants" ? "number" : "text"}
+                        type={key === "student_count" ? "number" : "text"}
                         value={formData[key]}
                         onChange={(e) => handleChange(key, e.target.value)}
                         className="w-full border px-2 py-1 text-black"

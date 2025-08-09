@@ -20,7 +20,8 @@ const Criteria4_1_3 = () => {
   const [yearData, setYearData] = useState({});
   const [formData, setFormData] = useState({
     room_identifier: "",
-    typeict_facility: ""
+    typeict_facility: "",
+    supportLinks: [""]
   });
   const [submittedData, setSubmittedData] = useState([]);
   const [provisionalScore, setProvisionalScore] = useState(null);
@@ -80,6 +81,21 @@ const Criteria4_1_3 = () => {
     }
   };
 
+  const addSupportLink = () => {
+    setFormData(prev => ({
+      ...prev,
+      supportLinks: [...prev.supportLinks, ""]
+    }));
+  };
+
+  const removeSupportLink = (index) => {
+    const updatedLinks = formData.supportLinks.filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      supportLinks: updatedLinks
+    }));
+  };
+
   const handleSubmit = async () => {
     const { room_identifier, typeict_facility } = formData;
     const session = currentYear.split("-")[0];
@@ -109,6 +125,7 @@ const Criteria4_1_3 = () => {
         year: currentYear,
         room_identifier: room_identifier.trim(),
         typeict_facility: typeict_facility.trim(),
+        supportLinks: formData.supportLinks.filter(link => link.trim() !== "")
       };
 
       setSubmittedData((prev) => [...prev, newEntry]);
@@ -213,6 +230,7 @@ facilities such as smart class, LMS, etc.
                 <tr>
                   <th className="border px-2 py-2">Room number or Name of Classrooms and Seminar halls with ICT-enabled facilities</th>
                   <th className="border px-2 py-2">Type of ICT facility</th>
+                  <th className="border px-2 py-2">Support Links</th>
                 </tr>
               </thead>
               <tbody>
@@ -227,6 +245,35 @@ facilities such as smart class, LMS, etc.
                       />
                     </td>
                   ))}
+                  <td className="border px-2 py-1">
+                    {formData.supportLinks.map((link, index) => (
+                      <div key={index} className="flex mb-1">
+                        <input
+                          type="text"
+                          className="flex-1 border text-gray-950 border-gray-300 rounded-l px-2 py-1"
+                          placeholder="Supporting link"
+                          value={link}
+                          onChange={(e) => handleChange("supportLinks", e.target.value, index)}
+                        />
+                        {formData.supportLinks.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeSupportLink(index)}
+                            className="bg-red-500 text-white px-2 rounded-r hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addSupportLink}
+                      className="mt-1 text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      + Add another link
+                    </button>
+                  </td>
                   <td className="border px-2 py-1 text-center">
                     <button
                       className="!bg-blue-600 text-white px-3 py-1 rounded hover:!bg-blue-700"
@@ -258,9 +305,27 @@ facilities such as smart class, LMS, etc.
                     {yearData[year].map((entry, idx) => (
                       <tr key={idx} className="even:bg-gray-50">
                         <td className="border text-gray-900 border-black px-2 py-1">{idx + 1}</td>
-                        <td className="border text-gray-900 border-black px-2 py-1">{entry.roomno}</td>
-                        <td className="border text-gray-900 border-black px-2 py-1">{entry.type}</td>
-                        <td className="border text-gray-900 border-black px-2 py-1">{entry.link}</td>
+                        <td className="border text-gray-900 border-black px-2 py-1">{entry.room_identifier}</td>
+                        <td className="border text-gray-900 border-black px-2 py-1">{entry.typeict_facility}</td>
+                        <td className="border text-gray-900 border-black px-2 py-1">
+                          {entry.supportLinks && entry.supportLinks.length > 0 ? (
+                            <div className="space-y-1">
+                              {entry.supportLinks.map((link, idx) => (
+                                <a 
+                                  key={idx} 
+                                  href={link} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline block break-all"
+                                >
+                                  {link}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">No links provided</span>
+                          )}
+                        </td>
                        
                       </tr>
                     ))}

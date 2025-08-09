@@ -11,7 +11,6 @@ import { navItems } from './config/navigation';
 import {useGpa} from './contextprovider/GpaContext';
 import {useGpaData} from './contextprovider/gpadata';
 import RadarGraphSection from './Radar';
-import {GpaDataProvider, useGpaData} from './contextprovider/gpadata';
 import { FaArrowLeft, FaChartLine, FaBullseye, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 const Header = () => {
@@ -217,7 +216,6 @@ const GPAAnalysis = () => {
         <Sidebar 
           navItems={navItems}
           collapsed={collapsed} 
-          navItems={navItems}
           setCollapsed={setCollapsed} 
           navigate={navigate} 
         />
@@ -405,3 +403,6 @@ const GPAAnalysis = () => {
 };
 
 export default GPAAnalysis;
+
+
+

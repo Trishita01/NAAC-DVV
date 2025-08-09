@@ -1,217 +1,232 @@
 import React, { useState } from 'react';
-import {
-<<<<<<< HEAD
-FaArrowLeft,
-FaArrowRight,
-FaBell,
-FaSearch,
-FaUsers,FaEdit, FaSignInAlt,
-FaTachometerAlt, FaFileAlt, FaChartLine, FaPaperPlane, FaSignOutAlt, FaDownload, FaCog, FaQuestionCircle
-} from "react-icons/fa";
+import { 
+  FaSearch, 
+  FaChevronRight, 
+  FaCheck, 
+  FaFilePdf, 
+  FaDownload, 
+  FaFileWord, 
+  FaFileExcel, 
+  FaPlay, 
+  FaClock,
+  FaEnvelope,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaFacebook,
+  FaTwitter,
+  FaLinkedin
+} from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './components/iqac-sidebar';
 import { navItems } from './config/navigation';
 
 const HelpSupport = () => {
-const navigate = useNavigate();
-const [activeTab, setActiveTab] = useState(0);
-const [activeCriteria, setActiveCriteria] = useState(null);
-const [activeFaq, setActiveFaq] = useState(null);
-const [collapsed, setCollapsed] = useState(false);
-const [formData, setFormData] = useState({
-category: '',
-subject: '',
-message: '',
-file: null
-});
-const [isSubmitted, setIsSubmitted] = useState(false);
-const handleFormChange = (e) => {
-const { name, value } = e.target;
-setFormData(prev => ({ ...prev, [name]: value }));
-};
-const handleSubmit = (e) => {
-e.preventDefault();
-console.log('Form submitted:', formData);
-setIsSubmitted(true);
-setTimeout(() => {
-setIsSubmitted(false);
-setFormData({
-category: '',
-subject: '',
-message: '',
-file: null
-});
-}, 3000);
-};
-const tabs = [
-{ id: 0, name: 'Getting Started' },
-{ id: 1, name: 'Criteria Help' },
-{ id: 2, name: 'FAQs' },
-{ id: 3, name: 'Video Tutorials' },
-{ id: 4, name: 'Contact Support' }
-];
-const criteriaData = [
-{
-id: 1,
-title: 'Criteria 1: Curricular Aspects',
-requiredData: [
-'Academic flexibility metrics',
-'Curriculum enrichment details',
-'Feedback system documentation'
-],
-documents: [
-'Syllabus revision records',
-'Value-added course certificates',
-'Stakeholder feedback analysis'
-],
-mistakes: [
-'Incomplete feedback analysis',
-'Missing certificate attachments',
-'Incorrect data period selection'
-],
-templates: [
-{ name: 'Curriculum Enrichment Template', format: 'XLSX' },
-{ name: 'Feedback Analysis Format', format: 'DOCX' }
-]
-},
-{
-id: 2,
-title: 'Criteria 2: Teaching-Learning and Evaluation',
-requiredData: [
-'Student enrollment statistics',
-'Teaching-learning process details',
-'Student performance metrics'
-],
-documents: [
-'Student satisfaction survey results',
-'Learning outcome attainment records',
-'Faculty profile documentation'
-],
-mistakes: [
-'Inconsistent enrollment data',
-'Incomplete faculty profiles',
-'Missing learning outcome assessments'
-],
-templates: [
-{ name: 'Student Satisfaction Survey Template', format: 'XLSX' },
-{ name: 'Learning Outcome Assessment Format', format: 'DOCX' }
-]
-},
-{
-id: 3,
-title: 'Criteria 3: Research, Innovations and Extension',
-requiredData: [
-'Research publication metrics',
-'Innovation ecosystem details',
-'Extension activities documentation'
-],
-documents: [
-'Research paper citations',
-'Patent documentation',
-'Extension activity reports'
-],
-mistakes: [
-'Duplicate research entries',
-'Incomplete citation information',
-'Missing extension activity evidence'
-],
-templates: [
-{ name: 'Research Publication Template', format: 'XLSX' },
-{ name: 'Extension Activity Report Format', format: 'DOCX' }
-]
-},
-{
-id: 4,
-title: 'Criteria 4: Infrastructure and Learning Resources',
-requiredData: [
-'Physical facility metrics',
-'Library resource details',
-'IT infrastructure documentation'
-],
-documents: [
-'Infrastructure photographs',
-'Library acquisition records',
-'IT facility usage statistics'
-],
-mistakes: [
-'Outdated infrastructure data',
-'Incomplete library records',
-'Missing IT facility documentation'
-],
-templates: [
-{ name: 'Infrastructure Documentation Template', format: 'XLSX' },
-{ name: 'Library Resources Format', format: 'DOCX' }
-]
-},
-{
-id: 5,
-title: 'Criteria 5: Student Support and Progression',
-requiredData: [
-'Student support metrics',
-'Student progression details',
-'Student participation documentation'
-],
-documents: [
-'Scholarship disbursement records',
-'Placement statistics',
-'Student achievement evidence'
-],
-mistakes: [
-'Incomplete scholarship data',
-'Missing progression evidence',
-'Inconsistent achievement records'
-],
-templates: [
-{ name: 'Student Progression Template', format: 'XLSX' },
-{ name: 'Scholarship Documentation Format', format: 'DOCX' }
-]
-},
-{
-id: 6,
-title: 'Criteria 6: Governance, Leadership and Management',
-requiredData: [
-'Institutional vision metrics',
-'Strategy development details',
-'Faculty empowerment documentation'
-],
-documents: [
-'E-governance implementation records',
-'Faculty development program reports',
-'Institutional quality assurance initiatives'
-],
-mistakes: [
-'Incomplete governance documentation',
-'Missing faculty development evidence',
-'Inconsistent quality assurance data'
-],
-templates: [
-{ name: 'Governance Documentation Template', format: 'XLSX' },
-{ name: 'Faculty Development Report Format', format: 'DOCX' }
-]
-},
-{
-id: 7,
-title: 'Criteria 7: Institutional Values and Best Practices',
-requiredData: [
-'Gender equity promotion metrics',
-'Environmental consciousness details',
-'Best practices documentation'
-],
-documents: [
-'Gender sensitization program reports',
-'Green campus initiative evidence',
-'Best practice implementation records'
-],
-mistakes: [
-'Incomplete best practice documentation',
-'Missing environmental initiative evidence',
-'Inconsistent gender equity data'
-],
-templates: [
-{ name: 'Best Practices Documentation Template', format: 'XLSX' },
-{ name: 'Environmental Initiative Report Format', format: 'DOCX' }
-]
-}
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(0);
+  const [activeCriteria, setActiveCriteria] = useState(null);
+  const [activeFaq, setActiveFaq] = useState(null);
+  const [collapsed, setCollapsed] = useState(false);
+  const [formData, setFormData] = useState({
+    category: '',
+    subject: '',
+    message: '',
+    file: null
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleFormChange = (e) => {
+    const { name, value, files } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: files ? files[0] : value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Form submitted:', formData);
+    setIsSubmitted(true);
+    setTimeout(() => {
+      setIsSubmitted(false);
+      setFormData({
+        category: '',
+        subject: '',
+        message: '',
+        file: null
+      });
+    }, 3000);
+  };
+
+  const tabs = [
+    { id: 0, name: 'Getting Started' },
+    { id: 1, name: 'Criteria Help' },
+    { id: 2, name: 'FAQs' },
+    { id: 3, name: 'Video Tutorials' },
+    { id: 4, name: 'Contact Support' }
+  ];
+
+  const criteriaData = [
+    {
+      id: 1,
+      title: 'Criteria 1: Curricular Aspects',
+      requiredData: [
+        'Academic flexibility metrics',
+        'Curriculum enrichment details',
+        'Feedback system documentation'
+      ],
+      documents: [
+        'Syllabus revision records',
+        'Value-added course certificates',
+        'Stakeholder feedback analysis'
+      ],
+      mistakes: [
+        'Incomplete feedback analysis',
+        'Missing certificate attachments',
+        'Incorrect data period selection'
+      ],
+      templates: [
+        { name: 'Curriculum Enrichment Template', format: 'XLSX' },
+        { name: 'Feedback Analysis Format', format: 'DOCX' }
+      ]
+    },
+    {
+      id: 2,
+      title: 'Criteria 2: Teaching-Learning and Evaluation',
+      requiredData: [
+        'Student enrollment statistics',
+        'Teaching-learning process details',
+        'Student performance metrics'
+      ],
+      documents: [
+        'Student satisfaction survey results',
+        'Learning outcome attainment records',
+        'Faculty profile documentation'
+      ],
+      mistakes: [
+        'Inconsistent enrollment data',
+        'Incomplete faculty profiles',
+        'Missing learning outcome assessments'
+      ],
+      templates: [
+        { name: 'Student Satisfaction Survey Template', format: 'XLSX' },
+        { name: 'Learning Outcome Assessment Format', format: 'DOCX' }
+      ]
+    },
+    {
+      id: 3,
+      title: 'Criteria 3: Research, Innovations and Extension',
+      requiredData: [
+        'Research publication metrics',
+        'Innovation ecosystem details',
+        'Extension activities documentation'
+      ],
+      documents: [
+        'Research paper citations',
+        'Patent documentation',
+        'Extension activity reports'
+      ],
+      mistakes: [
+        'Duplicate research entries',
+        'Incomplete citation information',
+        'Missing extension activity evidence'
+      ],
+      templates: [
+        { name: 'Research Publication Template', format: 'XLSX' },
+        { name: 'Extension Activity Report Format', format: 'DOCX' }
+      ]
+    },
+    {
+      id: 4,
+      title: 'Criteria 4: Infrastructure and Learning Resources',
+      requiredData: [
+        'Physical facility metrics',
+        'Library resource details',
+        'IT infrastructure documentation'
+      ],
+      documents: [
+        'Infrastructure photographs',
+        'Library acquisition records',
+        'IT facility usage statistics'
+      ],
+      mistakes: [
+        'Outdated infrastructure data',
+        'Incomplete library records',
+        'Missing IT facility documentation'
+      ],
+      templates: [
+        { name: 'Infrastructure Documentation Template', format: 'XLSX' },
+        { name: 'Library Resources Format', format: 'DOCX' }
+      ]
+    },
+    {
+      id: 5,
+      title: 'Criteria 5: Student Support and Progression',
+      requiredData: [
+        'Student support metrics',
+        'Student progression details',
+        'Student participation documentation'
+      ],
+      documents: [
+        'Scholarship disbursement records',
+        'Placement statistics',
+        'Student achievement evidence'
+      ],
+      mistakes: [
+        'Incomplete scholarship data',
+        'Missing progression evidence',
+        'Inconsistent achievement records'
+      ],
+      templates: [
+        { name: 'Student Progression Template', format: 'XLSX' },
+        { name: 'Scholarship Documentation Format', format: 'DOCX' }
+      ]
+    },
+    {
+      id: 6,
+      title: 'Criteria 6: Governance, Leadership and Management',
+      requiredData: [
+        'Institutional vision metrics',
+        'Strategy development details',
+        'Faculty empowerment documentation'
+      ],
+      documents: [
+        'E-governance implementation records',
+        'Faculty development program reports',
+        'Institutional quality assurance initiatives'
+      ],
+      mistakes: [
+        'Incomplete governance documentation',
+        'Missing faculty development evidence',
+        'Inconsistent quality assurance data'
+      ],
+      templates: [
+        { name: 'Governance Documentation Template', format: 'XLSX' },
+        { name: 'Faculty Development Report Format', format: 'DOCX' }
+      ]
+    },
+    {
+      id: 7,
+      title: 'Criteria 7: Institutional Values and Best Practices',
+      requiredData: [
+        'Gender equity promotion metrics',
+        'Environmental consciousness details',
+        'Best practices documentation'
+      ],
+      documents: [
+        'Gender sensitization program reports',
+        'Green campus initiative evidence',
+        'Best practice implementation records'
+      ],
+      mistakes: [
+        'Incomplete best practice documentation',
+        'Missing environmental initiative evidence',
+        'Inconsistent gender equity data'
+      ],
+      templates: [
+        { name: 'Best Practices Documentation Template', format: 'XLSX' },
+        { name: 'Environmental Initiative Report Format', format: 'DOCX' }
+      ]
+    }
 ];
 const faqs = [
 {
@@ -319,6 +334,7 @@ description: 'Select a criteria to start working on. Follow the guided process t
 
 
 return (
+  <div>
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
       <Sidebar 
@@ -801,445 +817,6 @@ A comprehensive platform for faculty members to submit and manage data for NAAC 
 </div>
 </div>
 </div>
-=======
-  FaArrowLeft,
-  FaArrowRight,
-  FaBell,
-  FaSearch,
-  FaUsers,
-  FaEdit,
-  FaSignInAlt,
-  FaTachometerAlt,
-  FaFileAlt,
-  FaChartLine,
-  FaPaperPlane,
-  FaSignOutAlt,
-  FaDownload,
-  FaCog,
-  FaQuestionCircle,
-  FaChevronDown,
-  FaChevronUp,
-  FaPlay,
-  FaCheck,
-  FaCheckCircle,
-  FaTimes,
-  FaTimesCircle,
-  FaExclamationTriangle,
-  FaClipboardList,
-  FaFileUpload,
-  FaFilePdf,
-  FaFileExcel,
-  FaFileWord,
-  FaCloudUploadAlt,
-  FaEnvelope,
-  FaPhone,
-  FaChevronRight
-} from 'react-icons/fa';
-
-const HelpSupport = () => {
-  const [activeTab, setActiveTab] = useState(0);
-  const [activeCriteria, setActiveCriteria] = useState(null);
-  const [activeFaq, setActiveFaq] = useState(null);
-  const [collapsed, setCollapsed] = useState(false);
-  const [formData, setFormData] = useState({
-    category: '',
-    subject: '',
-    message: '',
-    file: null
-  });
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Form submitted:', formData);
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({
-        category: '',
-        subject: '',
-        message: '',
-        file: null
-      });
-    }, 3000);
-  };
-
-  const tabs = [
-    { id: 0, name: 'Getting Started', icon: FaSignInAlt },
-    { id: 1, name: 'Video Tutorials', icon: FaPlay },
-    { id: 2, name: 'Contact Support', icon: FaPaperPlane }
-  ];
-
-  const criteriaData = [
-    {
-      id: 1,
-      title: 'Criteria 1: Curricular Aspects',
-      color: 'bg-blue-50 border-blue-200',
-      requiredData: [
-        'Academic flexibility metrics',
-        'Curriculum enrichment details',
-        'Feedback system documentation'
-      ],
-      documents: [
-        'Syllabus revision records',
-        'Value-added course certificates',
-        'Stakeholder feedback analysis'
-      ],
-      mistakes: [
-        'Incomplete feedback analysis',
-        'Missing certificate attachments',
-        'Incorrect data period selection'
-      ],
-      templates: [
-        { name: 'Curriculum Enrichment Template', format: 'XLSX' },
-        { name: 'Feedback Analysis Format', format: 'DOCX' }
-      ]
-    },
-    {
-      id: 2,
-      title: 'Criteria 2: Teaching-Learning and Evaluation',
-      color: 'bg-emerald-50 border-emerald-200',
-      requiredData: [
-        'Student enrollment statistics',
-        'Teaching-learning process details',
-        'Student performance metrics'
-      ],
-      documents: [
-        'Student satisfaction survey results',
-        'Learning outcome attainment records',
-        'Faculty profile documentation'
-      ],
-      mistakes: [
-        'Inconsistent enrollment data',
-        'Incomplete faculty profiles',
-        'Missing learning outcome assessments'
-      ],
-      templates: [
-        { name: 'Student Satisfaction Survey Template', format: 'XLSX' },
-        { name: 'Learning Outcome Assessment Format', format: 'DOCX' }
-      ]
-    },
-    {
-      id: 3,
-      title: 'Criteria 3: Research, Innovations and Extension',
-      color: 'bg-purple-50 border-purple-200',
-      requiredData: [
-        'Research publication metrics',
-        'Innovation ecosystem details',
-        'Extension activities documentation'
-      ],
-      documents: [
-        'Research paper citations',
-        'Patent documentation',
-        'Extension activity reports'
-      ],
-      mistakes: [
-        'Duplicate research entries',
-        'Incomplete citation information',
-        'Missing extension activity evidence'
-      ],
-      templates: [
-        { name: 'Research Publication Template', format: 'XLSX' },
-        { name: 'Extension Activity Report Format', format: 'DOCX' }
-      ]
-    },
-    {
-      id: 4,
-      title: 'Criteria 4: Infrastructure and Learning Resources',
-      color: 'bg-orange-50 border-orange-200',
-      requiredData: [
-        'Physical facility metrics',
-        'Library resource details',
-        'IT infrastructure documentation'
-      ],
-      documents: [
-        'Infrastructure photographs',
-        'Library acquisition records',
-        'IT facility usage statistics'
-      ],
-      mistakes: [
-        'Outdated infrastructure data',
-        'Incomplete library records',
-        'Missing IT facility documentation'
-      ],
-      templates: [
-        { name: 'Infrastructure Documentation Template', format: 'XLSX' },
-        { name: 'Library Resources Format', format: 'DOCX' }
-      ]
-    },
-    {
-      id: 5,
-      title: 'Criteria 5: Student Support and Progression',
-      color: 'bg-cyan-50 border-cyan-200',
-      requiredData: [
-        'Student support metrics',
-        'Student progression details',
-        'Student participation documentation'
-      ],
-      documents: [
-        'Scholarship disbursement records',
-        'Placement statistics',
-        'Student achievement evidence'
-      ],
-      mistakes: [
-        'Incomplete scholarship data',
-        'Missing progression evidence',
-        'Inconsistent achievement records'
-      ],
-      templates: [
-        { name: 'Student Progression Template', format: 'XLSX' },
-        { name: 'Scholarship Documentation Format', format: 'DOCX' }
-      ]
-    },
-    {
-      id: 6,
-      title: 'Criteria 6: Governance, Leadership and Management',
-      color: 'bg-indigo-50 border-indigo-200',
-      requiredData: [
-        'Institutional vision metrics',
-        'Strategy development details',
-        'Faculty empowerment documentation'
-      ],
-      documents: [
-        'E-governance implementation records',
-        'Faculty development program reports',
-        'Institutional quality assurance initiatives'
-      ],
-      mistakes: [
-        'Incomplete governance documentation',
-        'Missing faculty development evidence',
-        'Inconsistent quality assurance data'
-      ],
-      templates: [
-        { name: 'Governance Documentation Template', format: 'XLSX' },
-        { name: 'Faculty Development Report Format', format: 'DOCX' }
-      ]
-    },
-    {
-      id: 7,
-      title: 'Criteria 7: Institutional Values and Best Practices',
-      color: 'bg-pink-50 border-pink-200',
-      requiredData: [
-        'Gender equity promotion metrics',
-        'Environmental consciousness details',
-        'Best practices documentation'
-      ],
-      documents: [
-        'Gender sensitization program reports',
-        'Green campus initiative evidence',
-        'Best practice implementation records'
-      ],
-      mistakes: [
-        'Incomplete best practice documentation',
-        'Missing environmental initiative evidence',
-        'Inconsistent gender equity data'
-      ],
-      templates: [
-        { name: 'Best Practices Documentation Template', format: 'XLSX' },
-        { name: 'Environmental Initiative Report Format', format: 'DOCX' }
-      ]
-    }
-  ];
-
-  const faqs = [
-    {
-      id: 1,
-      question: 'How do I reset my password if I forget it?',
-      answer: 'Click on the "Forgot Password" link on the login page. Enter your registered email address, and you will receive a password reset link. Follow the instructions in the email to create a new password.',
-      category: 'Authentication'
-    },
-    {
-      id: 2,
-      question: 'What file formats are accepted for document uploads?',
-      answer: 'The system accepts PDF, DOCX, XLSX, JPG, and PNG formats. For best results, we recommend using PDF for text documents, XLSX for data spreadsheets, and JPG/PNG for images. Maximum file size is 10MB per upload.',
-      category: 'File Upload'
-    },
-    {
-      id: 3,
-      question: 'How can I track my criteria submission progress?',
-      answer: 'Your dashboard displays a progress tracker for each criteria. Completed sections are marked in green, partially completed in yellow, and pending sections in gray. Click on any criteria to see detailed completion status.',
-      category: 'Progress Tracking'
-    },
-    {
-      id: 4,
-      question: 'What should I do if I encounter an error during data submission?',
-      answer: 'First, take a screenshot of the error message. Then, check your data for any formatting issues or required fields that might be missing. If the problem persists, contact support through the "Contact Support" section with the error details.',
-      category: 'Troubleshooting'
-    },
-    {
-      id: 5,
-      question: 'Can I save my progress and continue later?',
-      answer: 'Yes, the system automatically saves your progress as you work. You can click the "Save Draft" button at any time to manually save your current progress. When you log back in, you can continue from where you left off.',
-      category: 'Data Management'
-    },
-    {
-      id: 6,
-      question: 'How do I know if my submission is complete?',
-      answer: 'After completing all required fields and uploading necessary documents, click the "Review Submission" button. The system will check for any missing information. If everything is complete, you\'ll see a confirmation message and can proceed to final submission.',
-      category: 'Submission'
-    },
-    {
-      id: 7,
-      question: 'Can I edit my submission after it\'s been submitted?',
-      answer: 'Once a criteria is fully submitted, you cannot edit it directly. If you need to make changes, you must contact your institution\'s NAAC coordinator who can request an unlock for that specific criteria section.',
-      category: 'Submission'
-    },
-    {
-      id: 8,
-      question: 'What happens if I miss the submission deadline?',
-      answer: 'The system automatically closes access to data entry after the deadline. If you have extenuating circumstances, your institution\'s NAAC coordinator can request a deadline extension through the administrative portal.',
-      category: 'Deadlines'
-    }
-  ];
-
-  const videoTutorials = [
-    {
-      id: 1,
-      title: 'Getting Started with NAAC DVV System',
-      duration: '5:23',
-      thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=225&fit=crop&crop=center',
-      description: 'Learn the basics of navigating the NAAC DVV system and understanding the dashboard.',
-      difficulty: 'Beginner'
-    },
-    {
-      id: 2,
-      title: 'How to Upload Documents Correctly',
-      duration: '4:17',
-      thumbnail: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=225&fit=crop&crop=center',
-      description: 'Step-by-step guide on uploading various document types and ensuring they meet requirements.',
-      difficulty: 'Beginner'
-    },
-    {
-      id: 3,
-      title: 'Completing Criteria 1 Submission',
-      duration: '8:45',
-      thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=225&fit=crop&crop=center',
-      description: 'Detailed walkthrough of all requirements for Criteria 1 submission.',
-      difficulty: 'Intermediate'
-    },
-    {
-      id: 4,
-      title: 'Understanding Data Validation Process',
-      duration: '6:32',
-      thumbnail: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=225&fit=crop&crop=center',
-      description: 'Learn how the DVV validation process works and how to respond to queries.',
-      difficulty: 'Advanced'
-    },
-    {
-      id: 5,
-      title: 'Troubleshooting Common Issues',
-      duration: '7:19',
-      thumbnail: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=400&h=225&fit=crop&crop=center',
-      description: 'Solutions for the most common problems faced during data submission.',
-      difficulty: 'Intermediate'
-    },
-    {
-      id: 6,
-      title: 'Best Practices for Document Organization',
-      duration: '5:51',
-      thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=225&fit=crop&crop=center',
-      description: 'Tips and tricks for organizing your documents before uploading to the system.',
-      difficulty: 'Beginner'
-    }
-  ];
-
-  const getStartedSteps = [
-    {
-      icon: FaSignInAlt,
-      title: 'Login & Authentication',
-      description: 'Access the system using your institutional email and password. First-time users should complete profile setup.',
-      color: 'bg-blue-500'
-    },
-    {
-      icon: FaTachometerAlt,
-      title: 'Navigate Dashboard',
-      description: 'Familiarize yourself with the dashboard layout, criteria sections, and progress indicators.',
-      color: 'bg-emerald-500'
-    },
-    {
-      icon: FaEdit,
-      title: 'Begin Data Entry',
-      description: 'Select a criteria to start working on. Follow the guided process to enter data and upload documents.',
-      color: 'bg-purple-500'
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Enhanced Header */}
-      <header className="bg-white shadow-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex-1">
-              <div className="flex items-center mb-2">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
-                  <FaQuestionCircle className="text-white text-xl" />
-                </div>
-                <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                    Help & Support Center
-                  </h1>
-                  <p className="mt-2 text-lg text-gray-600">
-                    Welcome to the NAAC DVV System support portal. Find guidance, tutorials, and assistance for faculty members.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="mt-6 lg:mt-0 lg:ml-8">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search for help topics..."
-                  className="w-full lg:w-80 pl-12 pr-4 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <FaSearch className="text-gray-400" />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Breadcrumb */}
-          <div className="mt-6">
-            <nav className="flex items-center space-x-2 text-sm">
-              <a href="#" className="text-gray-500 hover:text-blue-600 transition-colors">Home</a>
-              <FaChevronRight className="text-gray-400 text-xs" />
-              <span className="text-blue-600 font-medium">Help & Support</span>
-            </nav>
-          </div>
-        </div>
-      </header>
-
-      {/* Enhanced Tab Navigation */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex overflow-x-auto py-4 space-x-2">
-            {tabs.map(tab => {
-              const IconComponent = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center whitespace-nowrap px-6 py-3 font-medium text-sm rounded-lg transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'
-                      : 'text-gray-600 bg-gray-50 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  <IconComponent className="mr-2" />
-                  {tab.name}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-      </div>
->>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

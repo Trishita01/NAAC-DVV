@@ -134,8 +134,7 @@ const Sidebar = () => {
         },
         {
           id: "4.3",
-<<<<<<< HEAD
-          name: "4.3 Infrastructure",
+          name: "4.3 IT Infrastructure",
           subItems: ["4.3.1", "4.3.2", "4.3.3"],
         },
         {
@@ -143,11 +142,6 @@ const Sidebar = () => {
           name: "4.4 Infrastructure",
           subItems: ["4.4.1", "4.4.2"],
         },
-=======
-          name: "4.3 IT Infrastructure",
-          subItems: ["4.3.1", "4.3.2", "4.3.3"],
-        },
->>>>>>> b1ff50b2787b0f4e535989b11c1b836d6830f45d
       ],
     },
     {

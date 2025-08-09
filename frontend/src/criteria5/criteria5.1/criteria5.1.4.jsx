@@ -16,6 +16,7 @@ const Criteria5_1_4= () => {
     availableSessions && availableSessions.length > 0 ? availableSessions[0] : pastFiveYears[0]
   );
   const [currentYear, setCurrentYear] = useState(selectedYear);
+  
   const [yearData, setYearData] = useState({});
   const [submittedData, setSubmittedData] = useState([]);
   const [loading, setLoading] = useState(false);

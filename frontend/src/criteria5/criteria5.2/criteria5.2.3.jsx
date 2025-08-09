@@ -18,6 +18,8 @@ const Criteria5_2_3= () => {
    const [error, setError] = useState(null);
    const [currentYear, setCurrentYear] = useState(pastFiveYears[0]);
    const { sessions: availableSessions } = useContext(SessionContext);
+   const [studentsAppearing, setStudentsAppearing] = useState("");
+   
    useEffect(() => {
      if (availableSessions && availableSessions.length > 0) {
        setCurrentYear(availableSessions[0]);
@@ -29,11 +31,8 @@ const Criteria5_2_3= () => {
     year: "",
     registration: "",
     NET:"", SLET:"",GATE:"" ,GMAT:"", CAT:"", GRE:"", JAM:"", IELTS:"", TOEFL:"", Civil:"",
-
-State:"",
-Other :"",
-   
-    
+    State:"",
+    Other :"",
     supportLinks: [""],
   });
 
@@ -60,6 +59,7 @@ Other :"",
   );
   const [yearCount, setYearCount] = useState(5);
   const [averageScore, setAverageScore] = useState(null);
+  const [submittedData, setSubmittedData] = useState([]);
 
   const navigate = useNavigate();
   const years = pastFiveYears;
@@ -144,11 +144,7 @@ Other :"",
         exam_toefl,
         exam_civil_services,
         exam_state_services,
-        exam_other,
-        studentname: student_name_contact,
-        programme: program_graduated_from,
-        employer: employer_details,
-        paypackage: pay_package_inr
+        exam_other
       };
   
       setSubmittedData(prev => [...prev, newEntry]);
@@ -161,10 +157,11 @@ Other :"",
       
       // Reset form
       setFormData({
-        studentname: "",
-        programme: "",
-        employer: "",
-        paypackage: "",
+        year: "",
+        registration: "",
+        NET:"", SLET:"",GATE:"" ,GMAT:"", CAT:"", GRE:"", JAM:"", IELTS:"", TOEFL:"", Civil:"",
+        State:"",
+        Other :"",
         supportLinks: [""],
       });
   
@@ -184,8 +181,6 @@ const goToNextPage = () => {
   const goToPreviousPage = () => {
     navigate("/criteria5.2.2");
   };
-
-  
 
   const totalPrograms = years.reduce((acc, year) => acc + (yearData[year]?.length || 0), 0);
   const averagePrograms = (totalPrograms / years.length).toFixed(2);
@@ -218,10 +213,9 @@ const goToNextPage = () => {
               <ul className="list-disc pl-5 text-sm text-gray-700">
                 <li>Number of students qualifying in state/ national/ international
 level examinations</li>
-
-<li>Upload supporting data for the same</li> 
-<li>Upload any additional information</li>
-                </ul>
+                <li>Upload supporting data for the same</li> 
+                <li>Upload any additional information</li>
+              </ul>
             </div>
           </div>
 
@@ -237,39 +231,52 @@ level examinations</li>
               ) : (
                 <p className="text-gray-600">No score data available.</p>
               )}
-            </div>
+          </div>
 
+          {/* Number of Students Appearing Section */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Number of Students Appearing in Examinations
+            </h3>
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-700">
+                Total number of students appearing in state/national/international level examinations:
+              </label>
+              <input
+                type="number"
+                placeholder="Enter number of students"
+                className="w-40 border border-gray-300 rounded px-3 py-2 text-gray-950 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                min="0"
+                value={studentsAppearing}
+                onChange={(e) => setStudentsAppearing(e.target.value)}
+              />
+            </div>
+          </div>
 
           <div className="border rounded mb-8">
             <div className="flex justify-between items-center bg-blue-100 text-gray-800 px-4 py-2">
-              <h2 className="text-xl font-bold">  Students qualifying in state/national/
-international level examinations</h2>
-<div>
-                  <label className="font-medium text-gray-700 mr-2">Select Year:</label>
-                  <select
-                    className="border px-3 py-1 rounded text-black"
-                    value={currentYear}
-                    onChange={(e) => setCurrentYear(e.target.value)}
-                  >
-                    {availableSessions && availableSessions.map((year) => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
-                </div>
+              <h2 className="text-xl font-bold">Students qualifying in state/national/international level examinations</h2>
+              <div>
+                <label className="font-medium text-gray-700 mr-2">Select Year:</label>
+                <select
+                  className="border px-3 py-1 rounded text-black"
+                  value={currentYear}
+                  onChange={(e) => setCurrentYear(e.target.value)}
+                >
+                  {availableSessions && availableSessions.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <table className="w-full border text-sm border-black">
               <thead className="bg-gray-100 text-gray-950">
                 <tr>
-                  <th rowspan="12" className="border px-2 py-2"> Year</th>
-                  <th rowspan="12"  className="border px-2 py-2">Registration
-number/roll
-number for the
-exam
- </th>
-                  <th colspan="12" className="border px-2 py-2">Names of students selected/ qualified</th>
-      
-                <th rowspan="12" className="border px-2 py-2">Action</th>
+                  <th rowSpan="2" className="border px-2 py-2">Year</th>
+                  <th rowSpan="2" className="border px-2 py-2">Registration number/roll number for the exam</th>
+                  <th colSpan="12" className="border px-2 py-2">Names of students selected/qualified</th>
+                  <th rowSpan="2" className="border px-2 py-2">Action</th>
                 </tr>
                 <tr>
                   <th className="border px-2 py-1">NET</th>
@@ -285,14 +292,12 @@ exam
                   <th className="border px-2 py-1">State</th>
                   <th className="border px-2 py-1">Other</th>
                 </tr>
-                  
               </thead>
               <tbody>
                 <tr>
                   {["year", "registration","NET", "SLET", "GATE", "GMAT", "CAT", "GRE", "JAM", "IELTS", "TOEFL", "Civil", "State", "Other"].map((key) => (
                     <td key={key} className="border px-2 py-1">
                       <input
-                        
                         className="w-full border text-gray-950 border-black rounded px-2 py-1"
                         placeholder={key.replace(/([A-Z])/g, " $1")}
                         value={formData[key]}
@@ -344,18 +349,12 @@ exam
               {yearData[year] && yearData[year].length > 0 ? (
                 <table className="w-full text-sm border">
                   <thead className="bg-gray-200">
-                  
-                  <tr>
-                      <th rowspan="12" className="border text-gray-950 px-4 py-2">#</th>
-                      <th rowspan="12" className="border text-gray-950 px-4 py-2">Year</th>
-                       <th rowspan="12" className="border text-gray-950 px-4 py-2">Registration number/roll
-number for the
-exam
-</th>
-                      <th colspan="12"  className="border text-gray-950 px-4 py-2">Names of students selected/ qualified</th>
-                    
+                    <tr>
+                      <th rowSpan="2" className="border text-gray-950 px-4 py-2">#</th>
+                      <th rowSpan="2" className="border text-gray-950 px-4 py-2">Year</th>
+                      <th rowSpan="2" className="border text-gray-950 px-4 py-2">Registration number/roll number for the exam</th>
+                      <th colSpan="12" className="border text-gray-950 px-4 py-2">Names of students selected/qualified</th>
                     </tr>
-
                     <tr>
                       <th className="border text-gray-950 px-4 py-2">NET</th>
                       <th className="border text-gray-950 px-4 py-2">SLET</th>
@@ -370,7 +369,6 @@ exam
                       <th className="border text-gray-950 px-4 py-2">State</th>
                       <th className="border text-gray-950 px-4 py-2">Other</th>
                     </tr>
-                                 
                   </thead>
                   <tbody>
                     {yearData[year].map((entry, index) => (
@@ -378,7 +376,6 @@ exam
                         <td className="border text-gray-950 px-2 py-1">{index + 1}</td>
                         <td className="border text-gray-950 px-2 py-1">{entry.year}</td>
                         <td className="border text-gray-950 px-2 py-1">{entry.registration}</td>
-                       
                         <td className="border text-gray-950 px-2 py-1">{entry.NET}</td>
                         <td className="border text-gray-950 px-2 py-1">{entry.SLET}</td>
                         <td className="border text-gray-950 px-2 py-1">{entry.GATE}</td>
@@ -391,7 +388,6 @@ exam
                         <td className="border text-gray-950 px-2 py-1">{entry.Civil}</td>
                         <td className="border text-gray-950 px-2 py-1">{entry.State}</td>
                         <td className="border text-gray-950 px-2 py-1">{entry.Other}</td>
-                      
                       </tr>
                     ))}
                   </tbody>

@@ -16,6 +16,7 @@ const Criteria3_2_1 = () => {
     (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`
   );
   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
+  const[submittedData, setSubmittedData] = useState([]);
   const [yearData, setYearData] = useState({});
   const { sessions, isLoading: sessionLoading, error: sessionError } = useContext(SessionContext);
   const [availableSessions, setAvailableSessions] = useState([]);
@@ -95,7 +96,8 @@ const Criteria3_2_1 = () => {
   }, []);
 
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     const paper_title = formData.proj.trim();
     const author_names = formData.name.trim();
     const department = formData.dept.trim();
@@ -212,14 +214,14 @@ year of publication (Data Template) </li>
   <div className="mb-4">
     <label className="font-medium text-gray-700 mr-2">Select Year:</label>
     <select
-      className="border px-3 py-1 rounded text-black"
-      value={currentYear}
-      onChange={(e) => setCurrentYear(e.target.value)}
-    >
-      {availableSessions?.map((year) => (
-        <option key={year} value={year}>{year}</option>
-      ))}
-    </select>
+  className="border px-3 py-1 rounded text-black"
+  value={currentYear}
+  onChange={(e) => setCurrentYear(e.target.value)}
+>
+  {(availableSessions || []).map((year) => (
+    <option key={year} value={year}>{year}</option>
+  ))}
+</select>
   </div>
   <div className="overflow-x-auto relative">
     <table className="min-w-full table-auto border text-sm">
@@ -309,23 +311,24 @@ year of publication (Data Template) </li>
 </section>
 
           {/* Support Links */}
-          <section className=" text-black bg-white rounded-lg shadow p-4 mb-6">
-            <label className=" block text-gray-700 font-medium mb-2">
-              Support Links (Journal | UGC | Article):
-            </label>
-            <div className="flex gap-2">
-              {formData.supportLinks.map((link, i) => (
-                <input
-                  key={i}
-                  type="url"
-                  placeholder={["Journal", "UGC", "Article"][i]}
-                  className="flex-1 border rounded px-3 py-2"
-                  value={link}
-                  onChange={e => handleChange("supportLinks", e.target.value, i)}
-                />
-              ))}
-            </div>
-          </section>
+    {/* Support Links */}
+<section className="text-black bg-white rounded-lg shadow p-4 mb-6">
+  <label className="block text-gray-700 font-medium mb-2">
+    Support Links (Journal | UGC | Article):
+  </label>
+  <div className="flex gap-2">
+    {(formData.supportLinks || []).map((link, i) => (
+      <input
+        key={i}
+        type="url"
+        placeholder={["Journal", "UGC", "Article"][i]}
+        className="flex-1 border rounded px-3 py-2"
+        value={link}
+        onChange={e => handleChange("supportLinks", e.target.value, i)}
+      />
+    ))}
+  </div>
+</section>
 
           {/* Year-wise Data */}
           {pastFiveYears.map(year => (

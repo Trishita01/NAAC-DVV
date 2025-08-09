@@ -14,11 +14,11 @@ const Criteria3_3_2 = () => {
   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
   const [yearData, setYearData] = useState({});
   const [currentYear, setCurrentYear] = useState("");
+  const [submittedData, setSubmittedData] = useState([]);
   const [formData, setFormData] = useState({
     session: "",
-    names: "",
-    name_award: "",
-    name_gov: "",
+    activity_name: "",
+    awarding_body: "",
     year: "",
     supportLinks: []
   });
@@ -28,11 +28,11 @@ const Criteria3_3_2 = () => {
   );
   const [yearCount, setYearCount] = useState(5);
   const [averageScore, setAverageScore] = useState(null);
-    useEffect(() => {
-      if (availableSessions && availableSessions.length > 0) {
-        setCurrentYear(availableSessions[0]); // Default to most recent session
-      }
-    }, [availableSessions]);
+  useEffect(() => {
+    if (availableSessions && availableSessions.length > 0) {
+      setCurrentYear(availableSessions[0]); // Default to most recent session
+    }
+  }, [availableSessions]);
 
   const navigate = useNavigate();
   const { sessions, isLoading: sessionLoading } = useContext(SessionContext);
@@ -78,54 +78,45 @@ const Criteria3_3_2 = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async () => {
-    const activity_name = formData.names.trim();
-    const award_name = formData.name_award.trim();
-    const awarding_body = formData.name_gov.trim();
-    const year_of_award = formData.year.trim();
-    const inputYear = formData.year.trim();
+    const activity_name = formData.activity_name.trim();
+    const awarding_body = formData.awarding_body.trim();
+    const year = formData.year.trim();
     const sessionFull = currentYear;
     const session = sessionFull.split("-")[0];
-    const year = inputYear || sessionFull;
 
-    if (!activity_name || !award_name || !awarding_body || !year_of_award) {
-      alert("Please fill in all required fields: Activity Name, Award Name, Awarding Body, and Year of Award");
+    if (!activity_name || !awarding_body || !year) {
+      alert("Please fill in all required fields: Activity Name, Awarding Body, and Year");
       return;
     }
 
     try {
       const response = await axios.post("http://localhost:3000/api/v1/criteria3/createResponse332", {
         session: parseInt(session),
-        year,
         activity_name,
-        award_name,
         awarding_body,
-        year_of_award
+        year
       });
 
       const resp = response?.data?.data || {};
       const newEntry = {
-        year: resp.year || year,
         activity_name: resp.activity_name || activity_name,
-        award_name: resp.award_name || award_name,
         awarding_body: resp.awarding_body || awarding_body,
-        year_of_award: resp.year_of_award || year_of_award
+        year_of_award: resp.year_of_award || year
       };
 
       setSubmittedData((prev) => [...prev, newEntry]);
       setYearData((prev) => ({
         ...prev,
-        [newEntry.year]: [...(prev[newEntry.year] || []), {
+        [newEntry.year_of_award]: [...(prev[newEntry.year_of_award] || []), {
           activity_name: newEntry.activity_name,
-          award_name: newEntry.award_name,
           awarding_body: newEntry.awarding_body,
           year_of_award: newEntry.year_of_award
         }],
       }));
 
       setFormData({ 
-        names: "",
-        name_award: "",
-        name_gov: "",
+        activity_name: "",
+        awarding_body: "",
         year: ""
       });
       fetchScore();
@@ -238,28 +229,28 @@ const Criteria3_3_2 = () => {
             </table>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-2">Links to relevant documents:</label>
-            <div className="flex flex-col gap-2">
-              {formData.supportLinks.map((link, index) => (
-                <input
-                  key={index}
-                  type="url"
-                  placeholder={`Enter support link ${index + 1}`}
-                  className="px-3 py-1 border border-gray-300 rounded text-gray-950"
-                  value={link}
-                  onChange={(e) => handleChange("supportLinks", e.target.value, index)}
-                />
-              ))}
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, supportLinks: [...formData.supportLinks, ""] })}
-                className="mt-2 px-3 py-1 !bg-blue-600 text-white rounded hover:bg-blue-700 w-fit"
-              >
-                + Add Another Link
-              </button>
-            </div>
-          </div>
+          <div className="flex flex-col gap-2">
+  {(formData.supportLinks || []).map((link, index) => (
+    <input
+      key={index}
+      type="url"
+      placeholder={`Enter document link ${index + 1}`}
+      className="px-3 py-1 border border-gray-300 rounded text-gray-950"
+      value={link}
+      onChange={(e) => handleChange("supportLinks", e.target.value, index)}
+    />
+  ))}
+  <button
+    type="button"
+    onClick={() => setFormData(prev => ({
+      ...prev,
+      supportLinks: [...(prev.supportLinks || []), ""]
+    }))}
+    className="mt-2 px-3 py-1 !bg-blue-600 text-white rounded hover:bg-blue-700 w-fit"
+  >
+    + Add Another Link
+  </button>
+</div>
 
           {pastFiveYears.map((year) => (
             <div key={year} className="mb-8 border rounded">

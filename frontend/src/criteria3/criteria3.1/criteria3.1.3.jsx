@@ -38,16 +38,40 @@ const Criteria3_1_3 = () => {
     date_to: "",
     supportLinks: []
   });
-
-  // Update year when currentYear changes
   useEffect(() => {
-    if (currentYear) {
+    if (sessions && sessions.length > 0) {
+      setAvailableSessions(sessions);
+      setCurrentYear(sessions[0]);
+      setSelectedYear(sessions[0]);
       setFormData(prev => ({
         ...prev,
-        year: currentYear.split('-')[0]
+        year: sessions[0].split('-')[0]
       }));
     }
-  }, [currentYear]);
+  }, [sessions]);
+
+  useEffect(() => {
+    const yearToUse = availableSessions?.length > 0 ? availableSessions[0] : pastFiveYears[0];
+    if (yearToUse && currentYear !== yearToUse) {
+      setCurrentYear(yearToUse);
+      setSelectedYear(yearToUse);
+      setFormData(prev => ({
+        ...prev,
+        year: yearToUse.split('-')[0]
+      }));
+    }
+  }, [availableSessions, pastFiveYears, currentYear]);
+
+  useEffect(() => {
+    if (!availableSessions?.length && pastFiveYears.length > 0) {
+      setCurrentYear(pastFiveYears[0]);
+      setSelectedYear(pastFiveYears[0]);
+      setFormData(prev => ({
+        ...prev,
+        year: pastFiveYears[0].split('-')[0]
+      }));
+    }
+  }, [availableSessions, pastFiveYears]);
 
   const fetchScore = async () => {
     console.log('Fetching score...');
@@ -93,19 +117,21 @@ const Criteria3_1_3 = () => {
     const participants = formData.participants.trim();
     const date_from = formData.date_from.trim();
     const date_to = formData.date_to.trim();
+    console.log("Current Year:", currentYear); // Add this line
     const sessionFull = currentYear;
     const session = sessionFull.split("-")[0];
-    const year = sessionFull.split("-")[0];
-
+    const year = sessionFull.split("-")[0]; 
+    console.log("Session:", year); // This is already correct
+  
     if (!workshop_name || !participants || !date_from || !date_to) {
       alert("Please fill in all required fields: Workshop Name, Participants, Date From, and Date To");
       return;
     }
-
+  
     try {
       const response = await axios.post("http://localhost:3000/api/v1/criteria3/createResponse313", {
         session: parseInt(session),
-        year,
+        year: year,  // Make sure this is included in the request
         workshop_name,
         participants: parseInt(participants),
         date_from,
@@ -152,14 +178,7 @@ const Criteria3_1_3 = () => {
       alert(error.response?.data?.message || error.message || "Failed to submit workshop data");
     }
   };
-
-  useEffect(() => {
-    if (sessions && sessions.length > 0) {
-      setAvailableSessions(sessions);
-      // Optionally set the current year to the first available session
-      setCurrentYear(sessions[0]);
-    }
-  }, [sessions]);
+// Replace these two useEffects with this single one:
 
   
 
@@ -217,20 +236,18 @@ const Criteria3_1_3 = () => {
           <div className="mb-4">
             <label className="font-medium text-gray-700 mr-2">Select Year:</label>
             <select
-  className="border px-3 py-1 rounded text-black"
   value={currentYear}
-  onChange={(e) => setCurrentYear(e.target.value)}
-  disabled={sessionLoading || !availableSessions.length}
+  onChange={(e) => {
+    setCurrentYear(e.target.value);
+    setSelectedYear(e.target.value);
+  }}
+  className="px-3 py-1 border border-gray-300 rounded text-gray-950"
 >
-  {sessionLoading ? (
-    <option>Loading sessions...</option>
-  ) : sessionError ? (
-    <option>Error loading sessions</option>
-  ) : (
-    availableSessions.map((year) => (
-      <option key={year} value={year}>{year}</option>
-    ))
-  )}
+  {availableSessions.map((session) => (
+    <option key={session} value={session}>
+      {session}
+    </option>
+  ))}
 </select>
           </div>
 
