@@ -15,6 +15,50 @@ const Criteria432 = db.response_4_3_2;
 const Criteria441 = db.response_4_4_1;
 const Score = db.scores;
 
+const getResponsesByCriteriaCode = asyncHandler(async (req, res) => {
+  const { criteriaCode } = req.params;
+  const { session } = req.query;
+
+  if (!criteriaCode) {
+    throw new apiError(400, "Missing criteria code");
+  }
+
+  const paddedCriteriaCode = convertToPaddedFormat(criteriaCode);
+  const dbName = `response_${criteriaCode.replace(/\./g, '_')}`;
+
+  // Step 1: Get criteria master
+  const criteriaMaster = await db.criteria_master.findOne({
+    where: { sub_sub_criterion_id: paddedCriteriaCode }
+  });
+
+  if (!criteriaMaster) {
+    throw new apiError(404, `Criteria not found for code: ${criteriaCode}`);
+  }
+
+  // Step 2: Prepare where clause
+  const whereClause = {
+    criteria_code: criteriaMaster.criteria_code,
+    ...(session && { session })  // Only include session if it's passed
+  };
+ console.log("DB Name",db[dbName])
+  console.log("Database name:", dbName);
+  console.log("Where clause:", whereClause);
+
+  // Step 3: Fetch responses
+try {
+    const responses = await db[dbName].findAll({
+      where: whereClause,
+    });
+    console.log("Query results:", responses);
+    return res.status(200).json(
+      new apiResponse(200, responses, 'Responses retrieved successfully')
+    );
+} catch (error) {
+  console.log(error)
+  throw new apiError(500, "Failed to fetch responses");
+}
+});
+
 /*
 1. 413 not done
 2. 414 done
@@ -31,6 +75,7 @@ const Score = db.scores;
 const createResponse413 = asyncHandler(async (req, res) => {
 
   const { session, room_identifier, typeict_facility } = req.body;
+  console.log("Session",req.body)
 
   const sessionYear = Number(session);
   const room = String(room_identifier);
@@ -1357,3 +1402,20 @@ const createResponse441 = asyncHandler(async (req, res) => {
   );
 });
 
+export{
+  createResponse414,
+  createResponse423,
+  createResponse413,
+  createResponse422,
+  score414,
+  score423,
+  score413,
+  score432,
+  score424,
+  score422,
+  createResponse424,
+  createResponse432,
+  createResponse441,
+  getResponsesByCriteriaCode,
+  
+}
