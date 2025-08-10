@@ -70,10 +70,11 @@ const Criteria5_2_3= () => {
       updatedLinks[index] = value;
       setFormData({ ...formData, supportLinks: updatedLinks });
     } else {
-      setFormData({ ...formData, [field]: value });
+      // Ensure we're storing strings for exam fields
+      const newValue = field.startsWith('exam_') ? value.toUpperCase() : value;
+      setFormData({ ...formData, [field]: newValue });
     }
   };
-
   const handleSubmit = async (e) => {
     e?.preventDefault();
     
@@ -94,10 +95,24 @@ const Criteria5_2_3= () => {
       Other: exam_other
     } = formData;
   
-    const session = year.split("-")[0];
+    // Convert numbers to "YES"/"NO"
+    const exams = {
+      exam_net: exam_net ? "YES" : "NO",
+      exam_slet: exam_slet ? "YES" : "NO",
+      exam_gate: exam_gate ? "YES" : "NO",
+      exam_gmat: exam_gmat ? "YES" : "NO",
+      exam_cat: exam_cat ? "YES" : "NO",
+      exam_gre: exam_gre ? "YES" : "NO",
+      exam_jam: exam_jam ? "YES" : "NO",
+      exam_ielts: exam_ielts ? "YES" : "NO",
+      exam_toefl: exam_toefl ? "YES" : "NO",
+      exam_civil_services: exam_civil_services ? "YES" : "NO",
+      exam_state_services: exam_state_services ? "YES" : "NO",
+      exam_other: exam_other ? "YES" : "NO"
+    };
   
-    if (!year || !registeration_number || !exam_net || !exam_slet || !exam_gate || !exam_gmat || !exam_cat || !exam_gre || !exam_jam || !exam_ielts || !exam_toefl || !exam_civil_services || !exam_state_services || !exam_other) {
-      alert("Please fill in all required fields.");
+    if (!year || !registeration_number) {
+      alert("Please fill in year and registration number.");
       return;
     }
   
@@ -105,21 +120,10 @@ const Criteria5_2_3= () => {
       const response = await axios.post(
         "http://localhost:3000/api/v1/criteria5/createResponse523",
         {
-          session: parseInt(session, 10),
+          session: parseInt(year.split("-")[0], 10),
           year,
           registeration_number,
-          exam_net: parseInt(exam_net) || 0,
-          exam_slet: parseInt(exam_slet) || 0,
-          exam_gate: parseInt(exam_gate) || 0,
-          exam_gmat: parseInt(exam_gmat) || 0,
-          exam_cat: parseInt(exam_cat) || 0,
-          exam_gre: parseInt(exam_gre) || 0,
-          exam_jam: parseInt(exam_jam) || 0,
-          exam_ielts: parseInt(exam_ielts) || 0,
-          exam_toefl: parseInt(exam_toefl) || 0,
-          exam_civil_services: parseInt(exam_civil_services) || 0,
-          exam_state_services: parseInt(exam_state_services) || 0,
-          exam_other: parseInt(exam_other) || 0,
+          ...exams
         },
         {
           headers: {
@@ -128,6 +132,7 @@ const Criteria5_2_3= () => {
           withCredentials: true
         }
       );
+      
   
       // Update local state with the new entry
       const newEntry = {

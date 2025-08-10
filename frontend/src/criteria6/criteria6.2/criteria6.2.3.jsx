@@ -71,22 +71,25 @@ const Criteria6_2_3 = () => {
     try {
       // Validate that at least one option is selected
       const selectedCount = Object.values(selectedOptions).filter(Boolean).length;
+      console.log('Selected governance areas:', selectedOptions);
+      
       if (selectedCount === 0) {
         alert("Please select at least one governance area");
+        return;
+      }
+
+      // Filter out items with empty years (only submit rows with data)
+      const filledData = governanceData.filter(item => item.year.trim() !== '');
+      console.log('Filled data to submit:', filledData);
+      
+      if (filledData.length === 0) {
+        alert("Please enter at least one year of implementation");
         return;
       }
 
       // Show alert if no options are selected
       if (selectedCount === 0) {
         alert("Please select at least one governance area before submitting");
-        return;
-      }
-
-      // Filter out items with empty years (only submit rows with data)
-      const filledData = governanceData.filter(item => item.year.trim() !== '');
-      
-      if (filledData.length === 0) {
-        alert("Please enter at least one year of implementation");
         return;
       }
 
@@ -100,23 +103,23 @@ const Criteria6_2_3 = () => {
       console.log("Total selected options:", implementationCount, "Selected options:", selectedOptions);
       
       // Send each filled item as a separate request with the same implementation value
-      const requests = filledData.map(item => {
+      const requests = filledData.map((item, index) => {
         const requestBody = {
           session: parseInt(currentYear.split('-')[0], 10),
-          implimentation: implementationCount,  // Send as number
+          implimentation: implementationCount,
           area_of_e_governance: item.area,
-          year_of_implementation: parseInt(currentYear.split('-')[0])  // Use first year from session
+          year_of_implementation: parseInt(currentYear.split('-')[0])
         };
+        
+        console.log('Request body for', item.area, ':', requestBody);
         
         // Update the year in the UI to match the session
         const updatedData = [...governanceData];
         updatedData[index] = {
           ...item,
-          year: currentYear  // Set to full session year
+          year: currentYear
         };
         setGovernanceData(updatedData);
-        
-        console.log("Sending request for:", requestBody);
         
         return axios.post(
           "http://localhost:3000/api/v1/criteria6/createResponse623", 
@@ -127,11 +130,18 @@ const Criteria6_2_3 = () => {
             },
             withCredentials: true
           }
-        );
+        ).then(response => {
+          console.log('Success response for', item.area, ':', response.data);
+          return response;
+        }).catch(error => {
+          console.error('Error response for', item.area, ':', error.response?.data || error.message);
+          throw error;
+        });
       });
       
       // Wait for all requests to complete
-      await Promise.all(requests);
+      const responses = await Promise.all(requests);
+      console.log('All responses:', responses);
       
       const successMessage = `Successfully submitted data for ${filledData.length} area(s) with ${selectedCount} governance areas selected`;
       console.log(successMessage);

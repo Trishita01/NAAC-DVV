@@ -85,37 +85,7 @@ const Criteria5_1_5= () => {
 
 
           {/* Inputs Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div>
-              <label className="block text-gray-700 mb-2">Department</label>
-              <select className="w-full border text-gray-950 border-gray-300 rounded-md px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Select department</option>
-                <option value="computer-science">Computer Science</option>
-                <option value="mathematics">Mathematics</option>
-                <option value="physics">Physics</option>
-                <option value="chemistry">Chemistry</option>
-                <option value="biology">Biology</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 mb-2">Faculty ID</label>
-              <input
-                type="text"
-                placeholder="Enter faculty ID"
-                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-950"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 mb-2">Faculty Name</label>
-              <input
-                type="text"
-                placeholder="Enter faculty name"
-                className=" text-gray-950 w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+          
 
           {/* Radio Buttons */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">

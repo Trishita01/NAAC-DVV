@@ -35,7 +35,14 @@ const [submittedData, setSubmittedData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [selectedOption, setSelectedOption] = useState("");
+  // Changed to handle multiple selections like in Criteria 4.2.2
+  const [selectedOptions, setSelectedOptions] = useState({
+    option1: false,
+    option2: false,
+    option3: false,
+    option4: false,
+  });
+
   const [rows, setRows] = useState([]);
   const [formData, setFormData] = useState({
     programName: "",
@@ -43,6 +50,25 @@ const [submittedData, setSubmittedData] = useState([]);
     studentsEnrolled: "",
     agency: "",
   });
+
+  // Updated to handle checkbox changes like in Criteria 4.2.2
+  const handleCheckboxChange = (option) => {
+    setSelectedOptions(prev => ({
+      ...prev,
+      [option]: !prev[option]
+    }));
+  };
+
+  // Function to get grade based on selected options count
+  const getGrade = () => {
+    const selectedCount = Object.values(selectedOptions).filter(Boolean).length;
+    if (selectedCount >= 4) return 'A. All of the above';
+    if (selectedCount === 3) return 'B. Any 3 of the above';
+    if (selectedCount === 2) return 'C. Any 2 of the above';
+    if (selectedCount === 1) return 'D. Any 1 of the above';
+    return 'E. None of the above';
+  };
+
   const fetchScore = async () => {
     console.log('Fetching score...');
     setLoading(true);
@@ -73,63 +99,58 @@ const [submittedData, setSubmittedData] = useState([]);
   };
 
   const handleSubmit = async () => {
-    const name = formData.name.trim();
-    const body = formData.body;
-    const inputYear = formData.year.trim();
-    const sessionFull = currentYear;
-    const session = sessionFull.split("-")[0];
-    const year = inputYear || sessionFull;
-
-    if (!name || !body) {
-      alert("Please fill in both Name of Teacher and select a Body.");
-      return;
-    }
-
-    const option_selected = bodyOptions[body];
-    if (!option_selected) {
-      alert("Please select a valid body option.");
+    const { programName, date, studentsEnrolled, agency } = formData;
+    const session = currentYear;
+    
+    if (!programName || !date || !studentsEnrolled || !agency) {
+      alert("Please fill in all fields");
       return;
     }
 
     try {
-      const response = await axios.post("http://localhost:3000/api/v1/criteria1/createResponse113", {
-        session,
-        year,
-        teacher_name: name,
-        body_name: body,
-        option_selected,
-      });
+      // Convert date from DD-MM-YYYY to YYYY-MM-DD format for the database
+      const [day, month, year] = date.split('-');
+      const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 
-      const resp = response?.data?.data || {};
-      const newEntry = {
-        year: resp.year || year,
-        name: resp.teacher_name || name,
-        body: resp.body_name || body,
-        option: option_selected,
+      const requestBody = {
+        session: parseInt(session, 10), // Ensure session is a number
+        program_name: programName,
+        implementation_date: formattedDate, // YYYY-MM-DD format
+        students_enrolled: parseInt(studentsEnrolled, 10),
+        agency_name: agency,
       };
 
-      setSubmittedData((prev) => [...prev, newEntry]);
-      setYearData((prev) => ({
-        ...prev,
-        [newEntry.year]: [...(prev[newEntry.year] || []), {
-          name: newEntry.name,
-          body: newEntry.body,
-          option: newEntry.option,
-        }],
-      }));
-
-      setFormData({ year: "", name: "", body: "" });
-      setSelectedOption("");
+      console.log('Submitting data:', requestBody);
+      
+      const response = await axios.post(
+        "http://localhost:3000/api/v1/criteria5/createResponse513", 
+        requestBody,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      console.log('Response from server:', response.data);
+      
+      // Update local state
+      setRows(prev => [...prev, { ...formData }]);
+      
+      // Show success message
+      alert("Data submitted successfully!");
+      setFormData({
+        programName: "",
+        date: "",
+        studentsEnrolled: "",
+        agency: "",
+      });
+      
       fetchScore();
       alert("Data submitted successfully!");
     } catch (error) {
       console.error("Error submitting:", error);
       alert(error.response?.data?.message || error.message || "Submission failed due to server error");
     }
-  };
-
-  const handleRadioChange = (option) => {
-    setSelectedOption(option);
   };
 
   const navigate = useNavigate();
@@ -159,8 +180,6 @@ const [submittedData, setSubmittedData] = useState([]);
             </div>
           </div>
 
-        
-
           {/* Metric Info */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h3 className="text-blue-600 font-medium mb-2">5.1.3 Metric Information</h3>
@@ -169,7 +188,14 @@ const [submittedData, setSubmittedData] = useState([]);
               1. Soft skills<br />
               2. Language and communication skills<br />
               3. Life skills (Yoga, physical fitness, health and hygiene)<br />
-              4. ICT/computing skills
+              4. ICT/computing skills<br />
+              <br />
+              Choose from the following<br />    
+              A. All of the above<br />
+              B. Any 3 of the above<br />
+              C. Any 2 of the above<br />
+              D. Any 1 of the above<br />
+              E. None of the above<br />
             </p>
 
               <div className="mb-4">
@@ -188,7 +214,7 @@ const [submittedData, setSubmittedData] = useState([]);
             ) : provisionalScore?.data ? (
               <div>
                 <p className="text-lg font-semibold text-green-800">
-                  Provisional Score (1.1.3): {provisionalScore.data.score}
+                  Provisional Score (5.1.3): {provisionalScore.data.score}
                 </p>
               </div>
             ) : (
@@ -208,7 +234,41 @@ const [submittedData, setSubmittedData] = useState([]);
             </select>
           </div>
 
-          
+          {/* Multiple Selection Checkboxes */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 className="text-blue-600 font-medium mb-4">
+              Select the Capacity Building and Skills Enhancement Initiatives (Multiple selections allowed)
+            </h3>
+            <div className="space-y-3">
+              {[
+                { key: "option1", label: "1. Soft skills" },
+                { key: "option2", label: "2. Language and communication skills" },
+                { key: "option3", label: "3. Life skills (Yoga, physical fitness, health and hygiene)" },
+                { key: "option4", label: "4. ICT/computing skills" }
+              ].map(({ key, label }) => (
+                <div key={key} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={key}
+                    className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    checked={selectedOptions[key]}
+                    onChange={() => handleCheckboxChange(key)}
+                  />
+                  <label htmlFor={key} className="text-sm text-gray-800">{label}</label>
+                </div>
+              ))}
+            </div>
+            
+            {/* Grade Display */}
+            <div className="mt-4 p-3 bg-blue-50 rounded-md">
+              <p className="text-sm font-medium text-blue-800">
+                Option Selected: {getGrade()}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Selected: {Object.values(selectedOptions).filter(Boolean).length} out of 4 initiatives
+              </p>
+            </div>
+          </div>
 
           {/* Input Table */}
           <div className="flex justify-center overflow-auto border rounded mb-6">
@@ -260,17 +320,10 @@ const [submittedData, setSubmittedData] = useState([]);
                       placeholder="Agency details"
                     />
                   </td>
-                  <td className="px-2 py-2 border">
+                  <td className="border px-2">
                     <button
-                      onClick={() => {
-                        if (formData.programName && formData.date && formData.studentsEnrolled && formData.agency) {
-                          setSubmittedData([...submittedData, formData]);
-                          setFormData({ programName: "", date: "", studentsEnrolled: "", agency: "" });
-                        } else {
-                          alert("Please fill all fields");
-                        }
-                      }}
-                      className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      onClick={handleSubmit}
+                      className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 w-full"
                     >
                       Add
                     </button>
@@ -308,38 +361,13 @@ const [submittedData, setSubmittedData] = useState([]);
             </div>
           )}
 
-          {/* MCQs Section */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h3 className="text-blue-600 font-medium mb-4">Select the Options</h3>
-            <div className="space-y-3">
-              {["All of the above", "Any 3 of the above", "Any 2 of the above", "Any 1 of the above", "None of the above"].map((label, index) => {
-                const optionKey = `option${index + 1}`;
-                return (
-                  <div key={optionKey} className="flex items-center">
-                    <input
-                      type="radio"
-                      id={optionKey}
-                      name="participation"
-                      className="mr-3 h-4 w-4 text-blue-600"
-                      checked={selectedOption === optionKey}
-                      onChange={() => handleRadioChange(optionKey)}
-                    />
-                    <label htmlFor={optionKey} className="text-sm text-gray-800">{label}</label>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
           {/* File Upload */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="bg-blue-50 p-4 rounded-md mb-6">
               <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700">
                 <li>Details of capability building and skills enhancement initiatives </li>
                 <li>Any additional information</li>
-                <li>Link to Institutional website
-</li>
-               
+                <li>Link to Institutional website</li>
               </ul>
             </div>
 

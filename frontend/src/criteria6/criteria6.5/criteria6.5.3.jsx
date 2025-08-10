@@ -10,8 +10,16 @@ import { SessionContext } from "../../contextprovider/sessioncontext";
 const Criteria6_5_3 = () => {
   const navigate = useNavigate();
   const { sessions, isLoading: sessionLoading, error: sessionError } = useContext(SessionContext);
-const [currentYear, setCurrentYear] = useState("");
-  const [selectedOption, setSelectedOption] = useState("");
+  const [currentYear, setCurrentYear] = useState("");
+  
+  // Changed to handle multiple selections like in Criteria 4.2.2
+  const [selectedOptions, setSelectedOptions] = useState({
+    option1: false,
+    option2: false,
+    option3: false,
+    option4: false,
+  });
+  
   const [rows, setRows] = useState([]);
   const [nextId, setNextId] = useState(1);
   const [yearOfImplementation, setYearOfImplementation] = useState("");
@@ -21,8 +29,40 @@ const [currentYear, setCurrentYear] = useState("");
   const [error, setError] = useState(null);
   const [provisionalScore, setProvisionalScore] = useState(null);
 
-  const handleRadioChange = (option) => {
-    setSelectedOption(option);
+  // Single row data for the table - user only inputs the year
+  const [qualityData, setQualityData] = useState({
+    year: "",
+    iqacMeetings: "",
+    conferences: "",
+    collaborativeInitiatives: "",
+    nirfParticipation: "",
+    orientationProgramme: "",
+    qualityAudit: "",
+  });
+
+  const handleQualityDataChange = (field, value) => {
+    setQualityData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Updated to handle checkbox changes like in Criteria 4.2.2
+  const handleCheckboxChange = (option) => {
+    setSelectedOptions(prev => ({
+      ...prev,
+      [option]: !prev[option]
+    }));
+  };
+
+  // Function to get grade based on selected options count
+  const getGrade = () => {
+    const selectedCount = Object.values(selectedOptions).filter(Boolean).length;
+    if (selectedCount >= 4) return 'A. All of the above';
+    if (selectedCount === 3) return 'B. Any 3 of the above';
+    if (selectedCount === 2) return 'C. Any 2 of the above';
+    if (selectedCount === 1) return 'D. Any 1 of the above';
+    return 'E. None of the above';
   };
 
   const addRow = () => {
@@ -36,13 +76,8 @@ const [currentYear, setCurrentYear] = useState("");
 
   const handleSubmit = async () => {
     try {
-      const implimentationValue = {
-        option1: 4, // All of the above
-        option2: 3, // Any 3 of the above
-        option3: 2, // Any 2 of the above
-        option4: 1, // Any 1 of the above
-        option5: 0  // None of the above
-      }[selectedOption] ?? 0;
+      const selectedCount = Object.values(selectedOptions).filter(Boolean).length;
+      const implimentationValue = selectedCount >= 4 ? 4 : selectedCount;
 
       const requestBody = {
         session,
@@ -117,78 +152,170 @@ const [currentYear, setCurrentYear] = useState("");
             </div>
           </div>
 
-          {/* Provisional Score Section */}
-          <div className="flex justify-center mb-4">
-            <div className="text-center">
-              <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
-              {loading ? (
-                <span className="text-gray-500">Loading...</span>
-              ) : error ? (
-                <span className="text-red-500">Error: {error}</span>
-              ) : provisionalScore ? (
-                <div className="text-blue-600 text-lg font-bold">
-                  Score: {provisionalScore.data?.score || "N/A"}
-                </div>
-              ) : (
-                <span className="text-gray-500">Score not available</span>
-              )}
+          {/* Information Box */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="flex justify-center mb-4">
+              <div className="text-center">
+                {loading ? (
+                  <span className="text-gray-500">Loading provisional score...</span>
+                ) : error ? (
+                  <span className="text-red-500">Error: {error}</span>
+                ) : provisionalScore ? (
+                  <div className="text-blue-600 text-lg font-bold">
+                    Provisional Score: {provisionalScore.data?.score || "N/A"}
+                  </div>
+                ) : (
+                  <span className="text-gray-500">Score not available</span>
+                )}
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-blue-600 font-medium mb-2">6.5.3 Metric Information</h3>
+              <p className="text-sm text-gray-700">
+                Quality assurance initiatives of the institution include:
+                <br/>
+                1. Regular meeting of Internal Quality Assurance Cell (IQAC); Feedback collected, analysed and used for improvements<br/>
+                2. Collaborative quality intitiatives with other institution(s)<br/>
+                3. Participation in NIRF<br/>
+                4. Any other quality audit recognized by state, national or international agencies (ISO Certification, NBA)<br/>
+                <br/>
+                Choose from the following<br/>    
+                A. All of the above<br/>
+                B. Any 3 of the above<br/>
+                C. Any 2 of the above<br/>
+                D. Any 1 of the above<br/>
+                E. None of the above <br/>
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-blue-600 font-medium mb-2">Data Requirements:</h3>
+              <ul className="list-disc pl-5 text-sm text-gray-700">
+                <li className="mb-1">AQARs prepared/ submitted</li>
+                <li>Collaborative quality initiatives with other institution(s)</li>
+                <li>Participation in NIRF</li>
+                <li>Any other quality audit recognized by state, national or international agencies (ISO Certification, NBA)</li>
+              </ul>
             </div>
           </div>
 
-          {/* Information Box */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-blue-600 font-medium mb-2">6.5.3 Metric Information</h3>
-            <p className="text-sm text-gray-700">
-            Quality assurance initiatives of the institution include: <br />
-              1.Regular meeting of Internal Quality Assurance Cell (IQAC); Feedback collected, analysed and used for improvements <br />
-              2. Collaborative quality intitiatives with other institution(s) <br />
-              3. Participation in NIRF <br />
-              4. any other quality audit recognized by state, national or international agencies (ISO Certification, NBA)
-            </p>
-            <h3 className="text-blue-600 font-medium mt-6 mb-2">Data Requirements:</h3>
-            <ul className="list-disc pl-5 text-sm text-gray-700">
-              <li>AQARs prepared/ submitted</li>
-              <li>Collaborative quality initiatives with other institution(s)</li>
-              <li>Participation in NIRF</li>
-              <li>Any other quality audit recognized by state, national or international agencies (ISO Certification, NBA)</li>
-            </ul>
-          </div>
-
-          {/* Radio Buttons */}
-          <div className="!bg-white rounded-lg shadow-md p-6 mb-6">
+          {/* Multiple Selection Checkboxes */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h3 className="text-blue-600 font-medium mb-4">
-              Select the Options <br />
-              1. Regular meeting of Internal Quality Assurance Cell (IQAC); Feedback collected, analysed and used for improvements <br />
-              2. Collaborative quality intitiatives with other institution(s) <br />
-              3.Participation in NIRF <br />
-              4.any other quality audit recognized by state, national or international agencies (ISO Certification, NBA)
+              Select the Quality Assurance Initiatives Available (Multiple selections allowed)
             </h3>
             <div className="space-y-3">
               {[
-                "All of the above",
-                "Any 3 of the above",
-                "Any 2 of the above",
-                "Any 1 of the above",
-                "None of the above",
-              ].map((label, index) => {
-                const optionKey = `option${index + 1}`;
-                return (
-                  <div key={optionKey} className="flex items-center">
-                    <input
-                      type="radio"
-                      id={optionKey}
-                      name="participation"
-                      className="mr-3 h-4 w-4 text-blue-600"
-                      checked={selectedOption === optionKey}
-                      onChange={() => handleRadioChange(optionKey)}
-                    />
-                    <label htmlFor={optionKey} className="text-sm text-gray-800">
-                      {label}
-                    </label>
-                  </div>
-                );
-              })}
+                { key: "option1", label: "1. Regular meeting of Internal Quality Assurance Cell (IQAC); Feedback collected, analysed and used for improvements" },
+                { key: "option2", label: "2. Collaborative quality intitiatives with other institution(s)" },
+                { key: "option3", label: "3. Participation in NIRF" },
+                { key: "option4", label: "4. Any other quality audit recognized by state, national or international agencies (ISO Certification, NBA)" }
+              ].map(({ key, label }) => (
+                <div key={key} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={key}
+                    className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    checked={selectedOptions[key]}
+                    onChange={() => handleCheckboxChange(key)}
+                  />
+                  <label htmlFor={key} className="text-sm text-gray-800">{label}</label>
+                </div>
+              ))}
             </div>
+            
+            {/* Grade Display */}
+            <div className="mt-4 p-3 bg-blue-50 rounded-md">
+              <p className="text-sm font-medium text-blue-800">
+                Option Selected: {getGrade()}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Selected: {Object.values(selectedOptions).filter(Boolean).length} out of 4 quality initiatives
+              </p>
+            </div>
+          </div>
+
+          {/* Data Entry Table - Single Row */}
+          <div className="p-6 bg-white shadow rounded-md max-w-full overflow-x-auto mb-6">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">
+              Quality Assurance Initiatives Data
+            </h2>
+
+            <table className="min-w-full border text-sm text-left">
+              <thead className="bg-gray-100 font-semibold text-gray-950">
+                <tr>
+                  <th className="border text-gray-950 px-3 py-2">Year</th>
+                  <th className="border text-gray-950 px-3 py-2">Regular meetings of the IQAC held</th>
+                  <th className="border text-gray-950 px-3 py-2">Conferences, Seminars, Workshops on quality conducted</th>
+                  <th className="border text-gray-950 px-3 py-2">Collaborative quality initiatives with other institution(s) (Provide name of the institution and activity</th>
+                  <th className="border text-gray-950 px-3 py-2">Participation in NIRF along with Status</th>
+                  <th className="border text-gray-950 px-3 py-2">Orientation programme on quality issues for teachers and students, Date (From-To) (DD-MM-YYYY)</th>
+                  <th className="border text-gray-950 px-3 py-2">Any other quality audit as recognized by the State, National or International agencies (ISO certification, NBA and such others</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="hover:bg-gray-50">
+                  <td className="border text-gray-950 px-3 py-2">
+                    <input
+                      type="text"
+                      className="w-full border rounded text-gray-950 px-2 py-1"
+                      value={qualityData.year}
+                      onChange={(e) => handleQualityDataChange("year", e.target.value)}
+                      placeholder="Enter year (e.g., 2023-24)"
+                    />
+                  </td>
+                  <td className="border text-gray-950 px-3 py-2">
+                    <input
+                      type="text"
+                      className="w-full border rounded text-gray-950 px-2 py-1"
+                      value={qualityData.iqacMeetings}
+                      onChange={(e) => handleQualityDataChange("iqacMeetings", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-3 py-2">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 rounded px-2 py-1"
+                      value={qualityData.conferences}
+                      onChange={(e) => handleQualityDataChange("conferences", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-3 py-2">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 rounded px-2 py-1"
+                      value={qualityData.collaborativeInitiatives}
+                      onChange={(e) => handleQualityDataChange("collaborativeInitiatives", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-3 py-2">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 rounded px-2 py-1"
+                      value={qualityData.nirfParticipation}
+                      onChange={(e) => handleQualityDataChange("nirfParticipation", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-3 py-2">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 rounded px-2 py-1"
+                      value={qualityData.orientationProgramme}
+                      onChange={(e) => handleQualityDataChange("orientationProgramme", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-3 py-2">
+                    <input
+                      type="text"
+                      className="w-full border text-gray-950 rounded px-2 py-1"
+                      value={qualityData.qualityAudit}
+                      onChange={(e) => handleQualityDataChange("qualityAudit", e.target.value)}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           {/* File Upload */}
@@ -198,9 +325,7 @@ const [currentYear, setCurrentYear] = useState("");
                 <li>Paste web link of Annual reports of Institution</li>
                 <li>Upload e-copies of the accreditations and certifications</li>
                 <li>Upload any additional information</li>
-                <li>
-                Upload details of Quality assurance initiatives of the institution(Data Template) (Data Template)
-                </li>
+                <li>Upload details of Quality assurance initiatives of the institution(Data Template) (Data Template)</li>
               </ul>
             </div>
 
@@ -215,20 +340,22 @@ const [currentYear, setCurrentYear] = useState("");
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end gap-4 mr-10">
-            <button
-              onClick={handleSubmit}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            >
-              Submit
-            </button>
-            <Bottom />
-            <button
-              onClick={() => navigate("/criteria1.2.1")}
-              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-            >
-              Next
-            </button>
+          <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
+            <div className="flex justify-between items-center">
+              <button
+                onClick={handleSubmit}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+              >
+                Submit
+              </button>
+              <Bottom />
+              <button
+                onClick={() => navigate("/criteria1.2.1")}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </div>

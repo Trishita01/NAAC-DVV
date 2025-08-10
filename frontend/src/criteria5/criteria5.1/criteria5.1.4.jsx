@@ -32,6 +32,7 @@ const [provisionalScore, setProvisionalScore] = useState(null);
     year: "",
     activityname: "",
     students: "",
+    students_benefitted: "",
    
    
     
@@ -45,23 +46,24 @@ const [provisionalScore, setProvisionalScore] = useState(null);
   }, [availableSessions]);
 
 
-  useEffect(() => {
-    async function fetchScore() {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await axios.get("http://localhost:3000/api/v1/criteria5/score514");
-        console.log("Fetched score514:", response.data);
-        setScore(response.data.data);
-      } catch (error) {
-        console.error("Error fetching score514:", error);
-        setError("Failed to load ratio. Please ensure data in 2.4.1 is filled.");
-      } finally {
-        setLoading(false);
-      }
+  const fetchScore = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get("http://localhost:3000/api/v1/criteria5/score514");
+      console.log("Fetched score514:", response.data);
+      setProvisionalScore(response.data);
+    } catch (error) {
+      console.error("Error fetching score514:", error);
+      setError("Failed to load score. Please try again later.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchScore();
-  }, []) ;
+  }, []); 
 
   const [yearScores, setYearScores] = useState(
     pastFiveYears.reduce((acc, year) => ({ ...acc, [year]: 0 }), {})
@@ -88,15 +90,25 @@ const [provisionalScore, setProvisionalScore] = useState(null);
     const {
       year: inputYear,
       activityname: activity_name,
-      students: students_participated
+      students: students_participated,
+      students_benefitted
     } = formData;
   
     const sessionFull = currentYear;
     const session = sessionFull.split("-")[0];
     const year = inputYear || sessionFull;
   
-    if (!activity_name || !students_participated) {
-      alert("Please fill in both Activity Name and Number of Students Participated.");
+    // Convert and validate numeric inputs
+    const studentsParticipated = parseInt(students_participated);
+    const studentsBenefitted = parseInt(students_benefitted);
+    
+    if (isNaN(studentsParticipated) || isNaN(studentsBenefitted)) {
+      alert("Please enter valid numbers for both 'Students Participated' and 'Students Benefitted' fields.");
+      return;
+    }
+    
+    if (studentsParticipated <= 0 || studentsBenefitted <= 0) {
+      alert("Number of students must be greater than 0.");
       return;
     }
   
@@ -107,7 +119,8 @@ const [provisionalScore, setProvisionalScore] = useState(null);
           session: parseInt(session, 10),
           year,
           activity_name,
-          students_participated: parseInt(students_participated) || 0,
+          students_participated: studentsParticipated,
+          students_benefitted: studentsBenefitted
         },
         {
           headers: {
@@ -140,6 +153,7 @@ const [provisionalScore, setProvisionalScore] = useState(null);
         year: "",
         activityname: "",
         students: "",
+        students_benefitted: "",
         supportLinks: [""],
       });
   
@@ -238,6 +252,25 @@ examinations and career counselling</li>
     )}
   </select>
 </div>
+
+<div className="px-4 py-3 bg-gray-50 border-b">
+              <div className="flex items-center gap-4">
+                <label className="font-medium text-gray-700">
+                  Number of students benefited by guidance for competitive examinations and career counselling
+                </label>
+                <input
+                  type="number"
+                  className="border border-gray-300 rounded px-3 py-2 w-32 text-gray-950"
+                  placeholder="Enter count"
+                  min="0"
+                  value={formData.students_benefitted}
+                  onChange={(e) => handleChange("students_benefitted", e.target.value)}
+                />
+              </div>
+            </div>
+
+
+
             </div>
 
             <table className="w-full border text-sm border-black">

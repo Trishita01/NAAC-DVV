@@ -70,15 +70,29 @@ const Criteria3_2_1 = () => {
   };
 
   const fetchScore = async () => {
-    console.log('Fetching score...');
+    console.log('Fetching score for 3.2.1...');
     setLoading(true);
     setError(null);
     try {
       const response = await axios.get("http://localhost:3000/api/v1/criteria3/score321");
-      console.log('API Response:', response);
-      console.log('Response data:', response.data);
-      setProvisionalScore(response.data);
-      console.log('provisionalScore after set:', provisionalScore);
+      
+      // Log the full response for debugging
+      console.log('Full API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data
+      });
+      
+      // Try to find the score and grade in different possible locations
+      const scoreData = response.data?.data || response.data;
+      
+      if (scoreData) {
+        console.log('Score data found:', scoreData);
+        setProvisionalScore(scoreData);
+      } else {
+        console.warn('No valid score data found in response');
+        setProvisionalScore(null);
+      }
     } catch (error) {
       console.error("Error fetching provisional score:", error);
       if (error.response) {
@@ -86,6 +100,7 @@ const Criteria3_2_1 = () => {
         console.error('Error status:', error.response.status);
       }
       setError(error.message || "Failed to fetch score");
+      setProvisionalScore(null);
     } finally {
       setLoading(false);
     }
@@ -181,20 +196,32 @@ const Criteria3_2_1 = () => {
         <main className="flex-1 min-w-0 p-6 overflow-y-auto">
           {/* Metric Info */}
           <section className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <div className="flex justify-center mb-4">
-              <div className="text-center">
-                <span className="font-semibold text-gray-700">Provisional Score:&nbsp;</span>
-                {loading ? (
-                  <span className="text-gray-500">Loading...</span>
-                ) : error ? (
-                  <span className="text-red-500">Error: {error}</span>
-                ) : (
-                  <span className="text-gray-500">Score not available</span>
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
+            {loading ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : error ? (
+              <p className="text-red-600">Error loading score: {error}</p>
+            ) : provisionalScore ? (
+              <div>
+                <p className="text-lg font-semibold text-green-800">
+                  Provisional Score (3.2.1): {provisionalScore.score || provisionalScore.score_sub_sub_criteria || 0}
+                </p>
+                <p className="text-lg font-semibold text-green-800">
+                  Grade: {provisionalScore.grade || provisionalScore.sub_sub_cr_grade || 'N/A'}
+                </p>
+                {/* Debug info - can be removed in production */}
+                {process.env.NODE_ENV === 'development' && (
+                  <details className="mt-2 text-xs text-gray-600">
+                    <summary>Debug Info</summary>
+                    <pre>{JSON.stringify(provisionalScore, null, 2)}</pre>
+                  </details>
                 )}
               </div>
-            </div>
+            ) : (
+              <p className="text-gray-600">No score data available. Submit data to generate a score.</p>
+            )}
           </div>
+
             <h3 className="text-blue-600 font-medium mb-2">3.2.1 Metric Information</h3>
             <p className="text-gray-700 mb-2">
              3.2.1.1. Number of research papers in the Journals notified on UGC
