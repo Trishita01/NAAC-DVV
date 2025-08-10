@@ -37,14 +37,29 @@ const Criteria5_2_3= () => {
   });
 
   const fetchScore = async () => {
+    console.log('Fetching score...');
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get("http://localhost:3000/api/v1/criteria5/score511");
-      setProvisionalScore(response.data);
+      const response = await axios.get("http://localhost:3000/api/v1/criteria5/score523");
+      console.log('API Response:', response);
+      
+      // Check if response has data and the expected score property
+      if (response.data && response.data.data && response.data.data.entry) {
+        console.log('Score data:', response.data.data.entry);
+        setProvisionalScore(response.data.data.entry);
+      } else {
+        console.log('No score data found in response');
+        setProvisionalScore(null);
+      }
     } catch (error) {
-      console.error("Error fetching score:", error);
+      console.error("Error fetching provisional score:", error);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
+      }
       setError(error.message || "Failed to fetch score");
+      setProvisionalScore(null);
     } finally {
       setLoading(false);
     }
@@ -53,6 +68,7 @@ const Criteria5_2_3= () => {
   useEffect(() => {
     fetchScore();
   }, []);
+
 
   const [yearScores, setYearScores] = useState(
     pastFiveYears.reduce((acc, year) => ({ ...acc, [year]: 0 }), {})
@@ -79,8 +95,7 @@ const Criteria5_2_3= () => {
     e?.preventDefault();
     
     const {
-      year: registeration_number,
-      registration: year,
+      registration: registeration_number,
       NET: exam_net,
       SLET: exam_slet,
       GATE: exam_gate,
@@ -94,6 +109,7 @@ const Criteria5_2_3= () => {
       State: exam_state_services,
       Other: exam_other
     } = formData;
+    const sessionYear = currentYear.split('-')[0]; // Extract first year from session
   
     // Convert numbers to "YES"/"NO"
     const exams = {
@@ -111,8 +127,8 @@ const Criteria5_2_3= () => {
       exam_other: exam_other ? "YES" : "NO"
     };
   
-    if (!year || !registeration_number) {
-      alert("Please fill in year and registration number.");
+    if (!registeration_number) {
+      alert("Please fill in registration number.");
       return;
     }
   
@@ -120,8 +136,8 @@ const Criteria5_2_3= () => {
       const response = await axios.post(
         "http://localhost:3000/api/v1/criteria5/createResponse523",
         {
-          session: parseInt(year.split("-")[0], 10),
-          year,
+          session: sessionYear,
+          year: sessionYear,
           registeration_number,
           ...exams
         },
@@ -225,17 +241,20 @@ level examinations</li>
           </div>
 
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
-              {loading ? (
-                <p className="text-gray-600">Loading provisional score...</p>
-              ) : provisionalScore?.data ? (
-                <div>
-                  <p className="text-lg font-semibold text-green-800">
-                    Provisional Score (5.1.1): {provisionalScore.data.score}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-gray-600">No score data available.</p>
-              )}
+            {loading ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : provisionalScore?.data?.score_sub_sub_criteria !== undefined || provisionalScore?.score_sub_sub_criteria !== undefined ? (
+              <p className="text-lg font-semibold text-green-800">
+                Provisional Score (3.1.3): {typeof (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria) === 'number'
+                  ? (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria).toFixed(2)
+                  : (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria)} %
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  (Last updated: {new Date(provisionalScore.timestamp || Date.now()).toLocaleString()})
+                </span>
+              </p>
+            ) : (
+              <p className="text-gray-600">No score data available. Submit data to see your score.</p>
+            )}
           </div>
 
           {/* Number of Students Appearing Section */}

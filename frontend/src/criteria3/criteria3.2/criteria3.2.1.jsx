@@ -70,27 +70,19 @@ const Criteria3_2_1 = () => {
   };
 
   const fetchScore = async () => {
-    console.log('Fetching score for 3.2.1...');
+    console.log('Fetching score...');
     setLoading(true);
     setError(null);
     try {
       const response = await axios.get("http://localhost:3000/api/v1/criteria3/score321");
+      console.log('API Response:', response);
       
-      // Log the full response for debugging
-      console.log('Full API Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: response.data
-      });
-      
-      // Try to find the score and grade in different possible locations
-      const scoreData = response.data?.data || response.data;
-      
-      if (scoreData) {
-        console.log('Score data found:', scoreData);
-        setProvisionalScore(scoreData);
+      // Check if response has data and the expected score property
+      if (response.data && response.data.data && response.data.data.entry) {
+        console.log('Score data:', response.data.data.entry);
+        setProvisionalScore(response.data.data.entry);
       } else {
-        console.warn('No valid score data found in response');
+        console.log('No score data found in response');
         setProvisionalScore(null);
       }
     } catch (error) {
@@ -109,7 +101,6 @@ const Criteria3_2_1 = () => {
   useEffect(() => {
     fetchScore();
   }, []);
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -199,26 +190,17 @@ const Criteria3_2_1 = () => {
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
             {loading ? (
               <p className="text-gray-600">Loading provisional score...</p>
-            ) : error ? (
-              <p className="text-red-600">Error loading score: {error}</p>
-            ) : provisionalScore ? (
-              <div>
-                <p className="text-lg font-semibold text-green-800">
-                  Provisional Score (3.2.1): {provisionalScore.score || provisionalScore.score_sub_sub_criteria || 0}
-                </p>
-                <p className="text-lg font-semibold text-green-800">
-                  Grade: {provisionalScore.grade || provisionalScore.sub_sub_cr_grade || 'N/A'}
-                </p>
-                {/* Debug info - can be removed in production */}
-                {process.env.NODE_ENV === 'development' && (
-                  <details className="mt-2 text-xs text-gray-600">
-                    <summary>Debug Info</summary>
-                    <pre>{JSON.stringify(provisionalScore, null, 2)}</pre>
-                  </details>
-                )}
-              </div>
+            ) : provisionalScore?.data?.score_sub_sub_criteria !== undefined || provisionalScore?.score_sub_sub_criteria !== undefined ? (
+              <p className="text-lg font-semibold text-green-800">
+                Provisional Score (3.2.1): {typeof (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria) === 'number'
+                  ? (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria).toFixed(2)
+                  : (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria)} %
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  (Last updated: {new Date(provisionalScore.timestamp || Date.now()).toLocaleString()})
+                </span>
+              </p>
             ) : (
-              <p className="text-gray-600">No score data available. Submit data to generate a score.</p>
+              <p className="text-gray-600">No score data available. Submit data to see your score.</p>
             )}
           </div>
 

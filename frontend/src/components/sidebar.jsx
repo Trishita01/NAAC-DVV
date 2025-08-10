@@ -62,7 +62,7 @@ const Sidebar = () => {
         {
           id: "2.2",
           name: "2.2 Catering to Student Diversity",
-          subItems: ["2.2.1", "2.2.2", "2.2.3"],
+          subItems: ["2.2.1", "2.2.2", ],
         },
         {
           id: "2.3",

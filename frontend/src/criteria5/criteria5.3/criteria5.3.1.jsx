@@ -26,28 +26,58 @@ const Criteria5_3_1 = () => {
    }, [availableSessions]);
 
   const [formData, setFormData] = useState({
-    year: "",
-    name: "",
-    team: "",
-    uni: "",
-    sports: "",
-    studentname: "",
-    
-    supportLinks: [""],
+    name: "",  // Award Name
+    studentname: "",  // Student Name
+    team_or_individual: "",  // Team/Individual
+    level: "",  // Level
+    activity_type: "",  // Activity Type
+    supportLinks: [""]
   });
   const [submittedData, setSubmittedData] = useState([]);
+
+  const teamOptions = [
+    { value: 'Team', label: 'Team' },
+    { value: 'Individual', label: 'Individual' }
+  ];
+
+  const levelOptions = [
+    { value: 'University', label: 'University' },
+    { value: 'State', label: 'State' },
+    { value: 'National', label: 'National' },
+    { value: 'International', label: 'International' }
+  ];
+
+  const activityOptions = [
+    { value: 'Sports', label: 'Sports' },
+    { value: 'Cultural', label: 'Cultural' }
+  ];
 
   const navigate = useNavigate();
 
   const fetchScore = async () => {
+    console.log('Fetching score...');
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get("http://localhost:3000/api/v1/criteria5/score511");
-      setProvisionalScore(response.data);
+      const response = await axios.get("http://localhost:3000/api/v1/criteria5/score531");
+      console.log('API Response:', response);
+      
+      // Check if response has data and the expected score property
+      if (response.data && response.data.data && response.data.data.entry) {
+        console.log('Score data:', response.data.data.entry);
+        setProvisionalScore(response.data.data.entry);
+      } else {
+        console.log('No score data found in response');
+        setProvisionalScore(null);
+      }
     } catch (error) {
-      console.error("Error fetching score:", error);
+      console.error("Error fetching provisional score:", error);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
+      }
       setError(error.message || "Failed to fetch score");
+      setProvisionalScore(null);
     } finally {
       setLoading(false);
     }
@@ -57,89 +87,69 @@ const Criteria5_3_1 = () => {
     fetchScore();
   }, []);
 
-
   const handleChange = (field, value, index = null) => {
-  if (field === "supportLinks") {
-    const updatedLinks = [...formData.supportLinks];
-    updatedLinks[index] = value;
-    setFormData({ ...formData, supportLinks: updatedLinks });
-  } else {
-    setFormData({ ...formData, [field]: value });
-  }
-};
-const handleSubmit = async (e) => {
-  e?.preventDefault();
-  
-  const {
-    year: award_name,
-    name: student_name,
-    team: team_or_individual,
-    uni: level,
-    sports: activity_type
-  } = formData;
+    if (field === "supportLinks") {
+      const updatedLinks = [...formData.supportLinks];
+      updatedLinks[index] = value;
+      setFormData({ ...formData, supportLinks: updatedLinks });
+    } else {
+      setFormData({ ...formData, [field]: value });
+    }
+  };
 
-  const year = currentYear;
-  const session = year.split("-")[0];
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    
+    const award_name = formData.name;
+    const student_name = formData.studentname;
+    const team_or_individual = formData.team_or_individual;
+    const level = formData.level;
+    const activity_type = formData.activity_type;
+    const year = currentYear.split("-")[0];
 
-  if (!award_name || !student_name || !team_or_individual || !level || !activity_type) {
-    alert("Please fill in all required fields (Award Name, Student Name, Team/Individual, Level, and Activity Type).");
-    return;
-  }
+    if (!award_name || !student_name || !team_or_individual || !level || !activity_type) {
+      alert("Please fill in all required fields (Award Name, Student Name, Team/Individual, Level, and Activity Type).\n\nCurrent values:\nAward Name: " + award_name + "\nStudent Name: " + student_name + "\nTeam/Individual: " + team_or_individual + "\nLevel: " + level + "\nActivity Type: " + activity_type);
+      return;
+    }
 
-  try {
-    const response = await axios.post(
-      "http://localhost:3000/api/v1/criteria5/createResponse531",
-      {
-        session: parseInt(session, 10),
-        year,
+    try {
+      const response = await axios.post("http://localhost:3000/api/v1/criteria5/createResponse531", {
+        session: currentYear,
+        year: currentYear,
         award_name,
+        student_name,
         team_or_individual,
         level,
         activity_type,
-        student_name
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        withCredentials: true
+        
+      });
+
+      if (response.status === 200) {
+        alert("Data submitted successfully!");
+        setSubmittedData(prev => [...prev, {
+          award_name,
+          student_name,
+          team_or_individual,
+          level,
+          activity_type,
+          
+        }]);
+        setFormData({
+          name: "",
+          studentname: "",
+          team_or_individual: "",
+          level: "",
+          activity_type: "",
+       
+        });
+      } else {
+        alert("Failed to submit data. Please try again.");
       }
-    );
-
-    // Update local state with the new entry
-    const newEntry = {
-      year,
-      studentname: student_name_contact,
-      programme: program_graduated_from,
-      employer: employer_details,
-      paypackage: pay_package_inr
-    };
-
-    setSubmittedData(prev => [...prev, newEntry]);
-    
-    // Update yearData
-    setYearData(prev => ({
-      ...prev,
-      [year]: [...(prev[year] || []), newEntry]
-    }));
-    
-    // Reset form
-    setFormData({
-      studentname: "",
-      programme: "",
-      employer: "",
-      paypackage: "",
-      supportLinks: [""],
-    });
-
-    // Refresh the score
-    fetchScore();
-    alert("Data submitted successfully!");
-  } catch (error) {
-    console.error("Error submitting:", error);
-    alert(error.response?.data?.message || error.message || "Submission failed due to server error");
-  }
-};
+    } catch (error) {
+      console.error("Error submitting data:", error);
+      alert("An error occurred while submitting data. Please try again.");
+    }
+  };
 
   const goToNextPage = () => {
     navigate("/criteria5.3.2");
@@ -197,19 +207,21 @@ level</li>
           <h2 className="text-xl font-bold text-gray-500 mb-4">Number of awards/medals for outstanding performance in sports/cultural activities at university/state/national / international level</h2>
 
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded">
-              {loading ? (
-                <p className="text-gray-600">Loading provisional score...</p>
-              ) : provisionalScore?.data ? (
-                <div>
-                  <p className="text-lg font-semibold text-green-800">
-                    Provisional Score (5.1.1): {provisionalScore.data.score}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-gray-600">No score data available.</p>
-              )}
-            </div>
-
+            {loading ? (
+              <p className="text-gray-600">Loading provisional score...</p>
+            ) : provisionalScore?.data?.score_sub_sub_criteria !== undefined || provisionalScore?.score_sub_sub_criteria !== undefined ? (
+              <p className="text-lg font-semibold text-green-800">
+                Provisional Score (3.1.3): {typeof (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria) === 'number'
+                  ? (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria).toFixed(2)
+                  : (provisionalScore.data?.score_sub_sub_criteria ?? provisionalScore.score_sub_sub_criteria)} %
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  (Last updated: {new Date(provisionalScore.timestamp || Date.now()).toLocaleString()})
+                </span>
+              </p>
+            ) : (
+              <p className="text-gray-600">No score data available. Submit data to see your score.</p>
+            )}
+          </div>
 
           {/* Year Dropdown */}
           <div className="mb-4">
@@ -234,10 +246,9 @@ level</li>
                     "Year",
                     "Name of the award",
                     "Team/Individual",
-                    "University/State/National/ International ",
-                    "Sports/ Cultural ",
+                    "Level",
+                    "Activity Type",
                     "Name of the student",
-                   
                   ].map((heading) => (
                     <th key={heading} className="px-4 py-2 border">
                       {heading}
@@ -248,24 +259,72 @@ level</li>
               </thead>
               <tbody>
                 <tr>
-                  {[
-                    "year",
-                    "name",
-                    "team",
-                    "uni",
-                    "sports",
-                    "name",
-                  ].map((field) => (
-                    <td key={field} className="px-2 py-2 border">
-                      <input
-                        type="text"
-                        value={formData[field]}
-                        onChange={(e) => handleChange(field, e.target.value)}
-                        className="w-full px-2 py-1 border rounded text-gray-900 border-black"
-                        placeholder={field}
-                      />
-                    </td>
-                  ))}
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={currentYear ? currentYear.split('-')[0] : ''}
+                      onChange={(e) => setCurrentYear(e.target.value)}
+                      className="w-full px-2 py-1 border rounded border-black"
+                      placeholder="Enter year"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => handleChange('name', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="Award Name"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <select
+                      value={formData.team_or_individual}
+                      onChange={(e) => handleChange('team_or_individual', e.target.value)}
+                      className="w-full px-2 py-1 border rounded border-black"
+                    >
+                      {teamOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <select
+                      value={formData.level}
+                      onChange={(e) => handleChange('level', e.target.value)}
+                      className="w-full px-2 py-1 border rounded border-black"
+                    >
+                      {levelOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <select
+                      value={formData.activity_type}
+                      onChange={(e) => handleChange('activity_type', e.target.value)}
+                      className="w-full px-2 py-1 border rounded border-black"
+                    >
+                      {activityOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.studentname}
+                      onChange={(e) => handleChange('studentname', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="Student Name"
+                    />
+                  </td>
                   <td className="px-2 py-2 border">
                     <button
                       onClick={handleSubmit}
