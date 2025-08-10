@@ -91,7 +91,7 @@ const Criteria4_1_4 = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/v1/criteria4/createResponse414",
+        "http://localhost:3000/api/response/4.1.4",
         {
           session: parseInt(year, 10),
           year: year,

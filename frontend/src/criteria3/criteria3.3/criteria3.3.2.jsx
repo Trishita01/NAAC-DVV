@@ -80,8 +80,8 @@ const Criteria3_3_2 = () => {
   const handleSubmit = async () => {
     const activity_name = formData.activity_name.trim();
     const awarding_body = formData.awarding_body.trim();
-    const year = formData.year.trim();
     const sessionFull = currentYear;
+    const year = sessionFull.split("-")[0];
     const session = sessionFull.split("-")[0];
 
     if (!activity_name || !awarding_body || !year) {

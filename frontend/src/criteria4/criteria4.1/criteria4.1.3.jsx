@@ -1,5 +1,3 @@
-
-
 import React, { useState } from "react";
 import Header from "../../components/header";
 import Navbar from "../../components/navbar";
@@ -21,6 +19,7 @@ const Criteria4_1_3 = () => {
   const [formData, setFormData] = useState({
     room_identifier: "",
     typeict_facility: "",
+    ict_facilities_count: "",
     supportLinks: [""]
   });
   const [submittedData, setSubmittedData] = useState([]);
@@ -97,10 +96,10 @@ const Criteria4_1_3 = () => {
   };
 
   const handleSubmit = async () => {
-    const { room_identifier, typeict_facility } = formData;
+    const { room_identifier, typeict_facility, ict_facilities_count } = formData;
     const session = currentYear.split("-")[0];
 
-    if (!room_identifier || !typeict_facility) {
+    if (!room_identifier || !typeict_facility || !ict_facilities_count) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -110,8 +109,11 @@ const Criteria4_1_3 = () => {
         "http://localhost:3000/api/v1/criteria4/createResponse413",
         {
           session: parseInt(session, 10),
+          criteria_code: "4.1.3",
           room_identifier: room_identifier.trim(),
           typeict_facility: typeict_facility.trim(),
+          ict_facilities_count: parseInt(ict_facilities_count, 10),
+          supportLinks: formData.supportLinks.filter(link => link.trim() !== "")
         },
         {
           headers: {
@@ -125,6 +127,7 @@ const Criteria4_1_3 = () => {
         year: currentYear,
         room_identifier: room_identifier.trim(),
         typeict_facility: typeict_facility.trim(),
+        ict_facilities_count: parseInt(ict_facilities_count, 10),
         supportLinks: formData.supportLinks.filter(link => link.trim() !== "")
       };
 
@@ -138,14 +141,13 @@ const Criteria4_1_3 = () => {
       setFormData({
         room_identifier: "",
         typeict_facility: "",
-        link: "",
+        ict_facilities_count: "",
         supportLinks: [""],
       });
       
       fetchScore();
       alert("Data submitted successfully!");
     } catch (error) {
-      console.error("Error submitting:", error);
       alert(error.response?.data?.message || error.message || "Submission failed due to server error");
     }
   };
@@ -222,57 +224,47 @@ facilities such as smart class, LMS, etc.
             </div>
           </div>
 
-
-
+            <div className="px-4 py-3 bg-gray-50 border-b">
+              <div className="flex items-center gap-4">
+                <label className="font-medium text-gray-700">
+                  No. of classrooms with ICT facilities:
+                </label>
+                <input
+                  type="number"
+                  className="border border-gray-300 rounded px-3 py-2 w-32 text-gray-950"
+                  placeholder="Enter count"
+                  min="0"
+                  value={formData.ict_facilities_count}
+                  onChange={(e) => handleChange("ict_facilities_count", e.target.value)}
+                />
+              </div>
+            </div>
 
             <table className="w-full border text-sm">
               <thead className="bg-gray-100 text-gray-950">
                 <tr>
                   <th className="border px-2 py-2">Room number or Name of Classrooms and Seminar halls with ICT-enabled facilities</th>
                   <th className="border px-2 py-2">Type of ICT facility</th>
-                  <th className="border px-2 py-2">Support Links</th>
+                  <th className="border px-2 py-2">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  {["room_identifier", "typeict_facility"].map((key) => (
-                    <td key={key} className="border px-2 py-1">
-                      <input
-                        className="w-full border text-gray-950 border-black rounded px-2 py-1"
-                        placeholder={key.replace(/([A-Z])/g, " $1")}
-                        value={formData[key]}
-                        onChange={(e) => handleChange(key, e.target.value)}
-                      />
-                    </td>
-                  ))}
                   <td className="border px-2 py-1">
-                    {formData.supportLinks.map((link, index) => (
-                      <div key={index} className="flex mb-1">
-                        <input
-                          type="text"
-                          className="flex-1 border text-gray-950 border-gray-300 rounded-l px-2 py-1"
-                          placeholder="Supporting link"
-                          value={link}
-                          onChange={(e) => handleChange("supportLinks", e.target.value, index)}
-                        />
-                        {formData.supportLinks.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeSupportLink(index)}
-                            className="bg-red-500 text-white px-2 rounded-r hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addSupportLink}
-                      className="mt-1 text-xs text-blue-600 hover:text-blue-800"
-                    >
-                      + Add another link
-                    </button>
+                    <input
+                      className="w-full border text-gray-950 border-black rounded px-2 py-1"
+                      placeholder="Room Identifier"
+                      value={formData.room_identifier}
+                      onChange={(e) => handleChange("room_identifier", e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <input
+                      className="w-full border text-gray-950 border-black rounded px-2 py-1"
+                      placeholder="Type ICT Facility"
+                      value={formData.typeict_facility}
+                      onChange={(e) => handleChange("typeict_facility", e.target.value)}
+                    />
                   </td>
                   <td className="border px-2 py-1 text-center">
                     <button
@@ -285,6 +277,41 @@ facilities such as smart class, LMS, etc.
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-gray-700 font-medium mb-2">
+              Support Document Links:
+            </label>
+            <div className="flex flex-col gap-2">
+              {formData.supportLinks.map((link, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    placeholder={`Enter support link ${index + 1}`}
+                    className="flex-1 px-3 py-1 border border-gray-300 rounded text-gray-950"
+                    value={link}
+                    onChange={(e) => handleChange("supportLinks", e.target.value, index)}
+                  />
+                  {formData.supportLinks.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeSupportLink(index)}
+                      className="px-3 py-1 text-red-600 hover:text-red-800"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addSupportLink}
+                className="mt-2 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 w-fit"
+              >
+                + Add Another Link
+              </button>
+            </div>
           </div>
 
           {years.map((year) => (
@@ -310,16 +337,17 @@ facilities such as smart class, LMS, etc.
                         <td className="border text-gray-900 border-black px-2 py-1">
                           {entry.supportLinks && entry.supportLinks.length > 0 ? (
                             <div className="space-y-1">
-                              {entry.supportLinks.map((link, idx) => (
-                                <a 
-                                  key={idx} 
-                                  href={link} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:underline block break-all"
-                                >
-                                  {link}
-                                </a>
+                              {entry.supportLinks.map((link, linkIdx) => (
+                                <div key={linkIdx}>
+                                  <a 
+                                    href={link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline block break-all"
+                                  >
+                                    Link {linkIdx + 1}
+                                  </a>
+                                </div>
                               ))}
                             </div>
                           ) : (
@@ -408,6 +436,3 @@ facilities such as smart class, LMS, etc.
 };
 
 export default Criteria4_1_3;
-
-
-

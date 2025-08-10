@@ -21,7 +21,8 @@ const Criteria6_3_3 = () => {
   }, [availableSessions]);
 
   const [formData, setFormData] = useState({
-    date: "",
+    dateFrom: "",
+    dateTo: "",
     title_prof: "",
     title_adm: "",
     num: "",
@@ -53,12 +54,26 @@ const Criteria6_3_3 = () => {
   };
 
   const handleSubmit = async () => {
-    const { date, title_prof, title_adm, num } = formData;
+    const { dateFrom, dateTo, title_prof, title_adm, num } = formData;
     const session = currentSession;
 
     // Basic validation
-    if (!date || !title_prof || !title_adm || !num) {
+    if (!dateFrom || !dateTo || !title_prof || !title_adm || !num) {
       alert("Please fill in all required fields.");
+      return;
+    }
+
+    // Validate date formats
+    const dateFromRegex = /^\d{2}-\d{2}-\d{4}$/;
+    const dateToRegex = /^\d{2}-\d{2}-\d{4}$/;
+
+    if (!dateFromRegex.test(dateFrom)) {
+      alert("Please enter date from in DD-MM-YYYY format");
+      return;
+    }
+
+    if (!dateToRegex.test(dateTo)) {
+      alert("Please enter date to in DD-MM-YYYY format");
       return;
     }
     console.log(formData);
@@ -68,7 +83,8 @@ const Criteria6_3_3 = () => {
         "http://localhost:3000/api/v1/criteria6/createResponse633",
         {
           session: parseInt(session.split("-")[0], 10),
-          from_to_date: date,
+          dateFrom,
+          dateTo,
           title_of_prof_dev: title_prof.trim(),
           title_of_add_training: title_adm.trim(),
           no_of_participants: parseInt(num) || 0,
@@ -83,7 +99,8 @@ const Criteria6_3_3 = () => {
 
       // Update local state with the new entry
       const newEntry = {
-        date,
+        dateFrom,
+        dateTo,
         title_prof: title_prof.trim(),
         title_adm: title_adm.trim(),
         num: parseInt(num) || 0,
@@ -93,7 +110,8 @@ const Criteria6_3_3 = () => {
       
       // Reset form
       setFormData({
-        date: "",
+        dateFrom: "",
+        dateTo: "",
         title_prof: "",
         title_adm: "",
         num: "",
@@ -214,37 +232,61 @@ const Criteria6_3_3 = () => {
             <table className="min-w-full border text-sm text-left max-w-full">
               <thead className="bg-gray-100 font-semibold text-gray-950">
                 <tr>
-                  {[
-                    "Dates (from-to) (DD-MM-YYYY)",
-                    "Title of the professional development program organised for teaching staff",
-                    "Title of the administrative training program organised for non-teaching staff",
-                    "No. of participants",
-                  ].map((heading) => (
-                    <th key={heading} className="px-4 py-2 border">
-                      {heading}
-                    </th>
-                  ))}
+                  <th className="px-4 py-2 border">Date From (DD-MM-YYYY)</th>
+                  <th className="px-4 py-2 border">Date To (DD-MM-YYYY)</th>
+                  <th className="px-4 py-2 border">Title of the professional development program organised for teaching staff</th>
+                  <th className="px-4 py-2 border">Title of the administrative training program organised for non-teaching staff</th>
+                  <th className="px-4 py-2 border">No. of participants</th>
                   <th className="px-4 py-2 border">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  {[
-                    "date",
-                    "title_prof",
-                    "title_adm",
-                    "num",
-                  ].map((field) => (
-                    <td key={field} className="px-2 py-2 border">
-                      <input
-                        type="text"
-                        value={formData[field]}
-                        onChange={(e) => handleChange(field, e.target.value)}
-                        className="w-full px-2 py-1 border rounded text-gray-900 border-black"
-                        placeholder={field}
-                      />
-                    </td>
-                  ))}
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.dateFrom}
+                      onChange={(e) => handleChange('dateFrom', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="DD-MM-YYYY"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.dateTo}
+                      onChange={(e) => handleChange('dateTo', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="DD-MM-YYYY"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.title_prof}
+                      onChange={(e) => handleChange('title_prof', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="Professional Development Title"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.title_adm}
+                      onChange={(e) => handleChange('title_adm', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="Administrative Training Title"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.num}
+                      onChange={(e) => handleChange('num', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="Number of Participants"
+                    />
+                  </td>
                   <td className="px-2 py-2 border">
                     <button
                       onClick={handleSubmit}
@@ -267,23 +309,19 @@ const Criteria6_3_3 = () => {
                   <thead className="bg-gray-100 font-semibold text-gray-950">
                     <tr>
                       <th className="px-4 py-2 border text-gray-950">#</th>
-                      {[
-                        "Date",
-                        "Professional Development Title",
-                        "Administrative Training Title",
-                        "Participants",
-                      ].map((heading) => (
-                        <th key={heading} className="px-4 py-2 border text-gray-950">
-                          {heading}
-                        </th>
-                      ))}
+                      <th className="px-4 py-2 border text-gray-950">Date From</th>
+                      <th className="px-4 py-2 border text-gray-950">Date To</th>
+                      <th className="px-4 py-2 border text-gray-950">Professional Development Title</th>
+                      <th className="px-4 py-2 border text-gray-950">Administrative Training Title</th>
+                      <th className="px-4 py-2 border text-gray-950">Participants</th>
                     </tr>
                   </thead>
                   <tbody>
                     {submittedData.map((entry, i) => (
                       <tr key={i} className="even:bg-gray-50 text-gray-950">
                         <td className="px-2 py-2 border border-black">{i + 1}</td>
-                        <td className="px-2 py-2 border border-black">{entry.date}</td>
+                        <td className="px-2 py-2 border border-black">{entry.dateFrom}</td>
+                        <td className="px-2 py-2 border border-black">{entry.dateTo}</td>
                         <td className="px-2 py-2 border border-black">{entry.title_prof}</td>
                         <td className="px-2 py-2 border border-black">{entry.title_adm}</td>
                         <td className="px-2 py-2 border border-black">{entry.num}</td>

@@ -14,26 +14,27 @@ const Criteria3_4_2 = () => {
   const [currentYear, setCurrentYear] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const pastFiveYears = Array.from(
     { length: 5 },
     (_, i) => `${2024 - i}-${(2024 - i + 1).toString().slice(-2)}`
   );
 
   const [selectedYear, setSelectedYear] = useState(pastFiveYears[0]);
-  const [yearData, setYearData] = useState({});
-  const [yearScores, setYearScores] = useState(
-    pastFiveYears.reduce((acc, year) => ({ ...acc, [year]: 0 }), {})
+  const [yearData, setYearData] = useState(
+    pastFiveYears.reduce((acc, year) => ({ ...acc, [year]: [] }), {})
   );
-  const [yearCount, setYearCount] = useState(5);
+  const [yearScores, setYearScores] = useState(
+    sessions.reduce((acc, year) => ({ ...acc, [year]: 0 }), {})
+  );
+  const [yearCount, setYearCount] = useState(sessions.length);
   const [averageScore, setAverageScore] = useState(null);
   const [provisionalScore, setProvisionalScore] = useState(null);
 
   const [formData, setFormData] = useState({
-    year: "",
-    awards: "",
-    awardingBody: "",
-    link: "",
+    institution_name: "",
+    year_of_mou: "",
+    duration: "",
+    activities_list: "",
   });
 
   const navigate = useNavigate();
@@ -42,55 +43,74 @@ const Criteria3_4_2 = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async () => {
-    const allFilled = Object.values(formData).every((val) => val.trim() !== "");
-    if (!allFilled) {
-      alert("Please fill in all fields.");
+    const session = selectedYear.split("-")[0];
+    const institution_name = formData.institution_name.trim();
+    const year_of_mou = formData.year_of_mou.trim();
+    const duration = formData.duration.trim();
+    const activities_list = formData.activities_list.trim();
+
+    if (!institution_name || !year_of_mou || !duration || !activities_list) {
+      alert("Please fill in all required fields.");
       return;
     }
 
-    const requestBody = {
-      session: selectedYear.split("-")[0],
-      year: formData.year,
-      awards_received: formData.awards,
-      awarding_body: formData.awardingBody,
-      link: formData.link,
-    };
-
     try {
-      const response = await axios.post("/api/criteria3_4_2/create", requestBody);
-      console.log("Submitted:", response.data);
-      alert("Data submitted successfully!");
-      fetchScore();
-
-      setYearData((prev) => {
-        const updated = { ...prev };
-        if (!updated[selectedYear]) updated[selectedYear] = [];
-        updated[selectedYear].push(formData);
-        return updated;
+      const response = await axios.post("http://localhost:3000/api/v1/criteria3/createResponse342", {
+        session: parseInt(session),
+        institution_name,
+        year_of_mou,
+        duration: parseInt(duration),
+        activities_list
       });
 
-      setFormData({ year: "", awards: "", awardingBody: "", link: "" });
+      const resp = response?.data?.data || {};
+      const newEntry = {
+        institution_name: resp.institution_name || institution_name,
+        year_of_mou: resp.year_of_mou || year_of_mou,
+        duration: resp.duration || duration,
+        activities_list: resp.activities_list || activities_list,
+        collaborating_agency: resp.collaborating_agency || collaborating_agency,
+        scheme_name: resp.scheme_name || scheme_name,
+        year: resp.year || year,
+        student_count: resp.student_count || student_count,
+ 
+      };
+
+      setYearData(prev => ({
+        ...prev,
+        [newEntry.year]: [...(prev[newEntry.year] || []), newEntry]
+      }));
+
+      setFormData({
+        institution_name: "",
+        year_of_mou: "",
+        duration: "",
+        activities_list: "",
+      });
+
+      await fetchScore();
+      alert("Data submitted successfully!");
     } catch (err) {
-      console.error("Error submitting:", err);
-      if (err.response && err.response.data) {
-        alert("Submission failed: " + err.response.data.message);
-      } else {
-        alert("Submission failed due to network/server error.");
-      }
+      alert(err.response?.data?.message || err.message || "Submission failed.");
     }
   };
+
 
   const fetchScore = async () => {
     console.log("Fetching score...");
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get("/api/criteria3_4_2/score");
-      setProvisionalScore(response.data);
+      const response = await axios.get("http://localhost:3000/api/v1/criteria3/score342");
+      const { totalMoUs, grade } = response.data;
+      setProvisionalScore({
+        totalMoUs,
+        grade
+      });
       console.log("Provisional Score:", response.data);
     } catch (err) {
       console.error("Error fetching provisional score:", err);
-      setError(err.message || "Failed to fetch score");
+      setError(err.response?.data?.message || err.message || "Failed to fetch score");
     } finally {
       setLoading(false);
     }
@@ -130,8 +150,10 @@ const Criteria3_4_2 = () => {
                   <span className="text-gray-500">Loading...</span>
                 ) : error ? (
                   <span className="text-red-500">Error: {error}</span>
+                ) : provisionalScore?.grade !== undefined ? (
+                  <span className="text-gray-500">{provisionalScore.grade}</span>
                 ) : (
-                  <span className="text-gray-500">{provisionalScore ?? "Score not available"}</span>
+                  <span className="text-gray-500">-</span>
                 )}
               </div>
             </div>
@@ -158,7 +180,7 @@ const Criteria3_4_2 = () => {
               onChange={(e) => setSelectedYear(e.target.value)}
               className="border px-3 py-1 rounded text-black"
             >
-              {pastFiveYears.map((yr) => (
+              {sessions.map((yr) => (
                 <option key={yr} value={yr} className="text-black">{yr}</option>
               ))}
             </select>
@@ -169,24 +191,47 @@ const Criteria3_4_2 = () => {
             <table className="min-w-full border text-black text-sm">
               <thead className="bg-gray-100 font-semibold">
                 <tr>
-                  <th className="border px-2">Year</th>
-                  <th className="border px-2">Awards / Recognitions</th>
-                  <th className="border px-2">Awarding Body</th>
-                  <th className="border px-2">Report Link</th>
+                  <th className="border px-2">Institution Name</th>
+                  <th className="border px-2">Year of MOU</th>
+                  <th className="border px-2">Duration</th>
+                  <th className="border px-2">Activities List</th>
                   <th className="border px-2">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  {Object.keys(formData).map((key) => (
-                    <td key={key} className="border px-2">
-                      <input
-                        value={formData[key]}
-                        onChange={(e) => handleChange(key, e.target.value)}
-                        className="w-full border px-2 py-1 text-black"
-                      />
-                    </td>
-                  ))}
+                  <td className="border px-2">
+                    <input
+                      value={formData.institution_name}
+                      onChange={(e) => handleChange('institution_name', e.target.value)}
+                      className="w-full border px-2 py-1 text-black"
+                      placeholder="Institution Name"
+                    />
+                  </td>
+                  <td className="border px-2">
+                    <input
+                      value={formData.year_of_mou}
+                      onChange={(e) => handleChange('year_of_mou', e.target.value)}
+                      className="w-full border px-2 py-1 text-black"
+                      placeholder="Year of MOU"
+                    />
+                  </td>
+                  <td className="border px-2">
+                    <input
+                      value={formData.duration}
+                      onChange={(e) => handleChange('duration', e.target.value)}
+                      className="w-full border px-2 py-1 text-black"
+                      placeholder="Duration"
+                    />
+                  </td>
+                  <td className="border px-2">
+                    <input
+                      value={formData.activities_list}
+                      onChange={(e) => handleChange('activities_list', e.target.value)}
+                      className="w-full border px-2 py-1 text-black"
+                      placeholder="Activities List"
+                    />
+                  </td>
                   <td className="border px-2">
                     <button
                       onClick={handleSubmit}
@@ -233,12 +278,12 @@ const Criteria3_4_2 = () => {
 
           {/* Calculation Table */}
           <div className="overflow-auto border rounded p-4 mb-6">
-            <h2 className="text-lg font-semibold mb-2 text-black">Calculation Table (Last 5 Years)</h2>
+            <h2 className="text-lg font-semibold mb-2 text-black">Calculation Table</h2>
             <table className="table-auto border-collapse w-full text-black">
               <thead>
                 <tr className="bg-gray-100 font-semibold">
                   <th className="border px-4 py-2">Year</th>
-                  {pastFiveYears.map((yr) => (
+                  {sessions.map((yr) => (
                     <th key={yr} className="border px-4 py-2">{yr}</th>
                   ))}
                 </tr>
@@ -246,7 +291,7 @@ const Criteria3_4_2 = () => {
               <tbody>
                 <tr>
                   <td className="border px-4 py-2 font-medium text-black">Calculated Score</td>
-                  {pastFiveYears.map((yr) => (
+                  {sessions.map((yr) => (
                     <td key={yr} className="border px-4 py-2 text-center">
                       <input
                         type="number"
@@ -267,7 +312,7 @@ const Criteria3_4_2 = () => {
                 type="number"
                 value={yearCount}
                 min={1}
-                max={5}
+                max={sessions.length}
                 onChange={(e) => setYearCount(parseInt(e.target.value) || 1)}
                 className="w-20 border px-2 py-1 rounded text-center text-black"
               />

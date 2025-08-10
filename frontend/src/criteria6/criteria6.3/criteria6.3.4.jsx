@@ -25,7 +25,8 @@ const Criteria6_3_4 = () => {
   const [formData, setFormData] = useState({
     name: "",
     title: "",
-    duration: "",
+    dateFrom: "",
+    dateTo: "",
   });
   const [submittedData, setSubmittedData] = useState([]);
 
@@ -67,13 +68,27 @@ const Criteria6_3_4 = () => {
   };
 
   const handleSubmit = async () => {
-    const { name, title, duration } = formData;
+    const { name, title, dateFrom, dateTo } = formData;
     const session = currentSession;
     const sessionYear = session.split("-")[0];
 
     // Basic validation
-    if (!name || !title || !duration) {
+    if (!name || !title || !dateFrom || !dateTo) {
       alert("Please fill in all required fields.");
+      return;
+    }
+
+    // Validate date formats
+    const dateFromRegex = /^\d{2}-\d{2}-\d{4}$/;
+    const dateToRegex = /^\d{2}-\d{2}-\d{4}$/;
+
+    if (!dateFromRegex.test(dateFrom)) {
+      alert("Please enter date from in DD-MM-YYYY format");
+      return;
+    }
+
+    if (!dateToRegex.test(dateTo)) {
+      alert("Please enter date to in DD-MM-YYYY format");
       return;
     }
 
@@ -84,7 +99,8 @@ const Criteria6_3_4 = () => {
           session: parseInt(sessionYear, 10),
           teacher_name: name.trim(),
           program_title: title.trim(),
-          from_to_date: duration.trim()
+          date_from: dateFrom.trim(),
+          date_to: dateTo.trim()
         },
         {
           headers: {
@@ -98,7 +114,8 @@ const Criteria6_3_4 = () => {
       const newEntry = {
         name: name.trim(),
         title: title.trim(),
-        duration: duration.trim()
+        dateFrom: dateFrom.trim(),
+        dateTo: dateTo.trim()
       };
 
       setSubmittedData(prev => [...prev, newEntry]);
@@ -107,7 +124,8 @@ const Criteria6_3_4 = () => {
       setFormData({
         name: "",
         title: "",
-        duration: "",
+        dateFrom: "",
+        dateTo: "",
       });
 
       alert("Data submitted successfully!");
@@ -222,35 +240,51 @@ const Criteria6_3_4 = () => {
             <table className="min-w-full border text-sm text-left max-w-full">
               <thead className="bg-gray-100 font-semibold text-gray-950">
                 <tr>
-                  {[
-                    "Name of teacher who attended",
-                    "Title of the program",
-                    "Duration (from – to) (DD-MM-YYYY)",
-                  ].map((heading) => (
-                    <th key={heading} className="px-4 py-2 border">
-                      {heading}
-                    </th>
-                  ))}
+                  <th className="px-4 py-2 border">Name of teacher who attended</th>
+                  <th className="px-4 py-2 border">Title of the program</th>
+                  <th className="px-4 py-2 border">Date From (DD-MM-YYYY)</th>
+                  <th className="px-4 py-2 border">Date To (DD-MM-YYYY)</th>
                   <th className="px-4 py-2 border">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  {[
-                    "name",
-                    "title",
-                    "duration",
-                  ].map((field) => (
-                    <td key={field} className="px-2 py-2 border">
-                      <input
-                        type="text"
-                        value={formData[field]}
-                        onChange={(e) => handleChange(field, e.target.value)}
-                        className="w-full px-2 py-1 border rounded text-gray-900 border-black"
-                        placeholder={field}
-                      />
-                    </td>
-                  ))}
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => handleChange('name', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="Teacher Name"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => handleChange('title', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="Program Title"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.dateFrom}
+                      onChange={(e) => handleChange('dateFrom', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="DD-MM-YYYY"
+                    />
+                  </td>
+                  <td className="px-2 py-2 border">
+                    <input
+                      type="text"
+                      value={formData.dateTo}
+                      onChange={(e) => handleChange('dateTo', e.target.value)}
+                      className="w-full px-2 py-1 border rounded text-gray-900 border-black"
+                      placeholder="DD-MM-YYYY"
+                    />
+                  </td>
                   <td className="px-2 py-2 border">
                     <button
                       onClick={handleSubmit}
@@ -273,15 +307,10 @@ const Criteria6_3_4 = () => {
                   <thead className="bg-gray-100 font-semibold text-gray-950">
                     <tr>
                       <th className="px-4 py-2 border text-gray-950">#</th>
-                      {[
-                        "Teacher Name",
-                        "Program Title",
-                        "Duration",
-                      ].map((heading) => (
-                        <th key={heading} className="px-4 py-2 border text-gray-950">
-                          {heading}
-                        </th>
-                      ))}
+                      <th className="px-4 py-2 border text-gray-950">Teacher Name</th>
+                      <th className="px-4 py-2 border text-gray-950">Program Title</th>
+                      <th className="px-4 py-2 border text-gray-950">Date From</th>
+                      <th className="px-4 py-2 border text-gray-950">Date To</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -290,7 +319,8 @@ const Criteria6_3_4 = () => {
                         <td className="px-2 py-2 border border-black">{i + 1}</td>
                         <td className="px-2 py-2 border border-black">{entry.name}</td>
                         <td className="px-2 py-2 border border-black">{entry.title}</td>
-                        <td className="px-2 py-2 border border-black">{entry.duration}</td>
+                        <td className="px-2 py-2 border border-black">{entry.dateFrom}</td>
+                        <td className="px-2 py-2 border border-black">{entry.dateTo}</td>
                       </tr>
                     ))}
                   </tbody>

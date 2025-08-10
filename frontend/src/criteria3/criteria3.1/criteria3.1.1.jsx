@@ -204,10 +204,10 @@ const Criteria3_1_1 = () => {
             ) : provisionalScore ? (
               <div>
                 <p className="text-lg font-semibold text-green-800">
-                  Provisional Score (3.1.1): {provisionalScore?.data?.score_sub_sub_criteria || provisionalScore?.score_sub_sub_criteria || provisionalScore?.data?.score_criteria || provisionalScore?.score_criteria || 0} Lakhs
+                  Provisional Score (3.1.1): {provisionalScore?.score_sub_sub_criteria || provisionalScore?.data?.score_sub_sub_criteria || provisionalScore?.score || provisionalScore?.data?.score || 0} Lakhs
                 </p>
                 <p className="text-lg font-semibold text-green-800">
-                  Grade: {provisionalScore?.data?.sub_sub_cr_grade || provisionalScore?.sub_sub_cr_grade || provisionalScore?.data?.grade || provisionalScore?.grade || 'N/A'}
+                  Grade: {provisionalScore?.sub_sub_cr_grade || provisionalScore?.data?.sub_sub_cr_grade || provisionalScore?.grade || provisionalScore?.data?.grade || 'N/A'}
                 </p>
               </div>
             ) : (

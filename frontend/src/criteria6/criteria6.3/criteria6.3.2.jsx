@@ -51,8 +51,8 @@ const Criteria6_3_2 = () => {
     setError(null);
     try {
       const response = await axios.get("http://localhost:3000/api/v1/criteria6/score632");
-      console.log('API Response:', response);
-      setProvisionalScore(response.data);
+      console.log('API Response:', response.data);
+      setProvisionalScore(response.data.data);
     } catch (error) {
       console.error("Error fetching provisional score:", error);
       setError(error.message || "Failed to fetch score");

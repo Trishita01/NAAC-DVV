@@ -6,19 +6,28 @@ import Sidebar from "../../components/sidebar";
 import Bottom from "../../components/bottom";
 import { useNavigate } from "react-router-dom";
 import { SessionContext } from "../../contextprovider/sessioncontext";
-import LandingNavbar from "../../components/landing-navbar";
 
 const Criteria6_2_3 = () => {
   const navigate = useNavigate();
   const { sessions: availableSessions, isLoading: isLoadingSessions, error: sessionError } = useContext(SessionContext);
   
   const [currentYear, setCurrentYear] = useState("");
+  
+  // Multiple selection checkboxes for governance areas
+  const [selectedOptions, setSelectedOptions] = useState({
+    administration: false,
+    financeAccounts: false,
+    studentAdmissionSupport: false,
+    examination: false,
+  });
+
   const [governanceData, setGovernanceData] = useState([
     { area: "Administration", year: "" },
     { area: "Finance and Accounts", year: "" },
     { area: "Student Admission and Support", year: "" },
     { area: "Examination", year: "" },
   ]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [provisionalScore, setProvisionalScore] = useState(null);
@@ -30,34 +39,82 @@ const Criteria6_2_3 = () => {
     }
   }, [availableSessions]);
 
+  // Handle checkbox changes
+  const handleCheckboxChange = (option) => {
+    setSelectedOptions(prev => {
+      const newState = {
+        ...prev,
+        [option]: !prev[option]
+      };
+      console.log("Checkbox changed:", option, "new state:", newState);
+      return newState;
+    });
+  };
+
   const handleYearChange = (index, value) => {
     const updatedData = [...governanceData];
     updatedData[index].year = value;
     setGovernanceData(updatedData);
   };
 
+  // Function to get grade based on selected options count
+  const getGrade = () => {
+    const selectedCount = Object.values(selectedOptions).filter(Boolean).length;
+    if (selectedCount >= 4) return 'A. Any 4 or more of the above';
+    if (selectedCount === 3) return 'B. Any 3 of the above';
+    if (selectedCount === 2) return 'C. Any 2 of the above';
+    if (selectedCount === 1) return 'D. Any 1 of the above';
+    return 'E. None of the above';
+  };
+
   const handleSubmit = async () => {
     try {
-      // Filter out items with empty years
+      // Validate that at least one option is selected
+      const selectedCount = Object.values(selectedOptions).filter(Boolean).length;
+      if (selectedCount === 0) {
+        alert("Please select at least one governance area");
+        return;
+      }
+
+      // Show alert if no options are selected
+      if (selectedCount === 0) {
+        alert("Please select at least one governance area before submitting");
+        return;
+      }
+
+      // Filter out items with empty years (only submit rows with data)
       const filledData = governanceData.filter(item => item.year.trim() !== '');
       
       if (filledData.length === 0) {
         alert("Please enter at least one year of implementation");
         return;
       }
+
+      if (!currentYear) {
+        alert("Please select a session year");
+        return;
+      }
       
-      // Calculate implementation count based on number of areas with years
-      const implementationCount = filledData.length > 4 ? 4 : filledData.length; // Cap at 4
+      // Calculate implementation count based on selected checkboxes
+      const implementationCount = Object.values(selectedOptions).filter(Boolean).length;
+      console.log("Total selected options:", implementationCount, "Selected options:", selectedOptions);
       
-      // Send each filled item as a separate request
+      // Send each filled item as a separate request with the same implementation value
       const requests = filledData.map(item => {
         const requestBody = {
-          session: parseInt(currentYear, 10), // Convert session to number
-          implimentation: implementationCount, // Send the total count of implementations
+          session: parseInt(currentYear.split('-')[0], 10),
+          implimentation: implementationCount,  // Send as number
           area_of_e_governance: item.area,
-          year_of_implementation: item.year.trim() // Pass only the year value
+          year_of_implementation: parseInt(currentYear.split('-')[0])  // Use first year from session
         };
-        console.log("Request body:", requestBody);
+        
+        // Update the year in the UI to match the session
+        const updatedData = [...governanceData];
+        updatedData[index] = {
+          ...item,
+          year: currentYear  // Set to full session year
+        };
+        setGovernanceData(updatedData);
         
         console.log("Sending request for:", requestBody);
         
@@ -76,12 +133,21 @@ const Criteria6_2_3 = () => {
       // Wait for all requests to complete
       await Promise.all(requests);
       
-      const successMessage = `Successfully submitted data for ${filledData.length} area(s)`;
+      const successMessage = `Successfully submitted data for ${filledData.length} area(s) with ${selectedCount} governance areas selected`;
       console.log(successMessage);
       alert(successMessage);
       
       // Reset form
       setGovernanceData(governanceData.map(item => ({ ...item, year: '' })));
+      setSelectedOptions({
+        administration: false,
+        financeAccounts: false,
+        studentAdmissionSupport: false,
+        examination: false,
+      });
+      
+      // Refresh score
+      await fetchScore();
       
     } catch (error) {
       console.error("Submission failed:", error);
@@ -124,18 +190,50 @@ const Criteria6_2_3 = () => {
     fetchScore();
   }, []);
 
+  const goToNextPage = () => navigate("/criteria6.3.1");
+  const goToPreviousPage = () => navigate("/criteria6.2.2");
+
   return (
     <div className="min-h-screen w-screen bg-gray-50 flex flex-col">
-      <LandingNavbar />
-      <div className="flex mt-6 flex-1">
+      <Header />
+      <Navbar />
+      <div className="flex flex-1">
         <Sidebar />
-        <div className="flex-1 mt-6 flex flex-col p-4">
+        <div className="flex-1 flex flex-col p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-medium text-gray-800">Criteria 6: Governance, Leadership and Management</h2>
             <div className="text-sm text-gray-600">6.2 - Strategy Development and Deployment</div>
           </div>
 
-          {/* Session Selection Dropdown */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="mb-4">
+              <h3 className="text-blue-600 font-medium mb-2">6.2.3 Metric Information</h3>
+              <p className="text-sm text-gray-700">
+                Implementation of e-governance in areas of operation:
+                <br />1. Administration
+                <br />2. Finance and Accounts  
+                <br />3. Student Admission and Support
+                <br />4. Examination
+                <br /><br />
+                Choose from the following:<br />    
+                A. Any 4 or more of the above<br />
+                B. Any 3 of the above<br />
+                C. Any 2 of the above<br />
+                D. Any 1 of the above<br />
+                E. None of the above
+              </p>
+            </div>
+            <div className="mb-6">
+              <h3 className="text-blue-600 font-medium mb-2">Requirements:</h3>
+              <ul className="list-disc pl-5 text-sm text-gray-700">
+                <li>ERP (Enterprise Resource Planning) Document</li>
+                <li>Screen shots of user interfaces</li>
+                <li>Any other relevant document</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Session Selection */}
           <div className="mb-4">
             <label className="font-medium text-gray-700 mr-2">Select Session:</label>
             <select
@@ -174,7 +272,43 @@ const Criteria6_2_3 = () => {
             )}
           </div>
 
-          {/* Data Entry Table */}
+          {/* Multiple Selection Checkboxes */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 className="text-blue-600 font-medium mb-4">
+              Select the E-Governance Areas Implemented (Multiple selections allowed)
+            </h3>
+            <div className="space-y-3">
+              {[
+                { key: "administration", label: "1. Administration" },
+                { key: "financeAccounts", label: "2. Finance and Accounts" },
+                { key: "studentAdmissionSupport", label: "3. Student Admission and Support" },
+                { key: "examination", label: "4. Examination" }
+              ].map(({ key, label }) => (
+                <div key={key} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={key}
+                    className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    checked={selectedOptions[key]}
+                    onChange={() => handleCheckboxChange(key)}
+                  />
+                  <label htmlFor={key} className="text-sm text-gray-800">{label}</label>
+                </div>
+              ))}
+            </div>
+            
+            {/* Grade Display */}
+            <div className="mt-4 p-3 bg-blue-50 rounded-md">
+              <p className="text-sm font-medium text-blue-800">
+                Option Selected: {getGrade()}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Selected: {Object.values(selectedOptions).filter(Boolean).length} out of 4 governance areas
+              </p>
+            </div>
+          </div>
+
+          {/* E-Governance Implementation Details Table */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h3 className="text-blue-600 font-medium mb-4">E-Governance Implementation Details</h3>
             <div className="overflow-x-auto">
@@ -190,26 +324,32 @@ const Criteria6_2_3 = () => {
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="py-3 text-black px-4 border-b">{item.area}</td>
                       <td className="py-3 text-black px-4 border-b">
-                        <input
-                          type="text"
-                          className="w-full px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Enter year"
-                          value={item.year}
-                          onChange={(e) => handleYearChange(index, e.target.value)}
-                        />
+                        <div className="flex flex-col">
+                          <input
+                            type="text"
+                            className="w-full px-3 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter full session year (e.g., 2022-23)"
+                            value={item.year}
+                            onChange={(e) => handleYearChange(index, e.target.value)}
+                          />
+                          <small className="text-gray-500 mt-1">First year: {currentYear ? currentYear.split('-')[0] : ''}</small>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            
-            <div className="mt-6">
+          </div>
+
+          {/* Single Submit Button */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="flex justify-center">
               <button
                 onClick={handleSubmit}
-                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition-colors font-medium"
               >
-                Submit
+                Submit E-Governance Data
               </button>
             </div>
           </div>
@@ -239,9 +379,12 @@ const Criteria6_2_3 = () => {
               </label>
             </div>
           </div>
+
+          <div className="mt-auto bg-white border-t border-gray-200 shadow-inner py-4 px-6">
+            <Bottom onNext={goToNextPage} onPrevious={goToPreviousPage} />
+          </div>
         </div>
       </div>
-      <Bottom />
     </div>
   );
 };
