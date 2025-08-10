@@ -377,6 +377,162 @@ const createResponse321 = asyncHandler(async (req, res) => {
   );
 });
 
+const createResponse322 = asyncHandler(async (req, res) => {
+  /*
+    1. Extract input from req.body
+    2. Validate required fields and logical constraints
+    3. Check if programme_name or programme_code already exists for the same year and session
+    4. Get criteria_code from criteria_master
+    5. Get latest IIQA session and validate session window
+    6. Create or update response in response_3_2_2 table
+  */
+
+    const {
+      session,
+      teacher_name,
+      book_chapter_title,
+      paper_title,
+      conference_title,
+      year_of_publication,
+      publisher_name,
+      isbn_issn_number,
+      institution_affiliated  
+    } = req.body;
+
+    // Step 1: Field validation
+    if (
+      !session || !teacher_name || !book_chapter_title || !paper_title || !conference_title || !year_of_publication || !publisher_name || !isbn_issn_number || !institution_affiliated
+    ) {
+      throw new apiError(400, "Missing required fields");
+    }
+
+    const currentYear = new Date().getFullYear();
+    if(session < 1990 || session > currentYear) {
+      throw new apiError(400, "Session must be between 1990 and current year");
+    }
+
+    if(year_of_publication < 1990 || year_of_publication > currentYear) {
+      throw new apiError(400, "Year of publication must be between 1990 and current year");
+    }
+
+    if(institution_affiliated !== 'YES' && institution_affiliated !== 'NO') {
+      throw new apiError(400, "Institution affiliated must be 'YES' or 'NO'");
+    }
+
+    if(isbn_issn_number.length !== 13) {
+      throw new apiError(400, "ISBN/ISSN number must be 13 digits");
+    }
+  
+  // Step 2: Check for existing teacher_name or book_chapter_title in same session/year
+  const existingRecord = await Criteria322.findOne({
+    where: {
+      session,
+      [Sequelize.Op.or]: [
+        { teacher_name },
+        { book_chapter_title }
+      ]
+    }
+  });
+
+  if(existingRecord) {
+    throw new apiError(400, "Book chapter title already exists for this session and year");
+  }
+
+  //Step 3: Fetch criteria details
+  const criteria = await CriteriaMaster.findOne({
+    where: {
+      criterion_id: '03',
+      sub_criterion_id: '0302',
+      sub_sub_criterion_id: '030202'
+    }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  // Step 4: Validate session window against IIQA 
+  const latestIIQA = await IIQA.findOne({
+    attributes: ['session_end_year'],
+    order: [['created_at', 'DESC']]
+  });
+
+  if(!latestIIQA) {
+    throw new apiError(404, "No IIQA form found");
+  }
+
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5;
+
+  if(session < startYear || session > endYear) {
+    throw new apiError(400, "Session must be between ${startYear} and ${endYear}");
+  } 
+
+  // Step 5 : Create or update response
+ let [entry, created] = await Criteria322.findOrCreate({
+  where: {
+    session,
+    teacher_name,
+    book_chapter_title,
+    paper_title,
+    conference_title,
+    year_of_publication,
+    publisher_name,
+    isbn_issn_number,
+    institution_affiliated  
+  },
+  defaults: {
+    id: criteria.id,
+    criteria_code: criteria.criteria_code,
+    session,
+    teacher_name,
+    book_chapter_title,
+    paper_title,
+    conference_title,
+    year_of_publication,
+    publisher_name,
+    isbn_issn_number,
+    institution_affiliated  
+  }
+ });
+
+ if (!created) {
+  await Criteria322.update({
+    
+  }, {
+    where: {
+      session,
+      teacher_name,
+      book_chapter_title,
+      paper_title,
+      conference_title,
+      year_of_publication,
+      publisher_name,
+      isbn_issn_number,
+      institution_affiliated  
+    }
+  });
+ }
+
+ entry = await Criteria322.findOne({
+  where: {
+    session,
+    teacher_name,
+    book_chapter_title,
+    paper_title,
+    conference_title,
+    year_of_publication,
+    publisher_name,
+    isbn_issn_number,
+    institution_affiliated  
+  }
+ });
+
+ return res.status(201).json(
+  new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
+ );
+});
+
 const score313 = asyncHandler(async (req, res) => {
   const session = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("3.1.3");
@@ -621,189 +777,15 @@ console.log("Average Teachers:", avgTeachers);
   );
 });
 
-const createResponse322 = asyncHandler(async (req, res) => {
-  /*
-    1. Extract input from req.body
-    2. Validate required fields and logical constraints
-    3. Check if programme_name or programme_code already exists for the same year and session
-    4. Get criteria_code from criteria_master
-    5. Get latest IIQA session and validate session window
-    6. Create or update response in response_3_2_2 table
-  */
-
-    const {
-      session,
-      teacher_name,
-      book_chapter_title,
-      paper_title,
-      conference_title,
-      year_of_publication,
-      publisher_name,
-      isbn_issn_number,
-      institution_affiliated  
-    } = req.body;
-
-    // Step 1: Field validation
-    if (
-      !session || !teacher_name || !book_chapter_title || !paper_title || !conference_title || !year_of_publication || !publisher_name || !isbn_issn_number || !institution_affiliated
-    ) {
-      throw new apiError(400, "Missing required fields");
-    }
-
-    const currentYear = new Date().getFullYear();
-    if(session < 1990 || session > currentYear) {
-      throw new apiError(400, "Session must be between 1990 and current year");
-    }
-
-    if(year_of_publication < 1990 || year_of_publication > currentYear) {
-      throw new apiError(400, "Year of publication must be between 1990 and current year");
-    }
-
-    if(institution_affiliated !== 'YES' && institution_affiliated !== 'NO') {
-      throw new apiError(400, "Institution affiliated must be 'YES' or 'NO'");
-    }
-
-    if(isbn_issn_number.length !== 13) {
-      throw new apiError(400, "ISBN/ISSN number must be 13 digits");
-    }
-  
-  // Step 2: Check for existing teacher_name or book_chapter_title in same session/year
-  const existingRecord = await Criteria322.findOne({
-    where: {
-      session,
-      [Sequelize.Op.or]: [
-        { teacher_name },
-        { book_chapter_title }
-      ]
-    }
-  });
-
-  if(existingRecord) {
-    if(existingRecord.teacher_name === teacher_name) {
-      throw new apiError(400, "Teacher name already exists for this book_chapter_title")
-    }
-    if(existingRecord.book_chapter_title === book_chapter_title) {
-      throw new apiError(400, "Book chapter title already exists for this teacher_name")
-    }
-    if(existingRecord.paper_title === paper_title) {
-      throw new apiError(400, "Paper title already exists for this teacher_name")
-    }
-    if(existingRecord.conference_title === conference_title) {
-      throw new apiError(400, "Conference title already exists for this teacher_name")
-    }
-    if(existingRecord.year_of_publication === year_of_publication) {
-      throw new apiError(400, "Year of publication already exists for this teacher_name")
-    }
-    if(existingRecord.publisher_name === publisher_name) {
-      throw new apiError(400, "Publisher name already exists for this teacher_name")
-    }
-    if(existingRecord.isbn_issn_number === isbn_issn_number) {
-      throw new apiError(400, "ISBN/ISSN number already exists for this teacher_name")
-    }
-    if(existingRecord.institution_affiliated === institution_affiliated) {
-      throw new apiError(400, "Institution affiliated already exists for this teacher_name")
-    }
-    else{
-      throw new apiError(400, "Book chapter title already exists for this session and year")
-    }
-  }
-
-  //Step 3: Fetch criteria details
-  const criteria = await CriteriaMaster.findOne({
-    where: {
-      criterion_id: '03',
-      sub_criterion_id: '0302',
-      sub_sub_criterion_id: '030202'
-    }
-  });
-
-  if (!criteria) {
-    throw new apiError(404, "Criteria not found");
-  }
-
-  // Step 4: Validate session window against IIQA 
-  const latestIIQA = await IIQA.findOne({
-    attributes: ['session_end_year'],
-    order: [['created_at', 'DESC']]
-  });
-
-  if(!latestIIQA) {
-    throw new apiError(404, "No IIQA form found");
-  }
-
-  const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5;
-
-  if(session < startYear || session > endYear) {
-    throw new apiError(400, "Session must be between ${startYear} and ${endYear}");
-  } 
-
-  // Step 5 : Create or update response
- let [entry, created] = await Criteria322.findOrCreate({
-  where: {
-    session,
-    teacher_name,
-    book_chapter_title,
-    paper_title,
-    conference_title,
-    year_of_publication,
-    publisher_name,
-    isbn_issn_number,
-    institution_affiliated  
-  },
-  defaults: {
-    id: criteria.id,
-    criteria_code: criteria.criteria_code,
-    session,
-    teacher_name,
-    book_chapter_title,
-    paper_title,
-    conference_title,
-    year_of_publication,
-    publisher_name,
-    isbn_issn_number,
-    institution_affiliated  
-  }
- });
-
- if (!created) {
-  await Criteria322.update({
-    
-  }, {
-    where: {
-      session,
-      teacher_name,
-      book_chapter_title,
-      paper_title,
-      conference_title,
-      year_of_publication,
-      publisher_name,
-      isbn_issn_number,
-      institution_affiliated  
-    }
-  });
- }
-
- entry = await Criteria322.findOne({
-  where: {
-    session,
-    teacher_name,
-    book_chapter_title,
-    paper_title,
-    conference_title,
-    year_of_publication,
-    publisher_name,
-    isbn_issn_number,
-    institution_affiliated  
-  }
- });
-
- return res.status(201).json(
-  new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
- );
-});
-
 const score322 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("3.2.2");
+
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
+  });
+  if (!criteria) throw new apiError(404, "Criteria not found");
+
   // Step 1: Get latest IIQA session end year
   const latestIIQA = await IIQA.findOne({
     attributes: ['session_end_year'],
@@ -812,68 +794,115 @@ const score322 = asyncHandler(async (req, res) => {
   if (!latestIIQA) throw new apiError(404, "No IIQA record found");
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 4; // last 5 years inclusive
+  const startYear = endYear - 5; // last 5 years inclusive
 
-  // Step 2: Count total books, chapters, papers from Criteria322 in last 5 years
-  // (assuming each record counts as one)
-  const totalPublications = await Criteria322.count({
+  // Step 2: Count total publications in last 5 years
+  const totalPublicationsRows = await Criteria322.findAll({
+    attributes: [[Sequelize.fn('COUNT', Sequelize.col('id')), 'count']],
     where: {
       year_of_publication: { [Sequelize.Op.between]: [startYear, endYear] }
-    }
-  });
-
-  // Step 3: Get average full-time teachers from extended_profile
-  const teacherData = await extendedProfile.findAll({
-    attributes: [
-      [Sequelize.fn('AVG', Sequelize.col('full_time_teachers')), 'avg_teachers']
-    ],
-    where: {
-      year: { [Sequelize.Op.between]: [startYear, endYear] }
     },
     raw: true
   });
 
-  const avgTeachers = parseFloat(teacherData[0]?.avg_teachers || 0);
+  const totalPublications = parseInt(totalPublicationsRows[0]?.count || 0, 10);
 
-  // Step 4: Calculate score (avoid division by zero)
-  const score = avgTeachers > 0 ? (totalPublications / avgTeachers).toFixed(2) : 0;
+  // Step 3: Get teacher data rows
+  const teacherDataRows = await extendedProfile.findAll({
+    where: {
+      year: { [Sequelize.Op.between]: [startYear, endYear] }
+    },
+    order: [['year', 'DESC']],
+    raw: true
+  });
 
-  // Step 5: Apply grading logic
-  let grade = 0;
-  if (score >= 10) {
-    grade = 4;
-  } else if (score >= 5) {
-    grade = 3;
-  } else if (score >= 3) {
-    grade = 2;
-  } else if (score > 0) {
-    grade = 1;
-  } else {
-    grade = 0;
+  console.log("Teacher Data Rows:", teacherDataRows);
+
+
+  if (!teacherDataRows.length) {
+    throw new apiError(404, "No extended profile records found in the given range");
   }
 
-  console.log("Score 3.2.2:", score);
-  console.log("Grade 3.2.2:", grade);
+  // Step 4: Group teacher data by year
+  const groupedByYear = {};
+  teacherDataRows.forEach(record => {
+    const year = record.year;
+    groupedByYear[year] = (groupedByYear[year] || 0) + (record.full_time_teachers || 0);
+  });
 
-  // Optional: fetch criteria code for response
-  const criteria = await CriteriaMaster.findOne({
+  console.log("Grouped Teacher Data:", groupedByYear);
+
+  // Step 5: Calculate average teachers (like score321)
+  const teacherCounts = Object.values(groupedByYear);
+  const totalTeachers = teacherCounts.reduce((sum, value) => sum + value, 0);
+  const avgTeachers = parseFloat(
+    teacherCounts.length > 0 ? (totalTeachers / teacherCounts.length).toFixed(3) : 0
+  );
+
+  // Step 6: Calculate score
+  const scoreValue = avgTeachers > 0
+    ? parseFloat((totalPublications / avgTeachers).toFixed(2))
+    : 0;
+
+  // Step 7: Apply grading logic
+  let grade = 0;
+  if (scoreValue >= 10) grade = 4;
+  else if (scoreValue >= 5) grade = 3;
+  else if (scoreValue >= 3) grade = 2;
+  else if (scoreValue > 0) grade = 1;
+
+  console.log("Score Value:", scoreValue);
+  console.log("Grade:", grade);
+
+  // Step 9: Insert or update score in DB
+  let [entry, created] = await Score.findOrCreate({
     where: {
-      criterion_id: '03',
-      sub_criterion_id: '0302',
-      sub_sub_criterion_id: '030202'
+      criteria_code: criteria.criteria_code,
+      session: session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: scoreValue,
+      sub_sub_cr_grade: grade,
+      session: session,
+      year: session,
+      cycle_year: 1
     }
   });
 
-  if (!criteria) throw new apiError(404, "Criteria not found");
+  if (!created) {
+    await Score.update({
+      score_sub_sub_criteria: scoreValue,
+      sub_sub_cr_grade: grade,
+      session: session,
+      year: session,
+      cycle_year: 1
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
 
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
+  }
+
+  // Step 10: Return response
   return res.status(200).json(
     new apiResponse(200, {
-      criteria_code: criteria.criteria_code,
-      total_publications: totalPublications,
-      average_teachers: avgTeachers,
-      score,
-      grade
-    }, "Score calculated successfully")
+      entry,
+      created
+    }, created ? "Score created successfully" : "Score updated successfully")
   );
 });
 

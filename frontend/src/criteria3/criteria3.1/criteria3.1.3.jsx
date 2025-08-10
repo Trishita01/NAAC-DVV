@@ -82,9 +82,9 @@ const Criteria3_1_3 = () => {
       console.log('API Response:', response);
       
       // Check if response has data and the expected score property
-      if (response.data && response.data.data) {
-        console.log('Score data:', response.data.data);
-        setProvisionalScore(response.data.data);
+      if (response.data && response.data.data && response.data.data.entry) {
+        console.log('Score data:', response.data.data.entry);
+        setProvisionalScore(response.data.data.entry);
       } else {
         console.log('No score data found in response');
         setProvisionalScore(null);
