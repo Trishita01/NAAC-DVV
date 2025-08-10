@@ -122,177 +122,63 @@ try {
 });
 
 const createResponse313 = asyncHandler(async (req, res) => {
-  /*
-    1. Extract input from req.body
-    2. Validate required fields and logical constraints
-    3. Check if programme_name or programme_code already exists for the same year and session
-    4. Get criteria_code from criteria_master
-    5. Get latest IIQA session and validate session window
-    6. Create or update response in response_2_1_1 table
-  */
-
   const {
     session,
     year,
     workshop_name,
     participants,
     date_from,
-    date_to,
-    } = req.body;
+    date_to
+  } = req.body;
 
   // Step 1: Field validation
-if (!session || !workshop_name || !participants || !date_from || !date_to || !year) {
-  throw new apiError(400, "Missing required fields");
-}
-const currentYear = new Date().getFullYear();
-if (session < 1990 || session > currentYear) {
-  throw new apiError(400, "Session must be between 1990 and current year");
-}
-
-if (year < 1990 || year > currentYear) {
-  throw new apiError(400, "Year must be between 1990 and current year");
-}
-
-if (date_from  < 1990 || date_from > currentYear) {
-  throw new apiError(400, "Date from must be between 1990 and current year");
-}
-if (date_to < 1990 || date_to > currentYear) {
-  throw new apiError(400, "Date to must be between 1990 and current year");
-}
-
-if (date_from > date_to) {
-  throw new apiError(400, "Date from must be before date to");
-}
-
-if (participants < 0) {
-  throw new apiError(400, "Participants must be a positive number");
-}
-
-//Create proper Date objects for session
-const sessionDate = new Date(session, 0, 1); // Jan 1st of the given year
-
-// Step 2: Check if workshop_name or workshop_code already exists for the same year and session
-const existingRecord = await Criteria313.findOne({
-  where: {
-    session,
-    [Sequelize.Op.or]: [
-      { workshop_name },
-    ]
+  if (!session || !year || !workshop_name || !participants || !date_from || !date_to) {
+    throw new apiError(400, "Missing required fields");
   }
-});
 
-if (existingRecord) {
-  if (existingRecord.workshop_name === workshop_name) {
-    throw new apiError(400, "Workshop name already exists for this session and year");
-  } else {
-    throw new apiError(400, "Workshop code already exists for this session and year");
-  }
-}
-
-// Step 3: Fetch criteria details
-const criteria = await CriteriaMaster.findOne({
-  where: {
-    criterion_id: '03',
-    sub_criterion_id: '0301',
-    sub_sub_criterion_id: '030103'
-  }
-});
-
-if (!criteria) {
-  throw new apiError(404, "Criteria not found");
-}
-
-console.log(criteria.criteria_code);
-
-//Step 4: Validate session window against IIQA 
-const latestIIQA = await IIQA.findOne({
-  attributes: ['session_end_year'],
-  order: [['created_at', 'DESC']]
-});
-
-if (!latestIIQA) {
-  throw new apiError(404, "No IIQA form found");
-}
-
-const endYear = latestIIQA.session_end_year;
-const startYear = endYear - 5;
-
-if (session < startYear || session > endYear) {
-  throw new apiError(400, "Session must be between ${startYear} and ${endYear}");
-}
-
-//Step 5: Create or update response 
-let [entry, created] = await Criteria313.findOrCreate({
-  where: {
-    session,
-    year,
-    workshop_name,
-    date_from,
-    date_to
-  },
-  defaults: {
-    id: criteria.id,
-    criteria_code: criteria.criteria_code,
-    session,
-    year,
-    workshop_name,
-    participants,
-    date_from,
-    date_to
-  }
-});
-
-if(!created){
-  await Criteria313.update({
-    participants,
-    year,
-    workshop_name,
-    date_from,
-    date_to
-  }, {
-    where: {
-      session,
-      workshop_name,
-      date_from,
-      date_to,
-      year
-    }
-  });
-
-  // Fetch updated entry
-  entry = await Criteria313.findOne({
-    where: {
-      session,
-      year,
-      workshop_name,
-      date_from,
-      date_to
-    }
-  });
-}
-
-return res.status(201).json(
-  new apiResponse(201, entry, created ? "Response created successfully" : "Response updated successfully")
-);
-});
-
-const score313 = asyncHandler(async (req, res) => {
-  const criteria_code = convertToPaddedFormat("3.1.3");
   const currentYear = new Date().getFullYear();
-  const sessionYear = currentYear;
+  if (session < 1990 || session > currentYear) {
+    throw new apiError(400, "Session must be between 1990 and current year");
+  }
+  if (year < 1990 || year > currentYear) {
+    throw new apiError(400, "Year must be between 1990 and current year");
+  }
+  if (date_from < 1990 || date_from > currentYear) {
+    throw new apiError(400, "Date from must be between 1990 and current year");
+  }
+  if (date_to < 1990 || date_to > currentYear) {
+    throw new apiError(400, "Date to must be between 1990 and current year");
+  }
+  if (date_from > date_to) {
+    throw new apiError(400, "Date from must be before date to");
+  }
+  if (participants < 0) {
+    throw new apiError(400, "Participants must be a positive number");
+  }
 
-  // Step 1: Get criteria details
+  // Step 2: Prevent duplicates — same session + year + workshop_name + date range
+  const duplicate = await Criteria313.findOne({
+    where: { session, year, workshop_name, date_from, date_to }
+  });
+
+  if (duplicate) {
+    throw new apiError(409, "Entry already exists for this session, year, and workshop");
+  }
+
+  // Step 3: Fetch criteria details
   const criteria = await CriteriaMaster.findOne({
     where: {
-      sub_sub_criterion_id: criteria_code
+      criterion_id: '03',
+      sub_criterion_id: '0301',
+      sub_sub_criterion_id: '030103'
     }
   });
 
   if (!criteria) {
-    throw new apiError(404, "Criteria 3.1.3 not found in criteria_master");
+    throw new apiError(404, "Criteria not found");
   }
 
-  // Step 2: Get latest IIQA session range
+  // Step 4: Validate session window against latest IIQA
   const latestIIQA = await IIQA.findOne({
     attributes: ['session_end_year'],
     order: [['created_at', 'DESC']]
@@ -303,86 +189,25 @@ const score313 = asyncHandler(async (req, res) => {
   }
 
   const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5; // Last 5 years including endYear
-
-  // Step 3: Count total number of events conducted in the last 5 years
-  const totalEvents = await Criteria313.count({
-    where: {
-      session: { [Sequelize.Op.between]: [startYear, endYear] }
-    }
-  });
-
-  // Step 4: Scoring logic — Adjust as per your actual scale
-  let score, grade;
-  if (totalEvents >= 40) {
-    score = 4;
-    grade = 4;
-  } else if (totalEvents >= 30) {
-    score = 3;
-    grade = 3;
-  } else if (totalEvents >= 20) {
-    score = 2;
-    grade = 2;
-  } else if (totalEvents >= 5) {
-    score = 1;
-    grade = 1;
-  } else {
-    score = 0;
-    grade = 0;
+  const startYear = endYear - 5;
+  if (session < startYear || session > endYear) {
+    throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
 
-  console.log("Score 3.1.3:", score);
-  console.log("Grade 3.1.3:", grade);
-
-  // Step 5: Insert or update score
-  let [entry, created] = await Score.findOrCreate({
-    where: {
-      criteria_code: criteria.criteria_code,
-      session: sessionYear
-    },
-    defaults: {
-      criteria_code: criteria.criteria_code,
-      criteria_id: criteria.criterion_id,
-      sub_criteria_id: criteria.sub_criterion_id,
-      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
-      score_criteria: 0,
-      score_sub_criteria: 0,
-      score_sub_sub_criteria: score,
-      sub_sub_cr_grade: grade,
-      session: sessionYear,
-      year: currentYear,
-      cycle_year: 1
-    }
+  // Step 5: Create new entry
+  const newEntry = await Criteria313.create({
+    id: criteria.id,
+    criteria_code: criteria.criteria_code,
+    session,
+    year,
+    workshop_name,
+    participants,
+    date_from,
+    date_to
   });
 
-  if (!created) {
-    await Score.update({
-      score_sub_sub_criteria: score,
-      sub_sub_cr_grade: grade,
-      session: sessionYear,
-      year: currentYear,
-      cycle_year: 1
-    }, {
-      where: {
-        criteria_code: criteria.criteria_code,
-        session: sessionYear
-      }
-    });
-
-    entry = await Score.findOne({
-      where: {
-        criteria_code: criteria.criteria_code,
-        session: sessionYear
-      }
-    });
-  }
-
-  return res.status(200).json(
-    new apiResponse(200, {
-      score,
-      totalEvents,
-      grade
-    }, created ? "Score created successfully" : "Score updated successfully")
+  return res.status(201).json(
+    new apiResponse(201, newEntry, "Response created successfully")
   );
 });
 
@@ -552,18 +377,141 @@ const createResponse321 = asyncHandler(async (req, res) => {
   );
 });
 
+const score313 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("3.1.3");
+
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+}
+// 5 Years should be calculated form IIQA session DB
+const currentIIQA = await IIQA.findOne({
+  attributes: ['session_end_year'],
+  order: [['created_at', 'DESC']] // Get the most recent IIQA form
+});
+
+if (!currentIIQA) {
+  throw new apiError(404, "No IIQA form found");
+}
+
+const startDate = currentIIQA.session_end_year - 5;
+const endDate = currentIIQA.session_end_year;
+
+if (session < startDate || session > endDate) {
+  throw new apiError(400, "Session must be between the latest IIQA session and the current year");
+}
+
+  // Step 3: Count total number of events conducted in the last 5 years
+  const totalEvents = await Criteria313.count({
+    distinct: true,
+    col: 'workshop_name',
+    where: {
+      session: { [Op.between]: [startDate, endDate] }
+    }
+  });
+
+  console.log("Total events 3.1.3:", totalEvents);
+  // Step 4: Scoring logic — Adjust as per your actual scale
+  let score, grade;
+  if (totalEvents >= 40) {
+    score = 4;
+    grade = 4;
+  } else if (totalEvents >= 30) {
+    score = 3;
+    grade = 3;
+  } else if (totalEvents >= 20) {
+    score = 2;
+    grade = 2;
+  } else if (totalEvents >= 5) {
+    score = 1;
+    grade = 1;
+  } else {
+    score = 0;
+    grade = 0;
+  }
+
+  console.log("Score 3.1.3:", score);
+  console.log("Grade 3.1.3:", grade);
+
+  // Step 5: Insert or update score
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
+      session: session,
+      year: session,
+      cycle_year: 1
+    }
+  });
+
+  if (!created) {
+    await Score.update({
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
+      session: session,
+      year: session,
+      cycle_year: 1
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      entry,
+      created
+    }, created ? "Score created successfully" : "Score updated successfully")
+  );
+});
+
 const score321 = asyncHandler(async (req, res) => {
+  // Step 1: Get criteria details
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("3.2.1");
+
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
+  });
+  if (!criteria) throw new apiError(404, "Criteria not found");
+
+  // Step 2: Get latest IIQA session
   const latestIIQA = await IIQA.findOne({
-    attributes: ['session_end_year'],
+    attributes: ['id', 'session_end_year'],
     order: [['created_at', 'DESC']]
   });
   if (!latestIIQA) throw new apiError(404, "No IIQA record found");
 
+  console.log(latestIIQA.id, latestIIQA.session_end_year);
+
+
   const endYear = latestIIQA.session_end_year;
   const startYear = endYear - 5;
 
-  console.log(startYear, endYear);
-
+  // Step 3: Get total publications in the last 5 years
   const publicationCount = await Criteria321.findAll({
     attributes: [
       [Sequelize.fn('COUNT', Sequelize.col('paper_title')), 'count']
@@ -574,69 +522,103 @@ const score321 = asyncHandler(async (req, res) => {
     raw: true
   });
 
-  console.log(publicationCount);
+  console.log("Publication Count:", publicationCount);
 
-  const teacherData = await extendedProfile.findAll({
-    attributes: ['year', 'full_time_teachers'],
+  // Step 4: Get full-time teacher data for the same period
+  const teacherDataRows = await extendedProfile.findAll({
     where: {
-      year: {
-        [Sequelize.Op.between]: [startYear, endYear]
-      }
+      year: { [Sequelize.Op.between]: [startYear, endYear] }
     },
-    order: [['year', 'DESC']]
+    order: [['year', 'DESC']],
+    raw: true
   });
-  
-  if (!teacherData) {
-    throw new apiError(404, "No full-time teacher data found in the session range");
-  }
-  
-  // Step 1: Group by session/year
-  const groupedBySession = {};
-  teacherData.forEach(record => {
-    const year = record.year;
-    if (!groupedBySession[year]) {
-      groupedBySession[year] = 0;
-    }
-    groupedBySession[year] += record.full_time_teachers || 0;
-  });
-  
-  // Step 2: Calculate average from latest 5 years
-  const recentSessions = Object.keys(groupedBySession)
-    .sort((a, b) => b - a) // Sort DESC
-    .slice(0, 5); // Take latest 5 sessions
-  
-  const teacherCounts = recentSessions.map(session => groupedBySession[session]);
-  const totalTeachers = teacherCounts.reduce((sum, value) => sum + value, 0);
-  const average = (teacherCounts.length > 0 ? totalTeachers / teacherCounts.length : 0).toFixed(3);
-  
-  console.log("Grouped By Session:", groupedBySession);
-  console.log("Recent Sessions:", recentSessions);
-  console.log("Average Full-Time Teachers (last 5 years):", average);
-  
 
-  const avgTeachers = parseFloat(average || 0);
-  console.log(avgTeachers);
-  const score = avgTeachers > 0 ? (publicationCount[0].count / avgTeachers).toFixed(2) : 0;
-  console.log(score);
+console.log("Teacher Data Rows:", teacherDataRows);
 
-  // Grading
+if (!teacherDataRows.length) {
+  throw new apiError(404, "No extended profile records found for the latest IIQA form in the given range");
+}
+
+// Step 5: Group teacher data by year
+const groupedBySession = {};
+teacherDataRows.forEach(record => {
+  const year = record.year;
+  groupedBySession[year] = (groupedBySession[year] || 0) + (record.full_time_teachers || 0);
+});
+
+console.log("Grouped Teacher Data:", groupedBySession);
+
+// Step 6: Get latest 5 sessions & calculate average
+const teacherCounts = Object.values(groupedBySession);
+const totalTeachers = teacherCounts.reduce((sum, value) => sum + value, 0);
+const avgTeachers = parseFloat(
+  teacherCounts.length > 0 ? (totalTeachers / teacherCounts.length).toFixed(3) : 0
+);
+
+console.log("Average Teachers:", avgTeachers);
+
+  // Step 7: Calculate score
+  const scoreValue = avgTeachers > 0
+    ? parseFloat((publicationCount[0].count / avgTeachers).toFixed(2))
+    : 0;
+
+  // Step 8: Determine grade
   let grade = 0;
-  if (score >= 10) {
-    grade = 4;
-  } else if (score >= 5) {
-    grade = 3;
-  } else if (score >= 3) {
-    grade = 2;
-  } else if (score > 0) {
-    grade = 1;
-  } else {
-    grade = 0;
+  if (scoreValue >= 10) grade = 4;
+  else if (scoreValue >= 5) grade = 3;
+  else if (scoreValue >= 3) grade = 2;
+  else if (scoreValue > 0) grade = 1;
+
+  // Step 9: Insert or update score in DB
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session: session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: scoreValue,
+      sub_sub_cr_grade: grade,
+      session: session,
+      year: session,
+      cycle_year: 1
+    }
+  });
+
+  if (!created) {
+    await Score.update({
+      score_sub_sub_criteria: scoreValue,
+      sub_sub_cr_grade: grade,
+      session: session,
+      year: session,
+      cycle_year: 1
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session: session
+      }
+    });
   }
 
-  console.log("Score 3.2.1:", score);
-  console.log("Grade 3.2.1:", grade);
-
-  return res.status(200).json({ success: true, score, grade });
+  // Step 10: Return response
+  return res.status(200).json(
+    new apiResponse(200, {
+      entry,
+      created
+    }, created ? "Score created successfully" : "Score updated successfully")
+  );
 });
 
 const createResponse322 = asyncHandler(async (req, res) => {

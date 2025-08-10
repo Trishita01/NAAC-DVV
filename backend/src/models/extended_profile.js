@@ -19,7 +19,7 @@ export default class extended_profile extends Model {
       }
     },
     year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     number_of_courses_offered: {
@@ -61,11 +61,21 @@ export default class extended_profile extends Model {
     expenditure_in_lakhs: {
       type: DataTypes.DECIMAL(10,2),
       allowNull: true
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
     tableName: 'extended_profile',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "PRIMARY",
