@@ -149,6 +149,7 @@ const Criteria2_1_2 = () => {
           headers: {
             "Content-Type": "application/json",
           },
+          withCredentials: true
         }
       );
 

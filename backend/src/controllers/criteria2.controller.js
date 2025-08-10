@@ -386,7 +386,7 @@ const score212 = asyncHandler(async (req, res) => {
       'number_of_students_admitted_from_the_reserved_category'
     ],
     where: {
-      // criteria_code: criteria.criteria_code,
+      criteria_code: criteria.criteria_code,
       session: {
         [Sequelize.Op.between]: [startYear, endYear]
       }
