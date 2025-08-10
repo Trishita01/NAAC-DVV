@@ -3,6 +3,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import apiResponse from "../utils/apiResponse.js";
 import apiError from "../utils/apiError.js";
 import Sequelize from "sequelize";
+import { fn, col, Op } from "sequelize";
 
 const Criteria313 = db.response_3_1_3;
 const Criteria312 = db.response_3_1_2;
@@ -16,10 +17,10 @@ const Criteria342 = db.response_3_4_2;
 const Score = db.scores;
 const IIQA = db.iiqa_form;
 const extendedProfile = db.extended_profile;
+const IiqaDepartment = db.iiqa_departments;
 const IIQA_Student_Details = db.iiqa_student_details;
 const IIQAStaffDetails = db.iiqa_staff_details;
 const CriteriaMaster = db.criteria_master;
-
 // Helper function to convert criteria code to padded format
 const convertToPaddedFormat = (code) => {
   // First remove any dots, then split into individual characters
@@ -2038,36 +2039,73 @@ if (session < startDate || session > endDate) {
 });
 
 const score312 = asyncHandler(async (req, res) => {
-  // Get latest IIQA session
-  const latestIIQA = await IIQA.findOne({
-    attributes: ['session_end_year'],
-    order: [['session_end_year', 'DESC']],
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("3.1.2");
+
+  const criteria = await CriteriaMaster.findOne({
+    where: { sub_sub_criterion_id: criteria_code }
   });
 
-  if (!latestIIQA) throw new apiError(404, "No IIQA session found");
+  if (!criteria) {
+    throw new apiError(404, "Criteria not found");
+}
+// 5 Years should be calculated form IIQA session DB
+const currentIIQA = await IIQA.findOne({
+  attributes: ['session_end_year'],
+  order: [['created_at', 'DESC']] // Get the most recent IIQA form
+});
 
-  const endYear = latestIIQA.session_end_year;
-  const startYear = endYear - 5;
+if (!currentIIQA) {
+  throw new apiError(404, "No IIQA form found");
+}
 
-  // Step 1: Count unique departments with funded projects within valid session window
-  const fundedDepartments = await Criteria312.findAll({
-    attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('name_of_principal_investigator')), 'department']],
-    where: {
-      session: { [Sequelize.Op.between]: [startYear, endYear] },
-    },
-    raw: true
-  });
+const startDate = currentIIQA.session_end_year - 5;
+const endDate = currentIIQA.session_end_year;
 
-  const fundedDepartmentCount = fundedDepartments.length;
+if (session < startDate || session > endDate) {
+  throw new apiError(400, "Session must be between the latest IIQA session and the current year");
+}
+
+const fundedDepartments = await db.response_3_1_2.findOne({
+  attributes: [
+    [fn('COUNT', fn('DISTINCT', col('department_of_principal_investigator'))), 'department_count']
+  ],
+  include: [
+    {
+      model: db.iiqa_departments,
+      as: 'iiqaDepartment', // matches alias in your association
+      attributes: [],
+      required: true
+    }
+  ],
+  where: {
+    year: { [Op.between]: [startDate, endDate] }
+  },
+  raw: true
+});
+
+console.log("fundedDepartments",fundedDepartments.department_count);
+
+const fundedDepartmentCount = fundedDepartments.department_count;
 
   // Step 2: Get total number of departments from extended profile
-  const departmentCountResult = await extendedProfile.findOne({
-    attributes: ['number_of_departments'],
-    order: [['year', 'DESC']],
+  const totalDepartments = await db.iiqa_departments.findOne({
+    attributes: [
+      [fn('COUNT', fn('DISTINCT', col('department'))), 'department_count']
+    ],
+    include: [
+      {
+        model: db.iiqa_form,
+        as: 'iiqaForm', // alias must match association
+        attributes: [],
+        required: true,
+        order: [['year_filled', 'DESC']] // Get the most recent IIQA form
+      }
+    ],
     raw: true
   });
-
-  const totalDepartments = parseInt(departmentCountResult?.number_of_departments || 0);
+  
+  console.log("totalDepartments", totalDepartments.department_count);
 
   if (totalDepartments === 0) {
     return res.status(200).json({
@@ -2079,7 +2117,8 @@ const score312 = asyncHandler(async (req, res) => {
   }
 
   // Step 3: Calculate percentage
-  const percentage = ((fundedDepartmentCount / totalDepartments) * 100).toFixed(2);
+  const percentage = ((fundedDepartmentCount / totalDepartments.department_count) * 100).toFixed(2);
+  console.log("percentage", percentage);
 
   // Step 4: Grade mapping
   let grade = 0;
@@ -2089,11 +2128,49 @@ const score312 = asyncHandler(async (req, res) => {
   else if (percent >= 40) grade = 2;
   else if (percent >= 10) grade = 1;
 
-  return res.status(200).json({
-    success: true,
-    score: percentage,
-    grade
+  console.log("Grade", grade)
+  // Step 5: Insert or update score
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: percentage,
+      sub_sub_cr_grade: grade,
+      session
+    }
   });
+
+  if (!created) {
+    await Score.update({
+      score_sub_sub_criteria: percentage,
+      sub_sub_cr_grade: grade,
+      session
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+  }
+
+  return res.status(200).json(
+    new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
+  );
 });
 
 const createResponse334 = asyncHandler(async (req, res) => {

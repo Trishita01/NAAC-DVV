@@ -15,15 +15,15 @@ export default class iiqa_form extends Model {
       allowNull: false
     },
     session_start_year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     session_end_year: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     year_filled: {
-      type: DataTypes.DATE,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     naac_cycle: {
@@ -47,11 +47,21 @@ export default class iiqa_form extends Model {
       type: DataTypes.ENUM('Pending','Submitted','Approved','Rejected'),
       allowNull: true,
       defaultValue: "Pending"
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     }
   }, {
     sequelize,
     tableName: 'iiqa_form',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "PRIMARY",
@@ -73,4 +83,12 @@ export default class iiqa_form extends Model {
     ]
   });
   }
+
+  // in iiqa_form model
+static associate(models) {
+  this.hasMany(models.iiqa_departments, {
+    foreignKey: 'iiqa_form_id',
+    as: 'departments'
+  });
+}
 }
