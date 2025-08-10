@@ -59,6 +59,14 @@ try {
 }
 });
 
+// Helper function to convert criteria code to padded format
+const convertToPaddedFormat = (code) => {
+  // First remove any dots, then split into individual characters
+  const parts = code.replace(/\./g, '').split('');
+  // Pad each part to 2 digits and join
+  return parts.map(part => part.padStart(2, '0')).join('');
+};
+
 /*
 1. 413 not done
 2. 414 done
@@ -74,14 +82,15 @@ try {
  */
 const createResponse413 = asyncHandler(async (req, res) => {
 
-  const { session, room_identifier, typeict_facility } = req.body;
+  const { session, room_identifier, typeict_facility, ict_facilities_count } = req.body;
   console.log("Session",req.body)
 
   const sessionYear = Number(session);
   const room = String(room_identifier);
   const facilityType = String(typeict_facility);
+  const no_of_classroom = Number(ict_facilities_count);
 
-  if (!sessionYear || !room || !facilityType) {
+  if (!sessionYear || !room || !facilityType || !no_of_classroom) {
     throw new apiError(400, "Missing or invalid required fields");
   }
 
@@ -115,6 +124,22 @@ const createResponse413 = asyncHandler(async (req, res) => {
   if (sessionYear < startYear || sessionYear > endYear) {
     throw new apiError(400, `Session must be between ${startYear} and ${endYear}`);
   }
+
+  const extendedProfile = await ExtendedProfile.findOne({
+    order: [['created_at', 'DESC']],
+    limit: 1
+  });
+
+  if (!extendedProfile) {
+    throw new apiError(404, "Extended profile not found");
+  }
+
+  const response = await extendedProfile.update({
+    classroom_ict_enabled: no_of_classroom,   
+  });
+
+  console.log("Response",response)
+
 
   // Upsert entry
   let [entry, created] = await Criteria413.findOrCreate({
@@ -185,43 +210,95 @@ const score413 = asyncHandler(async (req, res) => {
     throw new apiError(400, "Session must be between the latest IIQA session and the current year");
   }
 
-  const responses = await Criteria413.findAll({
-    attributes: ['room_identifier'],
-    where: {
-      session: {
-        [Op.between]: [startDate, endDate]
-      },
-      criteria_code: criteria.criteria_code
-    }
-  });
-
   const extendedProfile = await ExtendedProfile.findOne({
-    attributes: ['total_classroom', 'total_seminar_hall'],
-    where: {
-      session: session
-    }
+    attributes: ['total_classrooms', 'total_seminar_halls', 'classroom_ict_enabled'],
+    order: [['created_at', 'DESC']],
+    limit: 1
   });
 
   if (!extendedProfile) {
     throw new apiError(404, "Extended profile not found");
   }
 
-  const totalClassroom = extendedProfile.total_classroom;
-  const totalSeminarHall = extendedProfile.total_seminar_hall;
+  const totalClassroom = extendedProfile.total_classrooms;
+  const totalSeminarHall = extendedProfile.total_seminar_halls;
 
   if(totalClassroom === 0 && totalSeminarHall === 0){
     throw new apiError(400, "Total classroom and seminar hall is 0");
   }
 
-  const noOfRooms = responses.length;
+  const noOfRooms = extendedProfile.classroom_ict_enabled;
+
+  if(noOfRooms === 0){
+    throw new apiError(400, "No of rooms is 0");
+  }
+
+  const totalRooms = totalClassroom + totalSeminarHall;
+
+  console.log("Total rooms:",totalRooms);
+  console.log("No of rooms enabled for ICT:", noOfRooms);
 
   //get extended profile
   //divide responses room by total classroom or seminar hall in extended profile
-  const score = (noOfRooms / (totalClassroom + totalSeminarHall)) * 100;
+  const score = (noOfRooms / totalRooms) * 100;
+
+  let grade;
+  if (score >= 25) {
+    grade = 4;
+  } else if (score >= 20) {
+    grade = 3;
+  } else if (score >= 10) {
+    grade = 2;
+  } else if (score >= 1) {
+    grade = 1;
+  } else {
+    grade = 0;
+  }
+
+  // Create or update Score
+  let [entry, created] = await Score.findOrCreate({
+    where: {
+      criteria_code: criteria.criteria_code,
+      session
+    },
+    defaults: {
+      criteria_code: criteria.criteria_code,
+      criteria_id: criteria.criterion_id,
+      sub_criteria_id: criteria.sub_criterion_id,
+      sub_sub_criteria_id: criteria.sub_sub_criterion_id,
+      score_criteria: 0,
+      score_sub_criteria: 0,
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
+      session
+    }
+  });
+
+  if (!created) {
+    await Score.update({
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade,
+      session
+    }, {
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+
+    entry = await Score.findOne({
+      where: {
+        criteria_code: criteria.criteria_code,
+        session
+      }
+    });
+  }
 
   return res.status(200).json(
-    new apiResponse(200, score, "Score calculated successfully")
-  ); 
+    new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
+  );
+
+  
 });
 
 
@@ -231,7 +308,6 @@ const createResponse414 = asyncHandler(async (req, res) => {
     year,
     budget_allocated_infra_aug,
     expenditure_infra_aug,
-    total_expenditure_excl_salary,
     expenditure_academic_maint,
     expenditure_physical_maint
   } = req.body;
@@ -240,7 +316,6 @@ const createResponse414 = asyncHandler(async (req, res) => {
   const yearVal = Number(year);
   const budget = Number(budget_allocated_infra_aug);
   const infraExpenditure = Number(expenditure_infra_aug);
-  const totalExpenditure = Number(total_expenditure_excl_salary);
   const academicMaint = Number(expenditure_academic_maint);
   const physicalMaint = Number(expenditure_physical_maint);
 
@@ -249,7 +324,6 @@ const createResponse414 = asyncHandler(async (req, res) => {
     !yearVal ||
     isNaN(budget) ||
     isNaN(infraExpenditure) ||
-    isNaN(totalExpenditure) ||
     isNaN(academicMaint) ||
     isNaN(physicalMaint)
   ) {
@@ -302,7 +376,6 @@ const createResponse414 = asyncHandler(async (req, res) => {
       year: yearVal,
       budget_allocated_infra_aug: budget,
       expenditure_infra_aug: infraExpenditure,
-      total_expenditure_excl_salary: totalExpenditure,
       expenditure_academic_maint: academicMaint,
       expenditure_physical_maint: physicalMaint
     }
@@ -312,7 +385,6 @@ const createResponse414 = asyncHandler(async (req, res) => {
     await Criteria414.update({
       budget_allocated_infra_aug: budget,
       expenditure_infra_aug: infraExpenditure,
-      total_expenditure_excl_salary: totalExpenditure,
       expenditure_academic_maint: academicMaint,
       expenditure_physical_maint: physicalMaint
     }, {
@@ -338,96 +410,87 @@ const createResponse414 = asyncHandler(async (req, res) => {
 });
 
 const score414 = asyncHandler(async (req, res) => {
-  const session = new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("4.1.4");
 
+  // Step 1: Get criteria
   const criteria = await CriteriaMaster.findOne({
     where: { sub_sub_criterion_id: criteria_code }
   });
-
   if (!criteria) {
-    throw new apiError(404, "Criteria not found");
+    throw new apiError(404, "Criteria 4.1.4 not found in criteria_master");
   }
 
-  const currentIIQA = await IIQA.findOne({
+  // Step 2: Get latest IIQA session
+  const latestIIQA = await IIQA.findOne({
     attributes: ['session_end_year'],
     order: [['created_at', 'DESC']]
   });
-
-  if (!currentIIQA) {
+  if (!latestIIQA) {
     throw new apiError(404, "No IIQA form found");
   }
 
-  const startDate = currentIIQA.session_end_year - 5;
-  const endDate = currentIIQA.session_end_year;
+  const endYear = latestIIQA.session_end_year;
+  const startYear = endYear - 5;
 
-  if (session < startDate || session > endDate) {
-    throw new apiError(400, "Session must be between the latest IIQA session and the current year");
-  }
-
-  // Fetch all relevant responses for 5-year window
+  // Step 3: Fetch responses for last 5 years
   const responses = await Criteria414.findAll({
-    attributes: ['expenditure_infra_aug', 'total_expenditure_excl_salary', 'year'],
+    attributes: [
+      'session',
+      'expenditure_infra_aug',
+      'total_expenditure_excl_salary'
+    ],
     where: {
       criteria_code: criteria.criteria_code,
       session: {
-        [Sequelize.Op.between]: [startDate, endDate]
+        [Sequelize.Op.gte]: startYear,
+        [Sequelize.Op.lte]: endYear
       }
     },
     order: [['session', 'DESC']]
   });
 
-  if (!responses.length) {
-    throw new apiError(404, "No responses found for Criteria 4.1.4 in the session range");
+  if (responses.length === 0) {
+    throw new apiError(404, "No responses found for the given period");
   }
 
-  // Group responses by year
-  const groupedByYear = {};
-  responses.forEach(response => {
-    const year = response.year;
-    if (!groupedByYear[year]) {
-      groupedByYear[year] = { infra: 0, total: 0 };
+  // Step 4: Group by year and calculate yearly percentages
+  const yearlyData = {};
+  responses.forEach(r => {
+    if (!yearlyData[r.session]) {
+      yearlyData[r.session] = { infra: 0, total: 0 };
     }
-    groupedByYear[year].infra += response.expenditure_infra_aug || 0;
-    groupedByYear[year].total += response.total_expenditure_excl_salary || 0;
+    yearlyData[r.session].infra += r.expenditure_infra_aug || 0;
+    yearlyData[r.session].total += r.total_expenditure_excl_salary || 0;
   });
 
-  // Compute score for each year
-  const yearlyScores = [];
-  for (const year of Object.keys(groupedByYear).sort((a, b) => b - a)) {
-    const { infra, total } = groupedByYear[year];
-    if (total > 0) {
-      const score = (infra / total) * 100;
-      yearlyScores.push(score);
-    }
-  }
+  const yearlyPercentages = Object.keys(yearlyData).map(year => {
+    const { infra, total } = yearlyData[year];
+    return total > 0 ? (infra / total) * 100 : 0;
+  });
 
-  if (yearlyScores.length === 0) {
+  if (yearlyPercentages.length === 0) {
     throw new apiError(400, "No valid data to compute score");
   }
 
-  const average = (yearlyScores.reduce((a, b) => a + b, 0) / yearlyScores.length).toFixed(3);
-  console.log("Average:", average);
-  console.log("Yearly Scores:", yearlyScores);
+  // Step 5: Calculate average score
+  const score = parseFloat(
+    (yearlyPercentages.reduce((a, b) => a + b, 0) / yearlyPercentages.length).toFixed(3)
+  );
 
+  // Step 6: Grade mapping
   let grade;
-  if (average >= 80) {
-    grade = 4;
-  } else if (average >= 60) {
-    grade = 3;
-  } else if (average >= 40) {
-    grade = 2;
-  } else if (average >= 30) {
-    grade = 1;
-  } else {
-    grade = 0;
-  }
+  if (score >= 80) grade = 4;
+  else if (score >= 60) grade = 3;
+  else if (score >= 40) grade = 2;
+  else if (score >= 30) grade = 1;
+  else grade = 0;
 
-  // Create or update Score
+  // Step 7: Create or update Score
   let [entry, created] = await Score.findOrCreate({
     where: {
       criteria_code: criteria.criteria_code,
-      session
+      session: currentYear
     },
     defaults: {
       criteria_code: criteria.criteria_code,
@@ -436,28 +499,28 @@ const score414 = asyncHandler(async (req, res) => {
       sub_sub_criteria_id: criteria.sub_sub_criterion_id,
       score_criteria: 0,
       score_sub_criteria: 0,
-      score_sub_sub_criteria: average,
+      score_sub_sub_criteria: score,
       sub_sub_cr_grade: grade,
-      session
+      session: currentYear,
+      cycle_year: 1
     }
   });
 
   if (!created) {
     await Score.update({
-      score_sub_sub_criteria: average,
-      sub_sub_cr_grade: grade,
-      session
+      score_sub_sub_criteria: score,
+      sub_sub_cr_grade: grade
     }, {
       where: {
         criteria_code: criteria.criteria_code,
-        session
+        session: currentYear
       }
     });
 
     entry = await Score.findOne({
       where: {
         criteria_code: criteria.criteria_code,
-        session
+        session: currentYear
       }
     });
   }
@@ -466,6 +529,7 @@ const score414 = asyncHandler(async (req, res) => {
     new apiResponse(200, entry, created ? "Score created successfully" : "Score updated successfully")
   );
 });
+
 
 
 

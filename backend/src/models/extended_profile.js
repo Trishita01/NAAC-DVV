@@ -19,7 +19,7 @@ export default class extended_profile extends Model {
       }
     },
     year: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DATE,
       allowNull: false
     },
     number_of_courses_offered: {
@@ -60,6 +60,10 @@ export default class extended_profile extends Model {
     },
     expenditure_in_lakhs: {
       type: DataTypes.DECIMAL(10,2),
+      allowNull: true
+    },
+    classroom_ict_enabled: {
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     created_at: {
