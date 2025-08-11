@@ -1896,7 +1896,7 @@ const score3 = asyncHandler(async (req, res) => {
   // Final total and score calculation
   const totalScore = Object.values(subCriteriaScores).reduce((sum, s) => sum + parseFloat(s), 0);
   const cri_score = parseFloat((totalScore / 100).toFixed(2)); 
-  const weighted_cri_score = cri_score * 0.1;
+  const weighted_cri_score = cri_score * 0.2;
   console.log("cri_score:", cri_score);
   console.log("weighted_cri_score:", weighted_cri_score);
   const adjustedWeightedCriScore = weighted_cri_score * 1000;
@@ -2125,13 +2125,13 @@ const score43 = asyncHandler(async (req, res) => {
   const session = new Date().getFullYear();
   const criteria_code = convertToPaddedFormat("4.3");
 
-  // Get 4.3.1 and 4.3.2 criteria
+  // Get 4.2.1 and 4.2.2 criteria
   const criteria = await CriteriaMaster.findAll({
     where: {
       sub_sub_criterion_id: {
         [Sequelize.Op.in]: [
-          convertToPaddedFormat("4.3.1"),
-          convertToPaddedFormat("4.3.2")
+          convertToPaddedFormat("4.3.2"),
+          convertToPaddedFormat("4.3.3")
         ]
       }
     }
@@ -2159,12 +2159,12 @@ const score43 = asyncHandler(async (req, res) => {
   const sum = grades.reduce((total, value) => total + value, 0);
   const average = grades.length ? sum / grades.length : 0;
   console.log("Average:", average);
-  const sub_score = average * 20;
+  const sub_score = average * 25;
   console.log("sub_score:", sub_score);
 
   // Ensure all Score rows exist, then update them
   for (const criterion of criteria) {
-    if (criterion.sub_criteria_id !== '0304') continue;
+    if (criterion.sub_criteria_id !== '0403') continue;
 
     await Score.findOrCreate({
       where: {
@@ -2186,19 +2186,19 @@ const score43 = asyncHandler(async (req, res) => {
     });
   }
 
-  // Update all entries under sub_criteria_id = '0304'
+  // Update all entries under sub_criteria_id = '0403'
   await Score.update(
     { score_sub_criteria: sub_score },
     {
       where: {
         session,
-        sub_criteria_id: '0304',
+        sub_criteria_id: '0403',
         sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
       }
     }
   );
 
-  // Fetch and return 3.4.1 and 3.4.2 rows (after update)
+  // Fetch and return 4.3.2 and 4.3.3  (after update)
   const finalScores = await Score.findAll({
     where: {
       session,
@@ -2209,9 +2209,837 @@ const score43 = asyncHandler(async (req, res) => {
   });
 
   return res.status(200).json(
-    new apiResponse(200, finalScores, "Score sub_criteria updated for 3.4")
+    new apiResponse(200, finalScores, "Score sub_criteria updated for 4.3")
   );
 });
+
+
+//score44
+const score44 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("4.4");
+
+  const criteria = await CriteriaMaster.findAll({
+    where: {
+      sub_sub_criterion_id: {
+        [Sequelize.Op.in]: [convertToPaddedFormat("4.4.1")]
+      }
+    }
+  });
+
+  if (!criteria || criteria.length === 0) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  const criteriaCodes = criteria.map(c => c.criteria_code);
+  const subSubCriteriaIds = criteria.map(c => c.sub_sub_criterion_id);
+
+  const scores = await Score.findAll({
+    attributes: ['score_sub_sub_criteria', 'sub_sub_criteria_id', 'sub_sub_cr_grade'],
+    where: {
+      session,
+      criteria_code: { [Sequelize.Op.in]: criteriaCodes },
+      sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+    }
+  });
+
+  const values = scores.map(s => parseFloat(s.sub_sub_cr_grade) || 0);
+  const average = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  const sub_score = average * 10;
+
+  console.log("Average:", average);
+  console.log("sub_score:", sub_score);
+
+  // Ensure all Score entries exist
+  for (const criterion of criteria) {
+    if (criterion.sub_criteria_id !== '0404') continue;
+
+    await Score.findOrCreate({
+      where: {
+        criteria_code: criterion.criteria_code,
+        session,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id
+      },
+      defaults: {
+        criteria_code: criterion.criteria_code,
+        criteria_id: criterion.criterion_id,
+        sub_criteria_id: criterion.sub_criteria_id,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: sub_score,
+        score_sub_sub_criteria: 0,
+        sub_sub_cr_grade: 0,
+        session
+      }
+    });
+  }
+
+  // Bulk update for all under 4.4.1
+  await Score.update(
+    { score_sub_criteria: sub_score },
+    {
+      where: {
+        session,
+        sub_criteria_id: '0404',
+        sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+      }
+    }
+  );
+
+  const finalScores = await Score.findAll({
+    where: {
+      session,
+      sub_sub_criteria_id: {
+        [Sequelize.Op.in]: subSubCriteriaIds
+      }
+    }
+  });
+
+  return res.status(200).json(
+    new apiResponse(200, finalScores, "Score sub_criteria updated for 4.4")
+  );
+});
+
+//score4
+const score4 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear().toString();
+  const criteria_id = "04"; // Criterion 1
+
+  let scores = await Score.findAll({
+    attributes: [
+      'sub_criteria_id',
+      'score_sub_criteria',
+      'score_sub_sub_criteria',
+      'sub_sub_criteria_id'
+    ],
+    where: {
+      criteria_id: criteria_id,
+      session: session,
+      [Sequelize.Op.or]: [
+        { score_sub_criteria: { [Sequelize.Op.gt]: 0 } },
+        { score_sub_sub_criteria: { [Sequelize.Op.gt]: 0 } }
+      ]
+    },
+    raw: true
+  });
+
+  // Fill missing sub_criteria_id using sub_sub_criteria_id from CriteriaMaster
+  for (let i = 0; i < scores.length; i++) {
+    if (!scores[i].sub_criteria_id && scores[i].sub_sub_criteria_id) {
+      const criteriaMap = await CriteriaMaster.findOne({
+        where: { sub_sub_criterion_id: scores[i].sub_sub_criteria_id },
+        attributes: ['sub_criterion_id'],
+        raw: true
+      });
+      if (criteriaMap) {
+        scores[i].sub_criteria_id = criteriaMap.sub_criterion_id;
+      }
+    }
+  }
+
+  // Group by sub_criteria_id, pick highest value between all sub_criteria scores
+  const subCriteriaScores = {};
+
+  scores.forEach(score => {
+    const subId = score.sub_criteria_id;
+    if (subId) {
+      const currentScore = score.score_sub_criteria || 0;
+
+      if (!subCriteriaScores[subId] || subCriteriaScores[subId] < currentScore) {
+        subCriteriaScores[subId] = currentScore;
+      }
+    }
+  });
+
+
+  // Final total and score calculation
+  const totalScore = Object.values(subCriteriaScores).reduce((sum, s) => sum + parseFloat(s), 0);
+  const cri_score = parseFloat((totalScore / 71).toFixed(2)); 
+  const weighted_cri_score = cri_score * 0.1;
+  console.log("cri_score:", cri_score);
+  console.log("weighted_cri_score:", weighted_cri_score);
+  const adjustedWeightedCriScore = weighted_cri_score * 1000;
+  // Fixed denominator = 71
+
+  // Optional: Create/update a row in Score for reference
+  const criteria = await CriteriaMaster.findOne({ where: { criterion_id: criteria_id } });
+  if (!criteria) throw new apiError(404, "Criteria not found");
+
+  await Score.update(
+    {
+      score_criteria: cri_score,
+      weighted_cr_score: adjustedWeightedCriScore,
+    },
+    {
+      where: {
+        criteria_id: criteria_id,
+        session: session
+      }
+    }
+  );
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      score: cri_score,
+      totalSubCriteriaScore: totalScore,
+      adjustedWeightedCriScore: adjustedWeightedCriScore,
+      weightedCRScore: weighted_cri_score,
+      subCriteriaScores: Object.entries(subCriteriaScores).map(([id, score]) => ({
+        sub_criteria_id: id,
+        score_sub_criteria: score
+      }))
+    }, "Score for Criterion 4 calculated successfully")
+  );
+});
+
+//score51
+const score51 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("5.1");
+
+  // Get 5.1.1 and 5.1.2 criteria
+  const criteria = await CriteriaMaster.findAll({
+    where: {
+      sub_sub_criterion_id: {
+        [Sequelize.Op.in]: [
+          convertToPaddedFormat("5.1.1"),
+          convertToPaddedFormat("5.1.2"),
+          convertToPaddedFormat("5.1.3"),
+          convertToPaddedFormat("5.1.4"),
+          convertToPaddedFormat("5.1.5")
+        ]
+      }
+    }
+  });
+
+  if (!criteria || criteria.length === 0) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  const criteriaCodes = criteria.map(c => c.criteria_code);
+  const subSubCriteriaIds = criteria.map(c => c.sub_sub_criterion_id);
+
+  // Fetch existing score rows
+  const existingScores = await Score.findAll({
+    attributes: ['sub_sub_cr_grade', 'sub_sub_criteria_id', 'criteria_code', 'score_sub_sub_criteria'],
+    where: {
+      criteria_code: { [Sequelize.Op.in]: criteriaCodes },
+      session,
+      sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+    }
+  });
+
+  // Calculate grades average
+  const grades = existingScores.map(s => parseFloat(s.sub_sub_cr_grade) || 0);
+  const sum = grades.reduce((total, value) => total + value, 0);
+  const average = grades.length ? sum / grades.length : 0;
+  console.log("Average:", average);
+  const sub_score = average * 50;
+  console.log("sub_score:", sub_score);
+
+  // Ensure all Score rows exist, then update them
+  for (const criterion of criteria) {
+    if (criterion.sub_criteria_id !== '0501') continue;
+
+    await Score.findOrCreate({
+      where: {
+        criteria_code: criterion.criteria_code,
+        session,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id
+      },
+      defaults: {
+        criteria_code: criterion.criteria_code,
+        criteria_id: criterion.criterion_id,
+        sub_criteria_id: criterion.sub_criteria_id,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: sub_score,
+        score_sub_sub_criteria: 0,
+        sub_sub_cr_grade: 0,
+        session
+      }
+    });
+  }
+
+  // Update all entries under sub_criteria_id = '0501'
+  await Score.update(
+    { score_sub_criteria: sub_score },
+    {
+      where: {
+        session,
+        sub_criteria_id: '0501',
+        sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+      }
+    }
+  );
+
+  // Fetch and return 5.1.1 and 5.1.2 and 5.1.3 and 5.1.4 and 5.1.5 rows (after update)
+  const finalScores = await Score.findAll({
+    where: {
+      session,
+      sub_sub_criteria_id: {
+        [Sequelize.Op.in]: subSubCriteriaIds
+      }
+    }
+  });
+
+  return res.status(200).json(
+    new apiResponse(200, finalScores, "Score sub_criteria updated for 5.1")
+  );
+});
+
+//score52
+const score52 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("5.2");
+
+  // Get 5.2.1 and 5.2.2 criteria
+  const criteria = await CriteriaMaster.findAll({
+    where: {
+      sub_sub_criterion_id: {
+        [Sequelize.Op.in]: [
+          convertToPaddedFormat("5.2.1"),
+          convertToPaddedFormat("5.2.2"),
+          convertToPaddedFormat("5.2.3"),
+        ]
+      }
+    }
+  });
+
+  if (!criteria || criteria.length === 0) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  const criteriaCodes = criteria.map(c => c.criteria_code);
+  const subSubCriteriaIds = criteria.map(c => c.sub_sub_criterion_id);
+
+  // Fetch existing score rows
+  const existingScores = await Score.findAll({
+    attributes: ['sub_sub_cr_grade', 'sub_sub_criteria_id', 'criteria_code', 'score_sub_sub_criteria'],
+    where: {
+      criteria_code: { [Sequelize.Op.in]: criteriaCodes },
+      session,
+      sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+    }
+  });
+
+  // Calculate grades average
+  const grades = existingScores.map(s => parseFloat(s.sub_sub_cr_grade) || 0);
+  const sum = grades.reduce((total, value) => total + value, 0);
+  const average = grades.length ? sum / grades.length : 0;
+  console.log("Average:", average);
+  const sub_score = average * 30;
+  console.log("sub_score:", sub_score);
+
+  // Ensure all Score rows exist, then update them
+  for (const criterion of criteria) {
+    if (criterion.sub_criteria_id !== '0502') continue;
+
+    await Score.findOrCreate({
+      where: {
+        criteria_code: criterion.criteria_code,
+        session,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id
+      },
+      defaults: {
+        criteria_code: criterion.criteria_code,
+        criteria_id: criterion.criterion_id,
+        sub_criteria_id: criterion.sub_criteria_id,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: sub_score,
+        score_sub_sub_criteria: 0,
+        sub_sub_cr_grade: 0,
+        session
+      }
+    });
+  }
+
+  // Update all entries under sub_criteria_id = '0502'
+  await Score.update(
+    { score_sub_criteria: sub_score },
+    {
+      where: {
+        session,
+        sub_criteria_id: '0502',
+        sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+      }
+    }
+  );
+
+  // Fetch and return 5.2.1 and 5.2.2 and 5.2.3 rows (after update)
+  const finalScores = await Score.findAll({
+    where: {
+      session,
+      sub_sub_criteria_id: {
+        [Sequelize.Op.in]: subSubCriteriaIds
+      }
+    }
+  });
+
+  return res.status(200).json(
+    new apiResponse(200, finalScores, "Score sub_criteria updated for 5.2")
+  );
+});
+
+//score53
+const score53 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("5.3");
+
+  // Get 5.3.1 and 5.3.3 criteria
+  const criteria = await CriteriaMaster.findAll({
+    where: {
+      sub_sub_criterion_id: {
+        [Sequelize.Op.in]: [
+          convertToPaddedFormat("5.3.1"),
+          convertToPaddedFormat("5.3.3")
+        ]
+      }
+    }
+  });
+
+  if (!criteria || criteria.length === 0) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  const criteriaCodes = criteria.map(c => c.criteria_code);
+  const subSubCriteriaIds = criteria.map(c => c.sub_sub_criterion_id);
+
+  // Fetch existing score rows
+  const existingScores = await Score.findAll({
+    attributes: ['sub_sub_cr_grade', 'sub_sub_criteria_id', 'criteria_code', 'score_sub_sub_criteria'],
+    where: {
+      criteria_code: { [Sequelize.Op.in]: criteriaCodes },
+      session,
+      sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+    }
+  });
+
+  // Calculate grades average
+  const grades = existingScores.map(s => parseFloat(s.sub_sub_cr_grade) || 0);
+  const sum = grades.reduce((total, value) => total + value, 0);
+  const average = grades.length ? sum / grades.length : 0;
+  console.log("Average:", average);
+  const sub_score = average * 40;
+  console.log("sub_score:", sub_score);
+
+  // Ensure all Score rows exist, then update them
+  for (const criterion of criteria) {
+    if (criterion.sub_criteria_id !== '0503') continue;
+
+    await Score.findOrCreate({
+      where: {
+        criteria_code: criterion.criteria_code,
+        session,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id
+      },
+      defaults: {
+        criteria_code: criterion.criteria_code,
+        criteria_id: criterion.criterion_id,
+        sub_criteria_id: criterion.sub_criteria_id,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: sub_score,
+        score_sub_sub_criteria: 0,
+        sub_sub_cr_grade: 0,
+        session
+      }
+    });
+  }
+
+  // Update all entries under sub_criteria_id = '0503'
+  await Score.update(
+    { score_sub_criteria: sub_score },
+    {
+      where: {
+        session,
+        sub_criteria_id: '0503',
+        sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+      }
+    }
+  );
+
+  // Fetch and return 5.3.1 and 5.3.3 rows (after update)
+  const finalScores = await Score.findAll({
+    where: {
+      session,
+      sub_sub_criteria_id: {
+        [Sequelize.Op.in]: subSubCriteriaIds
+      }
+    }
+  });
+
+  return res.status(200).json(
+    new apiResponse(200, finalScores, "Score sub_criteria updated for 5.3")
+  );
+});
+
+//score54
+const score54 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("5.4");
+
+  const criteria = await CriteriaMaster.findAll({
+    where: {
+      sub_sub_criterion_id: {
+        [Sequelize.Op.in]: [convertToPaddedFormat("5.4.2")]
+      }
+    }
+  });
+
+  if (!criteria || criteria.length === 0) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  const criteriaCodes = criteria.map(c => c.criteria_code);
+  const subSubCriteriaIds = criteria.map(c => c.sub_sub_criterion_id);
+
+  const scores = await Score.findAll({
+    attributes: ['score_sub_sub_criteria', 'sub_sub_criteria_id', 'sub_sub_cr_grade'],
+    where: {
+      session,
+      criteria_code: { [Sequelize.Op.in]: criteriaCodes },
+      sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+    }
+  });
+
+  const values = scores.map(s => parseFloat(s.sub_sub_cr_grade) || 0);
+  const average = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  const sub_score = average * 5;
+
+  console.log("Average:", average);
+  console.log("sub_score:", sub_score);
+
+  // Ensure all Score entries exist
+  for (const criterion of criteria) {
+    if (criterion.sub_criteria_id !== '0504') continue;
+
+    await Score.findOrCreate({
+      where: {
+        criteria_code: criterion.criteria_code,
+        session,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id
+      },
+      defaults: {
+        criteria_code: criterion.criteria_code,
+        criteria_id: criterion.criterion_id,
+        sub_criteria_id: criterion.sub_criteria_id,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: sub_score,
+        score_sub_sub_criteria: 0,
+        sub_sub_cr_grade: 0,
+        session
+      }
+    });
+  }
+
+  // Bulk update for all under 5.4.1
+  await Score.update(
+    { score_sub_criteria: sub_score },
+    {
+      where: {
+        session,
+        sub_criteria_id: '0504',
+        sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+      }
+    }
+  );
+
+  const finalScores = await Score.findAll({
+    where: {
+      session,
+      sub_sub_criteria_id: {
+        [Sequelize.Op.in]: subSubCriteriaIds
+      }
+    }
+  });
+
+  return res.status(200).json(
+    new apiResponse(200, finalScores, "Score sub_criteria updated for 5.4")
+  );
+});
+
+//score5
+const score5 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear().toString();
+  const criteria_id = "05"; // Criterion 5
+
+  let scores = await Score.findAll({
+    attributes: [
+      'sub_criteria_id',
+      'score_sub_criteria',
+      'score_sub_sub_criteria',
+      'sub_sub_criteria_id'
+    ],
+    where: {
+      criteria_id: criteria_id,
+      session: session,
+      [Sequelize.Op.or]: [
+        { score_sub_criteria: { [Sequelize.Op.gt]: 0 } },
+        { score_sub_sub_criteria: { [Sequelize.Op.gt]: 0 } }
+      ]
+    },
+    raw: true
+  });
+
+  // Fill missing sub_criteria_id using sub_sub_criteria_id from CriteriaMaster
+  for (let i = 0; i < scores.length; i++) {
+    if (!scores[i].sub_criteria_id && scores[i].sub_sub_criteria_id) {
+      const criteriaMap = await CriteriaMaster.findOne({
+        where: { sub_sub_criterion_id: scores[i].sub_sub_criteria_id },
+        attributes: ['sub_criterion_id'],
+        raw: true
+      });
+      if (criteriaMap) {
+        scores[i].sub_criteria_id = criteriaMap.sub_criterion_id;
+      }
+    }
+  }
+
+  // Group by sub_criteria_id, pick highest value between all sub_criteria scores
+  const subCriteriaScores = {};
+
+  scores.forEach(score => {
+    const subId = score.sub_criteria_id;
+    if (subId) {
+      const currentScore = score.score_sub_criteria || 0;
+
+      if (!subCriteriaScores[subId] || subCriteriaScores[subId] < currentScore) {
+        subCriteriaScores[subId] = currentScore;
+      }
+    }
+  });
+
+
+  // Final total and score calculation
+  const totalScore = Object.values(subCriteriaScores).reduce((sum, s) => sum + parseFloat(s), 0);
+  const cri_score = parseFloat((totalScore / 125).toFixed(2)); 
+  const weighted_cri_score = cri_score * 0.1;
+  console.log("cri_score:", cri_score);
+  console.log("weighted_cri_score:", weighted_cri_score);
+  const adjustedWeightedCriScore = weighted_cri_score * 1000;
+  // Fixed denominator = 125
+
+  // Optional: Create/update a row in Score for reference
+  const criteria = await CriteriaMaster.findOne({ where: { criterion_id: criteria_id } });
+  if (!criteria) throw new apiError(404, "Criteria not found");
+
+  await Score.update(
+    {
+      score_criteria: cri_score,
+      weighted_cr_score: adjustedWeightedCriScore,
+    },
+    {
+      where: {
+        criteria_id: criteria_id,
+        session: session
+      }
+    }
+  );
+
+  return res.status(200).json(
+    new apiResponse(200, {
+      score: cri_score,
+      totalSubCriteriaScore: totalScore,
+      adjustedWeightedCriScore: adjustedWeightedCriScore,
+      weightedCRScore: weighted_cri_score,
+      subCriteriaScores: Object.entries(subCriteriaScores).map(([id, score]) => ({
+        sub_criteria_id: id,
+        score_sub_criteria: score
+      }))
+    }, "Score for Criterion 5 calculated successfully")
+  );
+});
+
+//score71
+const score71 = asyncHandler(async (req, res) => {
+  const session = new Date().getFullYear();
+  const criteria_code = convertToPaddedFormat("7.1");
+
+  // Get 7.1.2 and 7.1.4 and 7.1.5 and 7.1.6 and 7.1.7 and 7.1.10 criteria
+  const criteria = await CriteriaMaster.findAll({
+    where: {
+      sub_sub_criterion_id: {
+        [Sequelize.Op.in]: [
+          convertToPaddedFormat("7.1.2"),
+          convertToPaddedFormat("7.1.4"),
+          convertToPaddedFormat("7.1.5"),
+          convertToPaddedFormat("7.1.6"),
+          convertToPaddedFormat("7.1.7"),
+          "070110"
+        ]
+      }
+    }
+  });
+
+  if (!criteria || criteria.length === 0) {
+    throw new apiError(404, "Criteria not found");
+  }
+
+  const criteriaCodes = criteria.map(c => c.criteria_code);
+  const subSubCriteriaIds = criteria.map(c => c.sub_sub_criterion_id);
+
+  // Fetch existing score rows
+  const existingScores = await Score.findAll({
+    attributes: ['sub_sub_cr_grade', 'sub_sub_criteria_id', 'criteria_code', 'score_sub_sub_criteria'],
+    where: {
+      criteria_code: { [Sequelize.Op.in]: criteriaCodes },
+      session,
+      sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+    }
+  });
+
+  // Calculate grades average
+  const grades = existingScores.map(s => parseFloat(s.sub_sub_cr_grade) || 0);
+  const sum = grades.reduce((total, value) => total + value, 0);
+  const average = grades.length ? sum / grades.length : 0;
+  console.log("Average:", average);
+  const sub_score = average * 27;
+  console.log("sub_score:", sub_score);
+
+  // Ensure all Score rows exist, then update them
+  for (const criterion of criteria) {
+    if (criterion.sub_criteria_id !== '0701') continue;
+
+    await Score.findOrCreate({
+      where: {
+        criteria_code: criterion.criteria_code,
+        session,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id
+      },
+      defaults: {
+        criteria_code: criterion.criteria_code,
+        criteria_id: criterion.criterion_id,
+        sub_criteria_id: criterion.sub_criteria_id,
+        sub_sub_criteria_id: criterion.sub_sub_criterion_id,
+        score_criteria: 0,
+        score_sub_criteria: sub_score,
+        score_sub_sub_criteria: 0,
+        sub_sub_cr_grade: 0,
+        session
+      }
+    });
+  }
+// Update all entries under sub_criteria_id = '0701'
+  await Score.update(
+    { score_sub_criteria: sub_score },
+    {
+      where: {
+        session,
+        sub_criteria_id: '0701',
+        sub_sub_criteria_id: { [Sequelize.Op.in]: subSubCriteriaIds }
+      }
+    }
+  );
+   // Fetch and return 7.1.2 and 7.1.4 and 7.1.5 and 7.1.6 and 7.1.7 and 7.1.10 rows (after update)
+   const finalScores = await Score.findAll({
+    where: {
+      session,
+      sub_sub_criteria_id: {
+        [Sequelize.Op.in]: subSubCriteriaIds
+      }
+    }
+  });
+
+    return res.status(200).json(
+      new apiResponse(200, finalScores, "Score sub_criteria updated for 7.1")
+    );
+  });
+  
+//score7
+const score7 = asyncHandler(async (req, res) => {
+    const session = new Date().getFullYear().toString();
+    const criteria_id = "07"; // Criterion 7
+  
+    let scores = await Score.findAll({
+      attributes: [
+        'sub_criteria_id',
+        'score_sub_criteria',
+        'score_sub_sub_criteria',
+        'sub_sub_criteria_id'
+      ],
+      where: {
+        criteria_id: criteria_id,
+        session: session,
+        [Sequelize.Op.or]: [
+          { score_sub_criteria: { [Sequelize.Op.gt]: 0 } },
+          { score_sub_sub_criteria: { [Sequelize.Op.gt]: 0 } }
+        ]
+      },
+      raw: true
+    });
+  
+    // Fill missing sub_criteria_id using sub_sub_criteria_id from CriteriaMaster
+    for (let i = 0; i < scores.length; i++) {
+      if (!scores[i].sub_criteria_id && scores[i].sub_sub_criteria_id) {
+        const criteriaMap = await CriteriaMaster.findOne({
+          where: { sub_sub_criterion_id: scores[i].sub_sub_criteria_id },
+          attributes: ['sub_criterion_id'],
+          raw: true
+        });
+        if (criteriaMap) {
+          scores[i].sub_criteria_id = criteriaMap.sub_criterion_id;
+        }
+      }
+    }
+  
+    // Group by sub_criteria_id, pick highest value between all sub_criteria scores
+    const subCriteriaScores = {};
+  
+    scores.forEach(score => {
+      const subId = score.sub_criteria_id;
+      if (subId) {
+        const currentScore = score.score_sub_criteria || 0;
+  
+        if (!subCriteriaScores[subId] || subCriteriaScores[subId] < currentScore) {
+          subCriteriaScores[subId] = currentScore;
+        }
+      }
+    });
+  
+  
+    // Final total and score calculation
+    const totalScore = Object.values(subCriteriaScores).reduce((sum, s) => sum + parseFloat(s), 0);
+    const cri_score = parseFloat((totalScore / 27).toFixed(2)); 
+    const weighted_cri_score = cri_score * 0.1;
+    console.log("cri_score:", cri_score);
+    console.log("weighted_cri_score:", weighted_cri_score);
+    const adjustedWeightedCriScore = weighted_cri_score * 1000;
+    // Fixed denominator = 125
+  
+    // Optional: Create/update a row in Score for reference
+    const criteria = await CriteriaMaster.findOne({ where: { criterion_id: criteria_id } });
+    if (!criteria) throw new apiError(404, "Criteria not found");
+  
+    await Score.update(
+      {
+        score_criteria: cri_score,
+        weighted_cr_score: adjustedWeightedCriScore,
+      },
+      {
+        where: {
+          criteria_id: criteria_id,
+          session: session
+        }
+      }
+    );
+  
+    return res.status(200).json(
+      new apiResponse(200, {
+        score: cri_score,
+        totalSubCriteriaScore: totalScore,
+        adjustedWeightedCriScore: adjustedWeightedCriScore,
+        weightedCRScore: weighted_cri_score,
+        subCriteriaScores: Object.entries(subCriteriaScores).map(([id, score]) => ({
+          sub_criteria_id: id,
+          score_sub_criteria: score
+        }))
+      }, "Score for Criterion 7 calculated successfully")
+    );
+ });
+ 
 
  /*        4       3       2       1       0
     2.1.1	>=80%	60%-80%	40%- 60%	30%-40%	<30%
@@ -2790,4 +3618,8 @@ const radarGrade = asyncHandler(async (req, res) => {
 });
 
 
-export { score21, score22, score23, score24, score26, score2, score11, score12, score13, score14, score1,score6, score62, score63, score64, score65, scoreTotal, getCollegeSummary, radarGrade };
+export { score21, score22, score23, score24, score26, score2, 
+  score11, score12, score13, score14, score1,score6, score62,
+   score63, score64, score65,score31,score32, score33, score34,
+    score3,score41,score42,score43,score44,score4,score51,score52,
+    score53,score54,score5,score71,score7,scoreTotal, getCollegeSummary, radarGrade };

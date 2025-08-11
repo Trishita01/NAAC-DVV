@@ -220,10 +220,10 @@ const createResponse511_512 = asyncHandler(async (req, res) => {
           session,
           year,
           scheme_name,
-          sub_sub_criterion_id: criteria.sub_sub_criterion_id, // ensure this field exists in your model
         };
   
         const defaults = {
+          id: criteria.id,
           criteria_code: criteria.criteria_code,
           gov_students_count,
           gov_amount,
@@ -571,6 +571,7 @@ const createResponse513 = asyncHandler(async (req, res) => {
   
     // Step 5: Create the new entry
     const newEntry = await Criteria513.create({
+      id: criteria.id,
       criteria_code: criteria.criteria_code,
       session,
       program_name,
@@ -769,6 +770,7 @@ const createResponse514 = asyncHandler(async (req, res) => {
   
     // Step 5: Create the new entry
     const newEntry = await Criteria514.create({
+      id: criteria.id,
       criteria_code: criteria.criteria_code,
       session,
       year,
@@ -1141,8 +1143,8 @@ const createResponse521 = asyncHandler(async (req, res) => {
     const criteria = await CriteriaMaster.findOne({
       where: {
         criterion_id: '05',
-        sub_criterion_id: '0501',
-        sub_sub_criterion_id: '050104'
+        sub_criterion_id: '0502',
+        sub_sub_criterion_id: '050201'
       }
     });
   
@@ -1172,6 +1174,7 @@ const createResponse521 = asyncHandler(async (req, res) => {
   
     // Step 5: Create the new entry
     const newEntry = await Criteria521.create({
+      id: criteria.id,
       criteria_code: criteria.criteria_code,
       session,
       year,
@@ -1402,6 +1405,7 @@ const createResponse522 = asyncHandler(async (req, res) => {
     }
   
     const newEntry = await Criteria522.create({
+      id: criteria.id,
       criteria_code: criteria.criteria_code,
       session,
       year,
@@ -1558,117 +1562,128 @@ const createResponse522 = asyncHandler(async (req, res) => {
 //5.2.3
  
 const createResponse523 = asyncHandler(async (req, res) => {
-    const {
+  const {
+    session,
+    year,
+    registeration_number,
+    exam_net,
+    exam_slet,
+    exam_gate,
+    exam_gmat,
+    exam_cat,
+    exam_gre,
+    exam_jam,
+    exam_ielts,
+    exam_toefl,
+    exam_civil_services,
+    exam_state_services,
+    exam_other,
+  } = req.body;
+
+  // Helper: check valid YES/NO string
+  const isValidAnswer = (val) =>
+    typeof val === "string" && ["YES", "NO"].includes(val.toUpperCase());
+
+  if (
+    session == null ||
+    year == null ||
+    !registeration_number ||
+    !isValidAnswer(exam_net) ||
+    !isValidAnswer(exam_slet) ||
+    !isValidAnswer(exam_gate) ||
+    !isValidAnswer(exam_gmat) ||
+    !isValidAnswer(exam_cat) ||
+    !isValidAnswer(exam_gre) ||
+    !isValidAnswer(exam_jam) ||
+    !isValidAnswer(exam_ielts) ||
+    !isValidAnswer(exam_toefl) ||
+    !isValidAnswer(exam_civil_services) ||
+    !isValidAnswer(exam_state_services) ||
+    !isValidAnswer(exam_other)
+  ) {
+    throw new apiError(400, "Missing or invalid required fields");
+  }
+
+  const currentYear = new Date().getFullYear();
+
+  if (session < 1990 || session > currentYear || year < 1990 || year > currentYear) {
+    throw new apiError(400, "Year and session must be between 1990 and the current year");
+  }
+
+  const existingEntry = await Criteria523.findOne({
+    where: {
       session,
-      year,
+      year: new Date(`${year}-01-01`),
       registeration_number,
-      exam_net,
-      exam_slet,
-      exam_gate,
-      exam_gmat,
-      exam_cat,
-      exam_gre,
-      exam_jam,
-      exam_ielts,
-      exam_toefl,
-      exam_civil_services,
-      exam_state_services,
-      exam_other,
-    } = req.body;
-  
-    if (
-      session == null ||
-      year == null ||
-      !registeration_number ||
-      !exam_net ||
-      !exam_slet ||
-      !exam_gate ||
-      !exam_gmat ||
-      !exam_cat ||
-      !exam_gre ||
-      !exam_jam ||
-      !exam_ielts ||
-      !exam_toefl ||
-      !exam_civil_services ||
-      !exam_state_services ||
-      !exam_other
-    ) {
-      throw new apiError(400, "Missing required fields");
-    }
-  
-    const currentYear = new Date().getFullYear();
-  
-    if (session < 1990 || session > currentYear || year < 1990 || year > currentYear) {
-      throw new apiError(400, "Year and session must be between 1990 and the current year");
-    }
-  
-    const existingEntry = await Criteria523.findOne({
-      where: {
-        session,
-        year,
-        registeration_number
-      }
-    });
-  
-    if (existingEntry) {
-      throw new apiError(409, "An entry already exists for this registration number in the same session and year");
-    }
-  
-    const criteria = await CriteriaMaster.findOne({
-      where: {
-        criterion_id: '05',
-        sub_criterion_id: '0502',
-        sub_sub_criterion_id: '050203' // Corrected
-      }
-    });
-  
-    if (!criteria) {
-      throw new apiError(404, "Criteria details not found");
-    }
-  
-    const latestIIQA = await IIQA.findOne({
-      attributes: ['session_end_year'],
-      order: [['created_at', 'DESC']]
-    });
-  
-    if (!latestIIQA) {
-      throw new apiError(404, "No IIQA data found");
-    }
-  
-    const iiqaEndYear = latestIIQA.session_end_year;
-    const iiqaStartYear = iiqaEndYear - 5;
-  
-    if (session < iiqaStartYear || session > iiqaEndYear) {
-      throw new apiError(
-        400,
-        `Session must be between ${iiqaStartYear} and ${iiqaEndYear} as per IIQA data`
-      );
-    }
-  
-    const newEntry = await Criteria523.create({
-      criteria_code: criteria.criteria_code,
-      session,
-      year,
-      registeration_number,
-      exam_net,
-      exam_slet,
-      exam_gate,
-      exam_gmat,
-      exam_cat,
-      exam_gre,
-      exam_jam,
-      exam_ielts,
-      exam_toefl,
-      exam_civil_services,
-      exam_state_services,
-      exam_other
-    });
-  
-    return res.status(201).json(
-      new apiResponse(201, newEntry, "Response created successfully")
-    );
+    },
   });
-  
+
+  if (existingEntry) {
+    throw new apiError(
+      409,
+      "An entry already exists for this registration number in the same session and year"
+    );
+  }
+
+  const criteria = await CriteriaMaster.findOne({
+    where: {
+      criterion_id: "05",
+      sub_criterion_id: "0502",
+      sub_sub_criterion_id: "050203",
+    },
+  });
+
+  if (!criteria) {
+    throw new apiError(404, "Criteria details not found");
+  }
+
+  const latestIIQA = await IIQA.findOne({
+    attributes: ["session_end_year"],
+    order: [["created_at", "DESC"]],
+  });
+
+  if (!latestIIQA) {
+    throw new apiError(404, "No IIQA data found");
+  }
+
+  const iiqaEndYear = latestIIQA.session_end_year;
+  const iiqaStartYear = iiqaEndYear - 5;
+
+  if (session < iiqaStartYear || session > iiqaEndYear) {
+    throw new apiError(
+      400,
+      `Session must be between ${iiqaStartYear} and ${iiqaEndYear} as per IIQA data`
+    );
+  }
+
+  // Create date for year field (Jan 1st)
+  const yearDate = new Date(`${year}-01-01`);
+
+  const newEntry = await Criteria523.create({
+    id: criteria.id,
+    criteria_code: criteria.criteria_code,
+    session,
+    year: yearDate,
+    registeration_number,
+    exam_net: exam_net.toUpperCase(),
+    exam_slet: exam_slet.toUpperCase(),
+    exam_gate: exam_gate.toUpperCase(),
+    exam_gmat: exam_gmat.toUpperCase(),
+    exam_cat: exam_cat.toUpperCase(),
+    exam_gre: exam_gre.toUpperCase(),
+    exam_jam: exam_jam.toUpperCase(),
+    exam_ielts: exam_ielts.toUpperCase(),
+    exam_toefl: exam_toefl.toUpperCase(),
+    exam_civil_services: exam_civil_services.toUpperCase(),
+    exam_state_services: exam_state_services.toUpperCase(),
+    exam_other: exam_other.toUpperCase(),
+  });
+
+  return res
+    .status(201)
+    .json(new apiResponse(201, newEntry, "Response created successfully"));
+});
+
 
   
  //5.3.1
@@ -1748,6 +1763,7 @@ const createResponse523 = asyncHandler(async (req, res) => {
     }
   
     const newEntry = await Criteria531.create({
+      id: criteria.id,
       criteria_code: criteria.criteria_code,
       session,
       year,
@@ -2316,6 +2332,7 @@ const createResponse533 = asyncHandler(async (req, res) => {
     createResponse523,
     createResponse531,
     createResponse533,
+<<<<<<< HEAD
     createResponse542,
     getResponsesByCriteriaCode,
     score511,
@@ -2328,4 +2345,7 @@ const createResponse533 = asyncHandler(async (req, res) => {
     score531,
     score533,
     score542
+=======
+    getResponsesByCriteriaCode
+>>>>>>> 1024309ff8ad75e76b0bfbbb0a20110515d9682c
   };

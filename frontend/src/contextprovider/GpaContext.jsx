@@ -3,6 +3,18 @@ import axios from 'axios';
 
 export const GpaContext = createContext();
 
+// Function to create empty criteria data structure
+const createEmptyCriteria = () => {
+  return Array(7).fill(0).map((_, index) => ({
+    id: index + 1,
+    title: `Criteria ${index + 1}`,
+    score: 0,
+    target: 0,
+    status: 'Not Met',
+    max: 10
+  }));
+};
+
 export const GpaProvider = ({ children }) => {
   const [gpaData, setGpaData] = useState({
     collegeId: '',
